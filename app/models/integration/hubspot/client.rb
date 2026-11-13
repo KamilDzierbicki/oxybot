@@ -3,6 +3,7 @@
 class Integration::Hubspot::Client
   BASE_URL = "https://api.hubapi.com"
   PAGE_SIZE = 100
+  MAX_PAGES = 200 # 20,000 records per sync; a runaway paging loop stops here
 
   class Error < StandardError; end
 
@@ -32,7 +33,7 @@ class Integration::Hubspot::Client
   def each_page(path, **params)
     results = []
     after = nil
-    loop do
+    MAX_PAGES.times do
       body = get(path, params.merge(limit: PAGE_SIZE, after: after).compact)
       results.concat(body.fetch("results"))
       after = body.dig("paging", "next", "after")
@@ -44,7 +45,8 @@ class Integration::Hubspot::Client
   def get(path, params)
     uri = URI("#{BASE_URL}#{path}")
     uri.query = URI.encode_www_form(params)
-    response = Net::HTTP.get_response(uri, "Authorization" => "Bearer #{@token}")
+    request = Net::HTTP::Get.new(uri, "Authorization" => "Bearer #{@token}")
+    response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 15) { |http| http.request(request) }
     raise Error, "HubSpot #{path} answered #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 
     JSON.parse(response.body)

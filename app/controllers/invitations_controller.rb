@@ -6,10 +6,14 @@ class InvitationsController < ApplicationController
     if invitation.save
       InvitationsMailer.invite(invitation, invitation.token).deliver_later
       # The link is also shown once, for teams without outgoing email set up yet
-      flash[:invitation_url] = invitation_acceptance_url(invitation.token)
+      flash[:invitation_url] = invitation_acceptance_url(token: invitation.token)
       redirect_to users_path, notice: "Invitation sent to #{invitation.email}."
     else
-      redirect_to users_path, alert: invitation.errors.full_messages.to_sentence
+      # Re-render with the typed email and the error next to the form
+      @invitation = invitation
+      @users = Current.account.users.alphabetically
+      @invitations = Current.account.invitations.open.order(created_at: :desc)
+      render "users/index", status: :unprocessable_entity
     end
   end
 

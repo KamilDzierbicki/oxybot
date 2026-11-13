@@ -112,7 +112,7 @@ class MockLlm
   # The prompt holds "Insight: ..." and candidates as "- [12] Title: description".
   def judge(messages)
     prompt = messages.map { |message| content_text(message) }.join("\n")
-    insight = prompt[/^Insight: (.+)$/, 1].to_s
+    insight = messages.map { |message| content_text(message) }.join("\n")[/^Insight: (.+)$/, 1].to_s
     candidates = prompt.scan(/^- \[(\d+)\] (.+)$/)
     id, text = candidates.max_by { |_id, candidate| overlap(insight, candidate) }
     shared = text ? overlap(insight, text) : 0

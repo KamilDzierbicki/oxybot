@@ -1,7 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title><%= content_for(:title) ? "#{content_for(:title)} · OxyBot" : "OxyBot" %></title>
+    <title><%= safe_join([ content_for(:title), "OxyBot" ].compact_blank, " · ") %></title>
+    <meta name="description" content="<%= content_for(:description).presence || "OxyBot turns customer feedback into cited product decisions: insights, demand by ARR, specs and release notes." %>">
+    <meta property="og:title" content="<%= content_for(:title).presence || "OxyBot" %>">
+    <meta property="og:description" content="Open-source product agent: customer feedback in, cited product decisions out.">
+    <meta property="og:type" content="website">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="application-name" content="OxyBot">
     <%= csrf_meta_tags %>
@@ -40,9 +44,7 @@
           </div>
         </nav>
         <main class="main">
-          <% flash.to_hash.slice("notice", "alert").each do |type, text| %>
-            <div class="flash flash--<%= type %>"><%= text %></div>
-          <% end %>
+          <%= render "shared/flash" %>
           <%= yield %>
         </main>
       </div>

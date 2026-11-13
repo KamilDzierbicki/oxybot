@@ -25,6 +25,7 @@ class InsightExtractor < RubyLLM::Agent
   model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
     note.account.ai_model("extract")
   end
+  max_output_tokens 2000
   inputs :note
   instructions { Prompt.render("insight-extractor", products: Prompt::Context.new(note.account).products) }
   schema SCHEMA

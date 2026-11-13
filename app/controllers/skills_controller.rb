@@ -36,13 +36,16 @@ class SkillsController < ApplicationController
   private
 
   # Team skills are editable by the team; personal ones only by their owner
+  # Team skills shape everyone's answers, so only admins change them; members manage their own
   def set_skill
     @skill = Skill.available_to(Current.user).find(params[:id])
+    head :forbidden if @skill.team? && !Current.user.admin?
   end
 
   def skill_params
     attributes = params.expect(skill: %i[name description instructions personal])
-    attributes[:user] = attributes.delete(:personal) == "1" ? Current.user : nil
+    personal = attributes.delete(:personal) == "1" || !Current.user.admin?
+    attributes[:user] = personal ? Current.user : nil
     attributes
   end
 end

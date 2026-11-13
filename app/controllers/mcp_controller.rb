@@ -3,7 +3,13 @@
 class McpController < ActionController::API
   include ActionController::HttpAuthentication::Token::ControllerMethods
 
+  include ActionController::RateLimiting
+
+  before_action :refuse_foreign_origin
+  # Guessing tokens is limited per address (checked before authentication); use per user after it
+  rate_limit to: 60, within: 1.minute, by: -> { request.remote_ip }, with: -> { head :too_many_requests }, name: "address"
   before_action :authenticate
+  rate_limit to: 120, within: 1.minute, by: -> { @user.id }, with: -> { head :too_many_requests }, name: "user"
 
   def handle
     server = MCP::Server.new(
@@ -21,6 +27,16 @@ class McpController < ActionController::API
   end
 
   private
+
+  # Browsers send Origin; coding agents do not. A page on another site must not reach the tools.
+  def refuse_foreign_origin
+    origin = request.headers["Origin"]
+    return if origin.blank? || URI.parse(origin).host == request.host
+
+    head :forbidden
+  rescue URI::InvalidURIError
+    head :forbidden
+  end
 
   def authenticate
     @user = authenticate_with_http_token { |token, _options| User.find_by_mcp_token(token) }

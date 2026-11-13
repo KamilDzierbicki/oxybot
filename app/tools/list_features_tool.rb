@@ -4,7 +4,7 @@ class ListFeaturesTool < ApplicationTool
   parameter :status, description: "Optional status: idea, planned, in_progress or released", required: false
 
   def execute(product: nil, status: nil)
-    features = product_scope(account.features, product).includes(:product).order(:title)
+    features = product_scope(account.features, product).includes(:product).order(:title, :id)
     features = features.where(status: status) if Feature::STATUSES.include?(status)
 
     { features: features.limit(30).map { |feature| { id: feature.id, title: feature.title, product: feature.product.slug,

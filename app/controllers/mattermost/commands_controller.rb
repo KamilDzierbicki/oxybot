@@ -7,7 +7,8 @@ class Mattermost::CommandsController < ApplicationController
 
   def create
     integration = Integration::Mattermost.find_by(external_id: params[:team_id])
-    token = request.authorization.to_s.delete_prefix("Token ").presence || params[:token]
+    token = request.authorization.to_s.delete_prefix("Token ").presence || params[:token].presence
+    token = nil unless token.is_a?(String)
     return head :unauthorized unless integration&.valid_command_token?(token)
 
     integration.receive_command(params.permit(:channel_id, :user_id, :text, :trigger_id, :response_url).to_h)

@@ -6,6 +6,7 @@ class Mattermost::WebhooksController < ApplicationController
 
   def create
     payload = request.request_parameters.presence || JSON.parse(request.raw_post.presence || "{}")
+    return head :bad_request unless payload.is_a?(Hash)
     integration = Integration::Mattermost.find_by(external_id: payload["team_id"])
     return head :unauthorized unless integration&.valid_webhook_token?(payload["token"])
 

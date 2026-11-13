@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -178,6 +178,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_220000) do
     t.datetime "processed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at", "id"], name: "index_feedback_notes_for_list", order: { created_at: :desc, id: :desc }
     t.index ["account_id", "source", "external_id"], name: "index_feedback_notes_on_account_id_and_source_and_external_id", unique: true, where: "(external_id IS NOT NULL)"
     t.index ["account_id"], name: "index_feedback_notes_on_account_id"
     t.index ["customer_id"], name: "index_feedback_notes_on_customer_id"
@@ -200,6 +201,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_220000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.vector "embedding", limit: 768
+    t.index ["account_id", "triage_state", "created_at", "id"], name: "index_insights_for_inbox", order: { created_at: :desc, id: :desc }
     t.index ["account_id", "triage_state"], name: "index_insights_on_account_id_and_triage_state"
     t.index ["account_id"], name: "index_insights_on_account_id"
     t.index ["customer_id"], name: "index_insights_on_customer_id"
@@ -316,6 +318,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_220000) do
     t.index ["account_id"], name: "index_users_on_account_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["mcp_token_digest"], name: "index_users_on_mcp_token_digest", unique: true
+    t.check_constraint "email_address::text = lower(email_address::text)", name: "users_email_address_lowercase"
   end
 
   add_foreign_key "chat_messages", "integrations"

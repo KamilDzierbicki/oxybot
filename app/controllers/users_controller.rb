@@ -8,8 +8,10 @@ class UsersController < ApplicationController
 
   def update
     user = Current.account.users.find(params[:id])
-    if user.update(params.expect(user: [ :role ]))
-      redirect_to users_path, notice: "#{user.name} is now #{user.role}."
+    attributes = params.expect(user: %i[role slack_user_id mattermost_user_id])
+    %i[slack_user_id mattermost_user_id].each { |key| attributes[key] = attributes[key].presence if attributes.key?(key) }
+    if user.update(attributes)
+      redirect_to users_path
     else
       redirect_to users_path, alert: user.errors.full_messages.to_sentence
     end

@@ -45,7 +45,7 @@ class TeamManagementTest < ActionDispatch::IntegrationTest
     invitation = accounts(:acme).invitations.create!(email: "late@acme.example", invited_by: users(:kamil))
     invitation.update_columns(expires_at: 1.minute.ago)
 
-    get invitation_acceptance_path(invitation.token)
+    get invitation_acceptance_path(token: invitation.token)
 
     assert_response :not_found
   end

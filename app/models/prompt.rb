@@ -6,6 +6,7 @@ class Prompt
   LABEL = "production"
   CACHE_TTL = 5.minutes
   FILES = Rails.root.join("config/prompts")
+  UNREACHABLE_KEY = "prompt/langfuse-unreachable"
 
   Template = Data.define(:name, :text, :source, :version)
 
@@ -18,11 +19,14 @@ class Prompt
   def self.fetch(name)
     raise ArgumentError, "unknown prompt #{name}" unless NAMES.include?(name)
     return from_file(name) unless Prompt::Langfuse.configured?
+    # After a failure, skip Langfuse for a minute so one outage does not slow every request
+    return from_file(name) if Rails.cache.read(UNREACHABLE_KEY)
 
     # Only successes are cached: after a failure the next call tries Langfuse again, using the file meanwhile
     Rails.cache.read(cache_key(name)) || Prompt::Langfuse.fetch(name, label: LABEL).tap { |template| Rails.cache.write(cache_key(name), template, expires_in: CACHE_TTL) }
   rescue Prompt::Langfuse::Error, Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNREFUSED => e
     Rails.logger.warn("[prompt] #{name}: #{e.message}; using config/prompts")
+    Rails.cache.write(UNREACHABLE_KEY, true, expires_in: 1.minute)
     from_file(name)
   end
 
@@ -31,6 +35,7 @@ class Prompt
   end
 
   def self.refresh
+    Rails.cache.delete(UNREACHABLE_KEY)
     NAMES.each { |name| Rails.cache.delete(cache_key(name)) }
   end
 

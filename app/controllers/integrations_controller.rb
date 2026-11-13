@@ -7,14 +7,19 @@ class IntegrationsController < ApplicationController
   end
 
   def show
-    @chat_messages = @integration.chat_messages.chronologically.last(60) if @integration.chat?
+    # The log can hold private messages, so only admins see it, and only while testing in mock mode
+    @chat_messages = @integration.chat_messages.chronologically.last(60) if @integration.chat? && @integration.mock? && Current.user.admin?
   end
 
   def new
+    return head :not_found unless Integration::KINDS.key?(params[:kind])
+
     @integration = Current.account.integrations.new(type: Integration.class_for(params[:kind]).name)
   end
 
   def create
+    return head :not_found unless Integration::KINDS.key?(params.dig(:integration, :kind))
+
     @integration = Integration.class_for(params.dig(:integration, :kind)).new(account: Current.account, external_id: params.dig(:integration, :external_id))
     @integration.assign_attributes(integration_params.except(:external_id))
     if @integration.save
@@ -24,9 +29,13 @@ class IntegrationsController < ApplicationController
     end
   end
 
+  # The workspace id is fixed once connected: changing it would let one account claim another's events
   def update
-    @integration.update!(integration_params)
-    redirect_to @integration, notice: "Settings saved."
+    if @integration.update(integration_params.except(:external_id))
+      redirect_to @integration
+    else
+      redirect_to @integration, alert: @integration.errors.full_messages.to_sentence
+    end
   end
 
   def destroy

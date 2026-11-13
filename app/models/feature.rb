@@ -26,7 +26,7 @@ class Feature < ApplicationRecord
         (SELECT customer_id FROM insights WHERE insights.feature_id = features.id)) AS demand_arr_cents
     SQL
   }
-  scope :by_demand, -> { with_demand.order("demand_arr_cents DESC, insight_count DESC, features.title ASC") }
+  scope :by_demand, -> { with_demand.order("demand_arr_cents DESC, insight_count DESC, features.title ASC, features.id ASC") }
 
   def embedding_text = "#{title}\n#{description}"
 

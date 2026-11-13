@@ -1,6 +1,7 @@
 # The chat simulator (mock mode): hands a message to the integration the way its platform adapter would, so
 # feedback channels, mentions, direct messages and threaded replies can be tried without a real workspace.
 class Integrations::SimulatedMessagesController < ApplicationController
+  admin_only
   def create
     integration = Current.account.integrations.find(params[:integration_id])
     return head :not_found unless integration.chat? && integration.mock?

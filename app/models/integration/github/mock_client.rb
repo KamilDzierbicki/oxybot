@@ -16,7 +16,7 @@ class Integration::Github::MockClient
 
   def read_file(path)
     full = ROOT.join(path).cleanpath
-    raise ArgumentError, "outside the repository" unless full.to_s.start_with?(ROOT.to_s) && full.file?
+    raise ArgumentError, "outside the repository" unless full.to_s.start_with?("#{ROOT}/") && full.file?
 
     File.read(full)
   end

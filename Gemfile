@@ -33,6 +33,9 @@ gem "ruby_llm", "~> 2.1"
 gem "neighbor", "~> 0.6"
 # MCP server that exposes specs to coding agents (official Model Context Protocol SDK)
 gem "mcp"
+# Error and job failure reports (Sentry or a self-hosted GlitchTip), only when SENTRY_DSN is set
+gem "sentry-ruby"
+gem "sentry-rails"
 # Markdown for knowledge documents and assistant answers
 gem "redcarpet"
 # Rails 8 authentication generator needs it
@@ -48,8 +51,6 @@ gem "kamal", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
-# Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 1.2"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

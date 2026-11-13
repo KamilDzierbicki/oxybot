@@ -2,12 +2,16 @@ Rails.application.routes.draw do
   resource :session
   resource :signup, only: %i[new create]
   resources :invitations, only: %i[create destroy]
-  get "invitations/:invitation_token/accept" => "invitations/acceptances#show", as: :invitation_acceptance
-  post "invitations/:invitation_token/accept" => "invitations/acceptances#create"
+  # Invitation tokens go in the query string (filtered from logs), never in the path
+  get "invitations/accept" => "invitations/acceptances#show", as: :invitation_acceptance
+  post "invitations/accept" => "invitations/acceptances#create"
   resources :users, only: %i[index update destroy]
   resource :ai_settings, only: %i[show update]
   resource :prompt_refresh, only: :create
-  resources :passwords, param: :token
+  # Reset tokens go in the query string (filtered from logs), never in the path
+  resources :passwords, only: %i[new create]
+  get "passwords/edit" => "passwords#edit", as: :edit_password
+  patch "passwords" => "passwords#update", as: :update_password
 
   root "conversations#index"
 

@@ -12,6 +12,7 @@ class DocumentReviser < RubyLLM::Agent
   model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
     revision.account.ai_model("writer")
   end
+  max_output_tokens 6000
   inputs :revision
   instructions do
     document = revision.document

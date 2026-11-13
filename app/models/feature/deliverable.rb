@@ -8,14 +8,19 @@ module Feature::Deliverable
     before_save :stamp_release, if: -> { will_save_change_to_status? && status == "released" }
   end
 
-  def in_linear? = linear_issue_id.present?
+  def in_linear? = linear_issue_id.present? && !linear_issue_id.start_with?("pending-")
 
+  # The row is claimed before calling Linear, so two quick clicks cannot create two issues
   def send_to_linear
-    raise ArgumentError, "Already in Linear as #{linear_identifier}" if in_linear?
+    claimed = self.class.where(id: id, linear_issue_id: nil).update_all(linear_issue_id: "pending-#{SecureRandom.hex(4)}", updated_at: Time.current)
+    raise ArgumentError, "Already in Linear as #{reload.linear_identifier || "an issue being created"}" if claimed.zero?
 
     spec = account.documents.specs.ready.where(feature: self).order(:id).last
     issue = account.linear_integration.create_issue(title: title, description: linear_description(spec))
     update!(linear_issue_id: issue[:id], linear_identifier: issue[:identifier], linear_url: issue[:url], linear_state: issue[:state])
+  rescue StandardError => e
+    self.class.where(id: id).where("linear_issue_id LIKE 'pending-%'").update_all(linear_issue_id: nil) unless e.is_a?(ArgumentError)
+    raise
   end
 
   def move_linear_issue_later
