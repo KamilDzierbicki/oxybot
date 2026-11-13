@@ -22,15 +22,19 @@ module FeedbackNote::Extractable
   end
 
   # Idempotent: a retried job finds processed_at set and does nothing.
+  # The note is claimed atomically first, so a retried job and a manual "extract again" never both run it
   def extract_insights
-    return if processed?
     return unless Rails.configuration.x.ai_enabled
+    return unless self.class.where(id: id, processed_at: nil).update_all(processed_at: Time.current) == 1
 
     reply = InsightExtractor.new(note: self).ask("Feedback:\n#{body}")
     transaction do
       Array(reply.parsed&.dig("insights")).each { |attributes| build_insight(attributes)&.save! }
-      update!(processed_at: Time.current)
+      touch(:processed_at)
     end
+  rescue StandardError
+    self.class.where(id: id).update_all(processed_at: nil) # released, so the job retry can run it
+    raise
   end
 
   private
