@@ -1,128 +1,203 @@
 # OxyBot
 
-An open product agent for product teams: it turns scattered customer feedback into decisions, specs and
-release communication. Feedback arrives from Slack channels and a form,
-a model splits it into atomic insights, each insight gets a suggested backlog feature, and a product manager
-confirms it in an inbox. Features are then ranked by how many customers ask for them and how much ARR those
-customers bring (synced from HubSpot). An assistant answers questions about all of it, in the app and in Slack,
-and cites the insights behind every claim.
+**An open-source product agent for product teams.** OxyBot collects customer feedback from Slack, Mattermost and
+forms, turns it into atomic insights, links them to your backlog, ranks features by how many customers ask and how
+much revenue they bring, and drafts specs, reports and release notes with a citation for every claim. You can ask it
+questions in the web app, in Slack or in Mattermost, and coding agents read its specs over MCP.
 
-Stack: Rails 8.1 (Hotwire, Solid Queue, Solid Cable), Postgres with pgvector, RubyLLM, LiteLLM, Langfuse.
+It is self-hosted and built with Ruby on Rails,
+Postgres with pgvector, LiteLLM and Langfuse.
 
-## Run it
+![The assistant answers with cited customer evidence](docs/screenshots/assistant.png)
+
+## Features
+
+**Feedback to evidence**
+- Feedback arrives from Slack and Mattermost feedback channels, a web form and (soon) email.
+- A model splits each note into atomic insights, one product each, with urgency and the customer behind it.
+- Customers and ARR sync from HubSpot; an insight's customer is found from the author's email or domain.
+- Hybrid search (vectors plus full text) and a judge model suggest the backlog feature each insight asks for.
+- An inbox where a product manager confirms, relinks, creates a feature or dismisses: the model proposes, people decide.
+
+**Decisions and documents**
+- Features ranked by demand: insights, distinct customers and their ARR, each customer counted once.
+- Product specs drafted from the feature's evidence, company knowledge and your codebase (GitHub).
+- A weekly opportunity report: growth, emerging themes without a feature, segments by plan, roadmap gaps; posted to chat.
+- Voice-of-customer reports, release notes with the customers to notify, and launch reviews against the spec's goals.
+- Change requests ("shorten the requirements") come back as suggestions with a diff; every edit is a version.
+- Templates, team skills (`/churn-risk`) and team or personal instructions encode how your team works.
+
+**Where you work**
+- An assistant in the web app, in Slack (DM or mention) and in Mattermost (`/oxybot` or `@oxybot`).
+- Features go to Linear as issues with their spec; status syncs both ways.
+- An MCP server gives Claude Code, Codex and Cursor read access to specs and customer evidence.
+
+**Built to be trusted**
+- Every claim cites the insight it comes from, and code drops any citation the model did not get from a tool.
+- Revenue never appears in shared channels; private chats and the web app show it.
+- Multi-tenant from the first table: every query is scoped to the account.
+
+| Inbox | Spec with evidence and code context |
+|---|---|
+| ![Inbox](docs/screenshots/inbox.png) | ![Spec](docs/screenshots/spec.png) |
+| **Features by demand** | **AI settings** |
+| ![Features](docs/screenshots/features.png) | ![AI settings](docs/screenshots/ai-settings.png) |
+
+## How it works
+
+```
+ Slack / Mattermost / form ──► FeedbackNote ──► extract (LLM) ──► Insight ──► embed + hybrid search ──► judge (LLM)
+                                                                    │                                     │
+ HubSpot ──► Customer (ARR) ────────────────────────────────────────┘                    suggested feature │
+                                                                                                           ▼
+                                                                    PM confirms in the Inbox ──► Feature (demand)
+                                                                                                           │
+            Assistant (app, Slack, Mattermost) ◄── read-only tools ◄───────────────────────────────────────┤
+            Documents: spec, VoC, opportunities, release notes, launch review ◄── facts gathered by code ◄──┤
+            Linear (issues, status both ways) · MCP server for coding agents ◄─────────────────────────────┘
+
+ Rails ──► LiteLLM (model aliases, budgets, any provider) ──► Claude, OpenAI, local models
+   │            └──► Ollama (local embeddings)
+   └──► Langfuse (traces, prompt versions)
+```
+
+Code gathers every fact a document uses (counts, ARR, evidence, code hits) and the model only writes. The model
+never edits a document in place and has no tool that changes data or reaches outside the app, because feedback is
+text written by outsiders.
+
+## Quick start
+
+Requirements: Ruby 4.0, Docker. Everything below runs on your machine.
 
 ```bash
+git clone <this repository> oxybot && cd oxybot
+bundle install
 docker compose up -d db
 bin/rails db:prepare db:seed
 bin/dev
 ```
 
-Open http://localhost:3120 and sign in with the demo account from `db/seeds.rb`. The seeded feedback is
-processed by background jobs in the first seconds after start; the Inbox then shows suggestions.
+Open http://localhost:3120 and sign in as `demo@oxybot.local` (password in `db/seeds.rb`), or create a new
+workspace at http://localhost:3120/signup/new.
 
-Without `LITELLM_URL` the app uses a mock model (`lib/mock_llm.rb`, mounted at `/mock_llm`). It speaks the same
-OpenAI-compatible API as LiteLLM, so every request takes the real path through RubyLLM, schemas and tool calls;
-only the answers come from simple word-overlap heuristics. Its suggestions are rough on purpose.
+Without `LITELLM_URL` OxyBot runs on a **built-in mock model** (`lib/mock_llm.rb`): no API keys, every request still
+takes the real path through RubyLLM, schemas and tool calls, but answers come from simple heuristics. Integrations
+without a token run in **mock mode** too, with a simulator on their page.
 
-### Real models and traces
+### With real models
 
 ```bash
-cp .env.example .env    # fill in ANTHROPIC_API_KEY and OPENAI_API_KEY
-docker compose --profile ai up -d
+cp .env.example .env              # add ANTHROPIC_API_KEY (and OPENAI_API_KEY if you use OpenAI models)
+docker compose --profile ai up -d # LiteLLM on :4010, Ollama for embeddings, Langfuse on :3011
+bin/rails oxybot:reembed          # once, if you seeded data before switching from the mock
 bin/dev
 ```
 
-This starts LiteLLM on port 4010 (aliases in `litellm.yaml`, each with a daily spend cap) and Langfuse on
-port 3011 (login from `compose.yml`). Rails sends its own spans to Langfuse through OpenTelemetry and LiteLLM
-sends the model calls, so one assistant turn is one trace, grouped by conversation and tagged with the tenant.
+Langfuse needs ClickHouse, Redis and S3-compatible storage (all in `compose.yml`) and about 3 GB of memory. To run
+without it, start only the model services: `docker compose --profile ai up -d litellm ollama ollama-pull`, and leave
+the `LANGFUSE_*` variables empty.
 
-## How it works
+Pick the model for each task in **AI settings**. The default aliases are in `litellm.yaml`; `oxybot-haiku` is a cheap
+alias that runs every task on Claude Haiku.
 
-| Step | Code |
-|---|---|
-| Feedback arrives (form, Slack feedback channel) | `FeedbackNote`, `SlackMessage#process` |
-| Customer resolved from the author's email or domain | `FeedbackNote#resolve_customer` |
-| Split into insights, one product each (`oxybot-extract`) | `FeedbackNote::Extractable`, `InsightExtractor` |
-| Hybrid search for candidate features, then a judge (`oxybot-judge`) | `HybridSearchable`, `Insight::Matchable`, `FeatureJudge` |
-| PM links, relinks, creates a feature or dismisses | Inbox (`InsightsController`, `Insights::*`) |
-| Demand: insights, distinct customers, their ARR | `Feature.by_demand` |
-| Assistant with read-only tools and checked citations (`oxybot-assistant`) | `ProductAgent`, `Conversation::Turn`, `app/tools` |
+## Configuration
 
-Design rules worth keeping:
-
-- **Tenancy:** every table has `account_id`, and every query starts from `Current.account` (web) or from the
-  record's account (jobs, Slack). Tools are built per turn and search only that account.
-- **The model proposes, people decide:** matching only suggests a feature; a PM links it.
-- **Model output is input:** unknown products, features outside the candidates and citations of insights no tool
-  returned are dropped in code.
-- **Feedback is untrusted text:** the extraction model has no tools, and the assistant's tools only read.
-- **Slack visibility:** in a shared channel the assistant never shows revenue; direct messages and the web app do.
-
-## Product agent workflows
-
-| Workflow | Where | Code |
+| Variable | Purpose | Default |
 |---|---|---|
-| Specs from evidence and code | Feature page, "Write spec" | `Document::Brief#prd_sections`, `DocumentWriter`, `SearchCodeTool` |
-| Change requests reviewed inline, version history with diffs | Document page | `DocumentSuggestion`, `Document::Revision`, `Document::Diff` |
-| Weekly opportunity discovery (growth, emerging themes, segments, roadmap check), posted to Slack | Documents, and every Monday | `Account::OpportunityDiscovery`, `OpportunityDiscoveryJob` |
-| Voice-of-customer report | Documents | `Document::Brief#voc_report_sections` |
-| Release notes with the customers to notify | Documents | `Document::Brief#release_notes_sections` |
-| Launch review against the spec's success metrics, usage and post-launch feedback | Released feature, "Launch review" | `Document::Brief#launch_review_sections`, `Feature::UsageMetrics` |
-| Hand-off to engineering, status synced both ways | Feature page, "Send to Linear" | `Feature::Deliverable`, `Integration::Linear` |
-| Specs for coding agents over MCP | Profile, "Create token" | `McpController`, `app/tools/spec_server` |
-| Team and personal skills (`/name` in chat or Slack), templates, custom instructions | Skills, Documents → Templates, Knowledge, Profile | `Skill`, `DocumentTemplate` |
+| `LITELLM_URL`, `LITELLM_API_KEY` | Where Rails sends model calls. Empty: the built-in mock model | mock |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | Provider keys, read by LiteLLM only | none |
+| `OLLAMA_API_BASE` | Embedding server used by the `oxybot-embed` alias | `http://ollama:11434` |
+| `LANGFUSE_URL`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` | Traces from Rails and prompt management | off |
+| `SLACK_SIGNING_SECRET` | Verifies Slack events | local default in development |
+| `APP_HOST`, `APP_PROTOCOL` | Links in chat messages and Linear issues | `localhost:3120`, `http` |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | Postgres with pgvector | compose database on 5435 |
 
-Code gathers the facts for every document (counts, ARR, evidence, code hits) and the model only writes;
-the agent never edits a document in place, it proposes a change that a person accepts.
-
-Not built yet: real-time co-editing between people, competitive research from public websites,
-real analytics connectors (launch reviews read `config/mocks/usage.yml`), and parallel subagents.
-
-## Settings in the dashboard
+Everything else is set in the dashboard:
 
 | Setting | Where | Who |
 |---|---|---|
-| Connect, test and disconnect Slack, HubSpot, Linear, GitHub | Integrations | admins |
-| Users, roles (admin, member), invitations by email or link; new workspaces at `/signup/new` | Users | admins |
-| Model alias per task, matching and theme thresholds, agent step limit, weekly report day, hour and time zone | AI settings | admins |
-| Team instructions, templates | Knowledge, Documents → Templates | admins |
-| Products, features, knowledge documents, skills, personal instructions, Slack member id, MCP token | their pages, Profile | everyone |
+| Connect, test and disconnect Slack, Mattermost, HubSpot, Linear, GitHub | Integrations | admins |
+| Users, roles (admin, member), invitations | Users | admins |
+| Model per task, matching and theme thresholds, agent step limit, weekly report schedule and time zone | AI settings | admins |
+| Team instructions, document templates | Knowledge, Documents → Templates | admins |
+| Products, features, knowledge, skills, personal instructions, chat ids, MCP token | their pages, Profile | everyone |
 
-Outside the dashboard, on purpose: which provider and model each LiteLLM alias calls and its daily budget
-(`litellm.yaml` or LiteLLM's admin UI), secrets (`.env`), and the embedding model (changing it means re-embedding).
+Model budgets and which provider an alias calls stay in LiteLLM (`litellm.yaml` or its admin UI).
 
-**Prompts** live in Langfuse when `LANGFUSE_URL` and keys are set: `bin/rails langfuse:push_prompts` uploads
-`config/prompts/*.txt` as versions labeled `production`; edit them in Langfuse and OxyBot picks them up within
-5 minutes (or "Reload prompts now" in AI settings). Without Langfuse, or when it is down, the files are used.
-Every trace is tagged with the prompt version (`product-agent@v3`).
+### Prompts
+
+With Langfuse configured, `bin/rails langfuse:push_prompts` uploads `config/prompts/*.txt` as versions labeled
+`production`. Edit them in Langfuse; OxyBot uses the new version within 5 minutes ("Reload prompts now" in AI settings
+skips the wait) and tags every trace with the prompt version. Without Langfuse, or when it is down, the files are used.
 
 ## Integrations
 
-Both run in mock mode until an access token is saved on the Integrations page.
+Every integration starts in mock mode until you save its token, and has a **Test connection** button.
 
-- **Slack:** the step-by-step app setup (scopes `chat:write`, `app_mentions:read`, `im:history`, `channels:history`;
-  events `app_mention`, `message.im`, `message.channels`; App Home messages tab on) is on the Slack integration page.
-  Set `SLACK_SIGNING_SECRET`, save the bot token, then "Test connection" fills in the app's member id. People talk to
-  OxyBot by direct message (one ongoing conversation, revenue visible) or by mentioning it in a channel (answer in
-  the thread, no revenue). Each person adds their Slack member id on their profile. In mock mode the Slack page has
-  a simulator that sends the same events and shows the replies.
-- **HubSpot:** create a private app with `crm.objects.companies.read` and `crm.objects.contacts.read`, save its
-  token and the company property that holds ARR. Sync runs every hour and from the "Sync now" button. In mock mode
-  data comes from `config/mocks/hubspot.yml`.
+- **Slack:** a Slack app with scopes `chat:write`, `app_mentions:read`, `im:history`, `channels:history`, events
+  `app_mention`, `message.im`, `message.channels`, the App Home messages tab on, and the request URL `/slack/events`.
+  Step-by-step instructions are on the Slack integration page. DM the app for a private, ongoing conversation; mention
+  it in a channel for an answer in the thread.
+- **Mattermost (self-hosted):** a bot account for replies, outgoing webhooks for feedback channels and for `@oxybot`
+  questions (`/mattermost/webhooks`), and a slash command `/oxybot` (`/mattermost/commands`) that works anywhere,
+  including direct messages, with an answer only the asker sees. Instructions are on the Mattermost integration page.
+- **HubSpot:** a private app token with `crm.objects.companies.read` and `crm.objects.contacts.read`. Choose the
+  company property that holds ARR. Syncs every hour.
+- **Linear:** a personal API key, the team id, and a webhook (Issues) to `/linear/webhooks` with its signing secret.
+- **GitHub:** a fine-grained, read-only token for the repository; the spec writer searches it for technical context.
+- **Coding agents (MCP):** create a token on your profile, then
+  `claude mcp add --transport http oxybot https://your-host/mcp --header "Authorization: Bearer <token>"`.
+  Tools: `list_specs`, `get_spec`, `search_feedback`.
 
-- **Linear:** create a personal API key and a webhook (Issues events) pointing at `/linear/webhooks`; save the key,
-  the team id and the webhook signing secret. The integration's `external_id` is the Linear organization id. In mock
-  mode issues live in the integration's settings and the feature page can simulate a move in Linear.
-- **GitHub:** a fine-grained token with read access to the repository's contents, and the repository as `owner/name`.
-  In mock mode the spec writer searches the sample repository in `config/mocks/github`.
-- **Coding agents (MCP):** create a token on the profile page, then
-  `claude mcp add --transport http oxybot http://localhost:3120/mcp --header "Authorization: Bearer <token>"`.
-  Tools: `list_specs`, `get_spec`, `search_feedback`, all read-only and limited to the token owner's account.
+## Security model
 
-## Tests
+- **Tenancy:** every table carries `account_id`; controllers start from `Current.account`, jobs and webhooks from the
+  record's account, and agent tools are built per request for one account.
+- **Untrusted text:** feedback and chat messages are data. The extraction model has no tools, the assistant's tools
+  only read, and model output is validated (unknown products, features outside the candidates and invented citations
+  are dropped).
+- **Webhooks** are verified: Slack and Linear signatures with replay windows, Mattermost tokens, and slash command
+  callbacks only to your own Mattermost server.
+- **Secrets:** integration tokens are encrypted at rest (Active Record Encryption); MCP tokens and invitation links
+  are stored as SHA-256 digests and shown once.
+- **Roles:** only admins change integrations, users, AI settings and team-wide instructions.
+
+Found a vulnerability? See [SECURITY.md](SECURITY.md).
+
+## Development
 
 ```bash
-bin/rails test
+bin/rails test     # offline: model, Slack, Mattermost, HubSpot, Linear and GitHub calls are stubbed
+bin/rubocop
+bin/brakeman
 ```
 
-Tests run offline: WebMock routes the model host to the same mock model, and Slack and HubSpot calls to stubs.
+The code follows Rails conventions: logic lives in models and concerns (`Insight::Matchable`,
+`Feature::Deliverable`), plain Ruby objects sit next to their model (`Document::Brief`, `Conversation::Turn`), jobs
+only call a model method, and there are no service objects. Agents (`app/agents`) are RubyLLM agents; their tools are
+in `app/tools`.
+
+| Path | What is there |
+|---|---|
+| `app/models/feedback_note`, `insight`, `feature` | Extraction, matching, demand, delivery to Linear |
+| `app/models/document*` | Briefs, generation, revisions, diffs, versions |
+| `app/models/integration*`, `chat_message.rb` | Slack, Mattermost, HubSpot, Linear, GitHub adapters |
+| `app/models/conversation*`, `app/tools` | The assistant and its read-only tools |
+| `app/tools/spec_server` | MCP tools for coding agents |
+| `config/prompts` | Prompt fallbacks (Langfuse text-prompt format) |
+| `lib/mock_llm.rb` | The offline model used in development and tests |
+
+## Roadmap
+
+- Real-time co-editing of documents between people
+- Analytics connectors (Amplitude, Pendo) for launch reviews; today they read `config/mocks/usage.yml`
+- Email and support-tool sources (Intercom, Zendesk, Gong)
+- Competitive research from public sources
+
+## Contributing
+
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Not chosen yet. Until a license file is added, all rights are reserved by the author.
