@@ -8,29 +8,30 @@
 </div>
 <% if @products.size <= 8 %>
   <nav class="tabs" aria-label="Products">
-    <%= link_to "All", features_path, class: ["tab", ("tab--active" unless @product)] %>
+    <%= tab_link "All", features_path, @product.nil? %>
     <% @products.each do |product| %>
-      <%= link_to product.name, features_path(product: product.slug), class: ["tab", ("tab--active" if product == @product)] %>
+      <%= tab_link product.name, features_path(product: product.slug), product == @product %>
     <% end %>
   </nav>
 <% else %>
-  <%= form_with url: features_path, method: :get, class: "inline-form", data: { controller: "auto-submit" } do |form| %>
+  <%= form_with url: features_path, method: :get, class: "inline-form" do |form| %>
     <%= form.select :product, @products.map { |product| [ product.name, product.slug ] }, { include_blank: "All products", selected: @product&.slug },
-                    aria: { label: "Filter by product" }, data: { action: "change->auto-submit#submit" } %>
+                    aria: { label: "Filter by product" } %>
+    <%= form.submit "Filter", class: "button", name: nil %>
   <% end %>
 <% end %>
 <div class="table-wrap">
-<table class="table">
-  <thead><tr><th>Feature</th><th>Product</th><th>Status</th><th class="num">Insights</th><th class="num">Customers</th><th class="num">ARR asking</th></tr></thead>
+<table class="table table--cards">
+  <thead><tr><th>Feature</th><th class="num">ARR asking</th><th class="num">Customers</th><th class="num">Insights</th><th>Status</th><th>Product</th></tr></thead>
   <tbody>
     <% @features.each do |feature| %>
       <tr>
-        <td><%= link_to feature.title, feature %></td>
-        <td class="muted"><%= feature.product.name %></td>
-        <td><%= status_pill feature.status %></td>
-        <td class="num"><%= feature.insight_count %></td>
-        <td class="num"><%= feature.customer_count %></td>
-        <td class="num"><strong><%= money(feature.demand_arr_cents) %></strong></td>
+        <td class="table__title"><%= link_to feature.title, feature %></td>
+        <td class="num" data-label="ARR asking"><strong class="arr"><%= money(feature.demand_arr_cents) %></strong></td>
+        <td class="num" data-label="Customers"><%= feature.customer_count %></td>
+        <td class="num" data-label="Insights"><%= feature.insight_count %></td>
+        <td data-label="Status"><%= status_pill feature.status %></td>
+        <td class="muted" data-label="Product"><%= feature.product.name %></td>
       </tr>
     <% end %>
   </tbody>

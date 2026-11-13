@@ -2,7 +2,10 @@ class InvitationsController < ApplicationController
   admin_only
 
   def create
-    invitation = Current.account.invitations.new(params.expect(invitation: %i[email role]).merge(invited_by: Current.user))
+    attributes = params.expect(invitation: %i[email role])
+    # Inviting the same address again replaces the open invitation, so there is one live link per person
+    Current.account.invitations.open.where(email: attributes[:email].to_s.strip.downcase).destroy_all
+    invitation = Current.account.invitations.new(attributes.merge(invited_by: Current.user))
     if invitation.save
       InvitationsMailer.invite(invitation, invitation.token).deliver_later
       # The link is also shown once, for teams without outgoing email set up yet
@@ -19,6 +22,6 @@ class InvitationsController < ApplicationController
 
   def destroy
     Current.account.invitations.open.find(params[:id]).destroy!
-    redirect_to users_path, notice: "Invitation withdrawn."
+    redirect_to users_path
   end
 end

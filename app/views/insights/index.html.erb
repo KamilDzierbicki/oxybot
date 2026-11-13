@@ -1,61 +1,88 @@
-<% content_for :title, "Inbox" %>
+<% content_for :title, "Insights" %>
 <div class="page-header">
-  <h1>Inbox</h1>
-  <nav class="tabs">
-    <% InsightsController::STATES.each do |state| %>
-      <%= link_to state.humanize, insights_path(state: state), class: ["tab", ("tab--active" if state == @state)] %>
+  <h1>Insights</h1>
+  <nav class="tabs" aria-label="Triage state">
+    <% { "pending" => "To triage", "linked" => "Linked", "dismissed" => "Dismissed" }.each do |state, label| %>
+      <%= tab_link label, insights_path(state: state), state == @state %>
     <% end %>
   </nav>
 </div>
-<p class="muted page-intro">Each insight is one customer need. OxyBot suggests the feature it asks for; you confirm, pick another, create a feature or dismiss.</p>
+<p class="muted page-intro">
+  Each insight is one customer need. OxyBot suggests the feature it asks for; you link it, pick another feature or dismiss it.
+  <% if @state == "pending" && @insights.any? %><span class="keys">Keys: <kbd>j</kbd> <kbd>k</kbd> move, <kbd>l</kbd> link the suggestion, <kbd>d</kbd> dismiss.</span><% end %>
+</p>
 
-<div id="insights">
+<div id="insights" data-controller="triage">
   <% @insights.each do |insight| %>
-    <div id="<%= dom_id(insight) %>" class="card triage">
+    <article id="<%= dom_id(insight) %>" class="card triage" tabindex="-1" data-triage-target="card" aria-labelledby="<%= dom_id(insight, :summary) %>">
       <div class="triage__main">
         <div class="insight__head">
-          <%= link_to insight.summary, insight, class: "insight__summary" %>
-          <%= status_pill insight.urgency %>
+          <%= link_to insight.summary, insight, class: "insight__summary", id: dom_id(insight, :summary) %>
+          <%= urgency_pill insight.urgency %>
         </div>
         <blockquote class="quote quote--small">“<%= insight.quote %>”</blockquote>
-        <div class="muted">
-          <%= insight.product.name %> ·
-          <%= insight.customer ? "#{insight.customer.name} (#{money(insight.customer.arr_cents)} ARR)" : "unknown customer" %> ·
-          <%= link_to "source note", insight.feedback_note %>
+        <div class="muted small">
+          <% if insight.customer %>
+            <%= insight.customer.name %> · <span class="arr"><%= money(insight.customer.arr_cents) %> ARR</span>
+          <% else %>
+            Unknown customer
+          <% end %>
+          · <%= insight.product.name %> · <%= link_to "source note", insight.feedback_note %>
         </div>
       </div>
-      <% if insight.linked? %>
-        <div class="triage__actions"><span class="small">Linked to <%= link_to insight.feature.title, insight.feature %></span></div>
-      <% end %>
-      <% if insight.pending? %>
-        <div class="triage__actions">
+
+      <div class="triage__actions">
+        <% if insight.linked? %>
+          <p class="small">Linked to <%= link_to insight.feature.title, insight.feature %></p>
+          <%= button_to "Move back to triage", insight_restoration_path(insight), class: "button button--quiet" %>
+        <% elsif insight.dismissed? %>
+          <%= button_to "Restore to triage", insight_restoration_path(insight), class: "button" %>
+        <% else %>
+          <% features = @features_by_product[insight.product_id] || [] %>
           <% if insight.suggested_feature %>
-            <div class="suggestion">
-              Suggested: <strong><%= insight.suggested_feature.title %></strong>
-              <span class="muted"><%= number_to_percentage(insight.match_confidence.to_f * 100, precision: 0) %></span>
-              <div class="muted small"><%= insight.match_reason %></div>
-            </div>
-            <%= button_to "Link to suggestion", insight_link_path(insight), params: { feature_id: insight.suggested_feature_id }, class: "button button--primary" %>
+            <%= button_to insight_link_path(insight), params: { feature_id: insight.suggested_feature_id }, class: "button button--primary triage__link", data: { triage_action: "link" } do %>
+              Link to <%= insight.suggested_feature.title %>
+            <% end %>
+            <details class="triage__why">
+              <summary>Why this feature (<%= number_to_percentage(insight.match_confidence.to_f * 100, precision: 0) %> match)</summary>
+              <p class="small"><%= insight.match_reason %></p>
+            </details>
           <% elsif insight.match_reason.nil? %>
-            <div class="muted">Matching…</div>
-          <% elsif (@features_by_product[insight.product_id] || []).empty? %>
-            <div class="muted small">No features in <%= insight.product.name %> yet. Create one from this need.</div>
+            <p class="muted small" role="status">Finding a matching feature…</p>
+          <% elsif features.empty? %>
+            <p class="muted small">No features in <%= insight.product.name %> yet. Create one from this need.</p>
           <% else %>
-            <div class="muted small">No existing feature fits. Pick one below or create a new one.</div>
+            <p class="muted small">No existing feature fits.</p>
           <% end %>
-          <%= form_with url: insight_link_path(insight), class: "inline-form" do |form| %>
-            <%= form.select :feature_id, (@features_by_product[insight.product_id] || []).map { |feature| [feature.title, feature.id] },
-                            { prompt: "Other feature…" }, required: true, aria: { label: "Link to another feature" } %>
-            <%= form.submit "Link", class: "button" %>
-          <% end %>
-          <div class="triage__row">
-            <%= button_to "New feature", insight_feature_path(insight), class: "button" %>
-            <%= button_to "Dismiss", insight_dismissal_path(insight), class: "button button--quiet" %>
-          </div>
-        </div>
-      <% end %>
-    </div>
+
+          <details class="triage__more" <%= "open" unless insight.suggested_feature %>>
+            <summary><%= insight.suggested_feature ? "Another feature" : "Pick or create a feature" %></summary>
+            <% if features.any? %>
+              <%= form_with url: insight_link_path(insight), class: "inline-form" do |form| %>
+                <%= form.label :feature_id, "Feature", for: dom_id(insight, :feature_id), class: "visually-hidden" %>
+                <%= form.select :feature_id, features.map { |feature| [feature.title, feature.id] },
+                                { prompt: "Choose a feature" }, required: true, id: dom_id(insight, :feature_id) %>
+                <%= form.submit "Link", class: "button" %>
+              <% end %>
+            <% end %>
+            <%= button_to "Create a feature from this", insight_feature_path(insight), class: "button button--quiet" %>
+          </details>
+          <%= button_to "Dismiss", insight_dismissal_path(insight), class: "button button--quiet", data: { triage_action: "dismiss" } %>
+        <% end %>
+      </div>
+    </article>
   <% end %>
 </div>
 <%= render "shared/pagination", total_count: @total_count %>
-<%= tag.p("Nothing here. New feedback lands in this inbox.", class: "empty") if @insights.empty? %>
+<% if @insights.empty? %>
+  <div class="empty">
+    <% if @state != "pending" %>
+      No <%= @state %> insights.
+    <% elsif Current.account.products.none? %>
+      Nothing to triage yet. Insights need a product to belong to.
+      <div class="row empty__actions"><%= link_to "Add a product", new_product_path, class: "button button--primary" %></div>
+    <% else %>
+      Nothing to triage. New insights appear here a few seconds after feedback arrives.
+    <% end %>
+  </div>
+<% end %>

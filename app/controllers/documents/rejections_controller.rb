@@ -3,6 +3,6 @@ class Documents::RejectionsController < ApplicationController
 
   def create
     @document.suggestions.find(params[:suggestion_id]).reject
-    redirect_to @document, notice: "Suggestion rejected."
+    redirect_to @document
   end
 end

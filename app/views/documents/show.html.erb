@@ -10,9 +10,10 @@
     <%= status_pill @document.status %>
     <%= link_to "Edit", edit_document_path(@document), class: "button" %>
     <%= link_to "History (#{@document.versions.size})", document_versions_path(@document), class: "button" %>
-    <%= button_to "Redraft", document_regeneration_path(@document), class: "button button--quiet", form: { data: { turbo_confirm: "Draft the document again from the latest data?" } } %>
+    <%= button_to "Redraft", document_regeneration_path(@document), class: "button button--quiet", form: { data: { turbo_confirm: "Draft the document again from the latest data? This calls the AI model; the current text stays in the history." } } %>
   </div>
 </div>
+<a class="button jump-link" href="#agent">Ask the agent<%= " (#{pluralize(@suggestions.count(&:pending?), "suggestion")} to review)" if @suggestions.any?(&:pending?) %></a>
 
 <div class="doc-layout">
   <article class="card doc">
@@ -24,14 +25,16 @@
         <i class="skeleton__heading"></i><i></i><i></i><i></i>
       </div>
     <% else %>
-      <div class="prose"><%= markdown(@document.body) %></div>
+      <div class="prose"><%= markdown(@document.body, heading_offset: 1) %></div>
     <% end %>
   </article>
 
-  <aside class="doc-side">
+  <aside class="doc-side" id="agent" aria-label="Agent">
     <section class="card">
       <h2 class="section-title section-title--flush">Ask the agent</h2>
-      <%= form_with url: document_suggestions_path(@document), class: "form" do |form| %>
+      <%# Permanent so a live refresh (someone else's edit) never wipes what is being typed %>
+      <%= form_with url: document_suggestions_path(@document), class: "form", id: "suggestion_form",
+                    data: { turbo_permanent: true, controller: "reset-on-submit", action: "turbo:submit-end->reset-on-submit#reset" } do |form| %>
         <%= form.text_area :instruction, rows: 3, required: true, placeholder: "Make the problem section shorter and add an out-of-scope list", aria: { label: "What should the agent change?" } %>
         <%= form.submit "Suggest a change", class: "button button--primary", disabled: @document.drafting? %>
       <% end %>
@@ -44,19 +47,19 @@
       <section class="card suggestion-card" id="<%= dom_id(suggestion) %>">
         <div class="muted small"><%= suggestion.user&.name || "Someone" %> asked: “<%= suggestion.instruction %>”</div>
         <% if suggestion.thinking? %>
-          <p class="message__thinking"><span class="dots"><i></i><i></i><i></i></span> Writing a suggestion…</p>
+          <p class="message__thinking" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Writing a suggestion…</p>
         <% elsif suggestion.pending? %>
           <p class="small"><%= suggestion.rationale %></p>
           <% diff = suggestion.diff %>
-          <div class="muted small">+<%= diff.added_count %> / −<%= diff.removed_count %> lines<%= " · the document changed since" if suggestion.stale? %></div>
-          <details open><summary class="small">Changes</summary><%= render "documents/diff", diff: diff %></details>
+          <div class="muted small" role="status"><%= pluralize(diff.added_count, "line") %> added, <%= diff.removed_count %> removed<%= " · the document changed since" if suggestion.stale? %></div>
+          <%= render "documents/diff", diff: diff, label: "Suggested changes" %>
           <div class="row">
             <%= button_to "Accept", document_suggestion_acceptance_path(@document, suggestion), params: { confirm_stale: suggestion.stale? ? "1" : nil }.compact,
                           class: "button button--primary", form: (suggestion.stale? ? { data: { turbo_confirm: "The document changed after the agent read it. Replace those edits?" } } : {}) %>
             <%= button_to "Reject", document_suggestion_rejection_path(@document, suggestion), class: "button button--quiet" %>
           </div>
         <% else %>
-          <p class="flash flash--alert small"><%= suggestion.rationale %></p>
+          <p class="flash flash--alert small" role="status"><%= suggestion.rationale %></p>
         <% end %>
       </section>
     <% end %>
@@ -67,7 +70,8 @@
         <% if @document.feature.in_linear? %>
           <p class="small">In Linear as <%= external_link @document.feature.linear_identifier, @document.feature.linear_url %> (<%= @document.feature.linear_state %>).</p>
         <% elsif Current.account.linear_integration %>
-          <%= button_to "Send to Linear", feature_linear_issue_path(@document.feature), class: "button", disabled: !@document.ready? %>
+          <%= button_to "Send to Linear", feature_linear_issue_path(@document.feature), class: "button", disabled: !@document.ready?,
+                        form: { data: { turbo_confirm: "Create a Linear issue “#{@document.feature.title}” with this spec as its description?" } } %>
         <% end %>
         <p class="muted small">Coding agents read this spec through the MCP server (<%= link_to "set up", profile_path %>).</p>
       </section>

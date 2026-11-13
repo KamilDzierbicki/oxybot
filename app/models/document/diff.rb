@@ -11,6 +11,21 @@ class Document::Diff
     @lines ||= build
   end
 
+  # The changed lines with `context` unchanged lines around each change; longer unchanged runs become one :gap line
+  # whose text is the number of lines hidden
+  def hunks(context: 2)
+    keep = Array.new(lines.size, false)
+    lines.each_with_index do |line, index|
+      next if line.change == :same
+
+      ((index - context)..(index + context)).each { |near| keep[near] = true if near.between?(0, lines.size - 1) }
+    end
+
+    lines.each_with_index.chunk_while { |(_, a), (_, b)| keep[a] == keep[b] }.flat_map do |run|
+      keep[run.first.last] ? run.map(&:first) : [ Line.new(:gap, run.size.to_s) ]
+    end
+  end
+
   def changed? = lines.any? { |line| line.change != :same }
   def added_count = lines.count { |line| line.change == :added }
   def removed_count = lines.count { |line| line.change == :removed }

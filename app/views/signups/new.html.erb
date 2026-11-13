@@ -3,7 +3,8 @@
   <div class="sidebar__brand"><span class="sidebar__logo" aria-hidden="true">◆</span> OxyBot</div>
   <h1>Create your workspace</h1>
   <p class="muted">For your product team. You become its admin and can invite colleagues.</p>
-  <%= form_with model: @signup, url: signup_path, scope: :signup, class: "form" do |form| %>
+  <%= form_with model: @signup, url: signup_path, scope: :signup, class: "form", data: { controller: "time-zone" } do |form| %>
+    <%= form.hidden_field :time_zone, data: { time_zone_target: "field" } %>
     <%= render "shared/errors", record: @signup %>
     <label>Company<%= form.text_field :account_name, required: true, autofocus: true %></label>
     <label>Your name<%= form.text_field :name, required: true %></label>

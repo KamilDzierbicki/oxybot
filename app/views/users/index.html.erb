@@ -27,11 +27,14 @@
 <% if flash[:invitation_url] %>
   <div class="card"><p class="small">If email is not set up yet, share this link (valid 7 days):</p><pre class="mono-block"><%= flash[:invitation_url] %></pre></div>
 <% end %>
-<%= form_with model: @invitation || Invitation.new, class: "inline-form inline-form--wrap" do |form| %>
-  <%= render "shared/errors", record: @invitation if @invitation %>
-  <%= form.email_field :email, required: true, placeholder: "colleague@company.com", aria: { label: "Email to invite" } %>
-  <%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, { selected: @invitation&.role || "member" }, aria: { label: "Role for the invited person" } %>
-  <%= form.submit "Send invitation", class: "button button--primary" %>
+<%= render "shared/errors", record: @invitation if @invitation %>
+<%= form_with model: @invitation || Invitation.new, class: "form invite-form" do |form| %>
+  <div class="form__row">
+    <label>Email<%= form.email_field :email, required: true, placeholder: "colleague@company.com" %></label>
+    <label>Role<%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, { selected: @invitation&.role || "member" } %></label>
+  </div>
+  <p class="form-hint">Inviting an address again replaces its open invitation with a new link.</p>
+  <div><%= form.submit "Send invitation", class: "button button--primary" %></div>
 <% end %>
 <% if @invitations.any? %>
   <h2 class="section-title">Pending invitations</h2>

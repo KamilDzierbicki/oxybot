@@ -25,6 +25,8 @@ module FeedbackNote::Extractable
   # The note is claimed atomically first, so a retried job and a manual "extract again" never both run it
   def extract_insights
     return unless Rails.configuration.x.ai_enabled
+    # Every insight belongs to a product; without one the note waits and is extracted when the first product is added
+    return if awaiting_product?
     return unless self.class.where(id: id, processed_at: nil).update_all(processed_at: Time.current) == 1
 
     reply = InsightExtractor.new(note: self).ask("Feedback:\n#{body}")
@@ -36,6 +38,8 @@ module FeedbackNote::Extractable
     self.class.where(id: id).update_all(processed_at: nil) # released, so the job retry can run it
     raise
   end
+
+  def awaiting_product? = !processed? && account.products.none?
 
   private
 

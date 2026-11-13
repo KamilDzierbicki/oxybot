@@ -8,7 +8,7 @@ class Invitations::AcceptancesController < ApplicationController
     @user = @invitation.accept(**params.expect(user: %i[name password]).to_h.symbolize_keys)
     if @user&.persisted?
       start_new_session_for @user
-      redirect_to root_path, notice: "Welcome to #{@invitation.account.name}."
+      redirect_to root_path, notice: "You joined #{@invitation.account.name}."
     else
       render :show, status: :unprocessable_entity
     end

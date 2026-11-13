@@ -3,18 +3,18 @@
   <h1>Feedback</h1>
   <%= link_to "Add feedback", new_feedback_note_path, class: "button button--primary" %>
 </div>
-<p class="muted">Raw feedback from Slack feedback channels and the form. Each note is split into insights automatically.</p>
+<p class="muted page-intro">Raw feedback from chat channels, HubSpot and the form. Each note is split into insights automatically.</p>
 <div class="table-wrap">
-<table class="table">
-  <thead><tr><th>Feedback</th><th>Source</th><th>Customer</th><th>Insights</th><th>Received</th></tr></thead>
+<table class="table table--cards">
+  <thead><tr><th>Feedback</th><th>Customer</th><th class="num">Insights</th><th>Source</th><th>Received</th></tr></thead>
   <tbody>
     <% @feedback_notes.each do |note| %>
       <tr>
-        <td><%= link_to note.body.truncate(110), note %></td>
-        <td><%= status_pill note.source %></td>
-        <td><%= note.customer&.name || tag.span("unknown", class: "muted") %></td>
-        <td><%= note.processed? ? note.insights.size : tag.span("processing…", class: "muted") %></td>
-        <td class="muted"><%= time_ago_in_words(note.created_at) %> ago</td>
+        <td class="table__title table__title--text"><%= link_to note.body.truncate(110), note %></td>
+        <td data-label="Customer"><%= note.customer&.name || tag.span("Unknown", class: "muted") %></td>
+        <td class="num" data-label="Insights"><%= note.processed? ? note.insights.size : tag.span(note.awaiting_product? ? "Waiting for a product" : "Processing…", class: "muted") %></td>
+        <td class="muted" data-label="Source"><%= note.source.humanize %></td>
+        <td class="muted" data-label="Received"><%= time_ago_in_words(note.created_at) %> ago</td>
       </tr>
     <% end %>
   </tbody>

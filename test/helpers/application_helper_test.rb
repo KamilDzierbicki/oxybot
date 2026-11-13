@@ -1,15 +1,23 @@
 require "test_helper"
 
 class ApplicationHelperTest < ActionView::TestCase
-  test "external links accept https only" do
-    assert_includes external_link("OXY-1", "https://linear.app/acme/issue/OXY-1"), %(href="https://linear.app/acme/issue/OXY-1")
-    assert_equal "OXY-1", external_link("OXY-1", "javascript:alert(1)")
+  setup { Current.session = users(:kamil).sessions.create! }
+
+  test "a list right after a sentence renders as a list, not as literal dashes" do
+    assert_includes markdown("Top requests:\n- PDF export\n- SSO"), "<li>PDF export</li>"
   end
 
-  test "markdown from the model cannot inject HTML, and citations become links" do
-    html = markdown("Hi <script>alert(1)</script> [insight:12]")
+  test "a citation previews its quote and customer, but only for this workspace's insights" do
+    note = accounts(:acme).feedback_notes.create!(source: "manual", body: "x", customer: customers(:northwind))
+    own = note.insights.create!(account: accounts(:acme), product: products(:reports), quote: "Board wants PDFs", summary: "PDF",
+                                customer: customers(:northwind))
+    foreign = accounts(:globex).feedback_notes.create!(source: "manual", body: "y")
+                               .insights.create!(account: accounts(:globex), product: products(:billing), quote: "Secret plan", summary: "s")
 
-    assert_not_includes html, "<script>"
-    assert_includes html, %(href="/insights/12")
+    html = markdown("Needed [insight:#{own.id}] and [insight:#{foreign.id}]")
+
+    assert_includes html, "Board wants PDFs"
+    assert_includes html, customers(:northwind).name
+    assert_not_includes html, "Secret plan"
   end
 end

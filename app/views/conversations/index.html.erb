@@ -24,7 +24,9 @@
     <%= form.submit "Ask", class: "button button--primary" %>
   <% end %>
   <div class="suggestions">
-    <% ["Which features have the most demand?", "What do customers say about PDF export?", "Show the planned features"].each do |question| %>
+    <% top = Current.account.features.by_demand.first %>
+    <% questions = [ "Which features have the most demand?", ("What do customers say about #{top.title}?" if top), "What did customers ask for this week?" ].compact %>
+    <% questions.each do |question| %>
       <%= button_to question, conversations_path, params: { question: question }, class: "chip" %>
     <% end %>
   </div>

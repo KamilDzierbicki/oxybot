@@ -6,26 +6,27 @@
 <p class="muted">The agent drafts these from your feedback, backlog and code. Specs and launch reviews start from a feature page.</p>
 <div class="row create-row">
   <% { "voc_report" => "Voice of customer report", "opportunity_report" => "Opportunity report", "release_notes" => "Release notes" }.each do |kind, label| %>
-    <%= button_to "New #{label.downcase}", documents_path, params: { kind: kind }, class: "button" %>
+    <%= button_to "New #{label.downcase}", documents_path, params: { kind: kind }, class: "button",
+                  form: { data: { turbo_confirm: "Draft a new #{label.downcase} with the AI model? It takes about half a minute." } } %>
   <% end %>
 </div>
-<nav class="tabs">
-  <%= link_to "All", documents_path, class: ["tab", ("tab--active" unless params[:kind])] %>
+<nav class="tabs" aria-label="Document kind">
+  <%= tab_link "All", documents_path, params[:kind].blank? %>
   <% Document::KINDS.each do |kind, name| %>
-    <%= link_to name, documents_path(kind: kind), class: ["tab", ("tab--active" if params[:kind] == kind)] %>
+    <%= tab_link name, documents_path(kind: kind), params[:kind] == kind %>
   <% end %>
 </nav>
 <div class="table-wrap">
-<table class="table">
+<table class="table table--cards">
   <thead><tr><th>Document</th><th>Kind</th><th>Feature</th><th>Status</th><th>Updated</th></tr></thead>
   <tbody>
     <% @documents.each do |document| %>
       <tr>
-        <td><%= link_to document.title, document %></td>
-        <td class="muted"><%= document.kind_name %></td>
-        <td><%= document.feature ? link_to(document.feature.title, document.feature) : tag.span("–", class: "muted") %></td>
-        <td><%= status_pill document.status %></td>
-        <td class="muted"><%= time_ago_in_words(document.updated_at) %> ago</td>
+        <td class="table__title"><%= link_to document.title, document %></td>
+        <td class="muted" data-label="Kind"><%= document.kind_name %></td>
+        <td data-label="Feature"><%= document.feature ? link_to(document.feature.title, document.feature) : tag.span("None", class: "muted") %></td>
+        <td data-label="Status"><%= status_pill document.status %></td>
+        <td class="muted" data-label="Updated"><%= time_ago_in_words(document.updated_at) %> ago</td>
       </tr>
     <% end %>
   </tbody>

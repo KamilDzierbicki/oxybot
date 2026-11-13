@@ -23,6 +23,17 @@ module Insight::Matchable
     # The model can only pick from the candidates it was shown
     suggested = candidates.find { |feature| feature.id == verdict["feature_id"] }
     update!(suggested_feature: suggested, match_confidence: verdict["confidence"].to_f.clamp(0, 1),
-            match_reason: verdict["reason"].to_s.truncate(250))
+            match_reason: readable_reason(verdict["reason"], candidates))
+  end
+
+  private
+
+  # Models sometimes refer to features as "candidate 26" or "[26]"; people know them by title
+  def readable_reason(reason, candidates)
+    titles = candidates.to_h { |feature| [ feature.id, feature.title ] }
+    reason.to_s.gsub(/\b(?:candidate|feature)\s*#?\[?(\d+)\]?|\[(\d+)\]/i) do
+      id = ($1 || $2).to_i
+      titles.key?(id) ? "“#{titles[id]}”" : $&
+    end.truncate(250)
   end
 end

@@ -7,7 +7,7 @@
 <% if @conversation.chat? %>
   <p class="muted">This conversation happens in <%= @conversation.integration.display_name %>. Replies are posted there<%= " without revenue figures (shared channel)" unless @conversation.revenue_visible? %>.</p>
 <% end %>
-<div id="messages" class="messages" data-controller="scroll-to-latest">
+<div id="messages" class="messages" data-controller="scroll-to-latest" role="log" aria-live="polite" aria-label="Conversation">
   <%= render @conversation.messages %>
 </div>
 <%= render "messages/form", conversation: @conversation unless @conversation.chat? %>

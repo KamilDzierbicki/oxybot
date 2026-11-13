@@ -3,6 +3,6 @@ class Insights::DismissalsController < ApplicationController
 
   def create
     @insight.dismiss
-    respond_with_triaged "Insight dismissed."
+    respond_with_triaged "Dismissed “#{@insight.summary.truncate(60)}”"
   end
 end

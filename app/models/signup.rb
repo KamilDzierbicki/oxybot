@@ -7,6 +7,7 @@ class Signup
   attribute :name, :string
   attribute :email_address, :string
   attribute :password, :string
+  attribute :time_zone, :string # the browser's IANA zone, e.g. "Europe/Warsaw"
 
   validates :account_name, :name, presence: true
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }
@@ -23,7 +24,7 @@ class Signup
     return false unless valid?
 
     ActiveRecord::Base.transaction do
-      account = Account.create!(name: account_name)
+      account = Account.create!(name: account_name, time_zone: rails_time_zone)
       @user = account.users.create!(name: name, email_address: email_address.to_s.strip, password: password, role: "admin")
     end
     true
@@ -33,6 +34,11 @@ class Signup
   end
 
   private
+
+  # Schedules and dates follow the zone the person signed up from; unknown zones fall back to UTC
+  def rails_time_zone
+    ActiveSupport::TimeZone::MAPPING.key(time_zone.to_s) || (ActiveSupport::TimeZone[time_zone.to_s] ? time_zone : "UTC")
+  end
 
   # Deliberately vague, so the form cannot be used to find out who has an account
   def email_free

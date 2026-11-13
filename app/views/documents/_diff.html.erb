@@ -1,5 +1,9 @@
-<div class="diff">
-  <% diff.lines.each do |line| %>
-    <div class="diff__line diff__line--<%= line.change %>"><span class="diff__mark"><%= { same: " ", added: "+", removed: "−" }[line.change] %></span><%= line.text.presence || " " %></div>
+<div class="diff" tabindex="0" role="region" aria-label="<%= local_assigns.fetch(:label, "Changes") %>">
+  <% diff.hunks.each do |line| %>
+    <% if line.change == :gap %>
+      <div class="diff__gap"><%= pluralize(line.text.to_i, "unchanged line") %></div>
+    <% else %>
+      <div class="diff__line diff__line--<%= line.change %>"><span class="diff__mark" aria-hidden="true"><%= { same: " ", added: "+", removed: "−" }[line.change] %></span><span class="visually-hidden"><%= { same: "", added: "Added: ", removed: "Removed: " }[line.change] %></span><%= line.text.presence || " " %></div>
+    <% end %>
   <% end %>
 </div>

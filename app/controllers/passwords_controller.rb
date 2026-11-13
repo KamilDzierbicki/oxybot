@@ -1,7 +1,7 @@
 class PasswordsController < ApplicationController
   allow_unauthenticated_access
   before_action :set_user_by_token, only: %i[ edit update ]
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_password_path, alert: "Try again later." }
+  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_password_path, alert: "Too many reset requests from this network. Wait 3 minutes and try again." }
   rate_limit to: 3, within: 15.minutes, only: :create, by: -> { params[:email_address].to_s.strip.downcase },
              with: -> { redirect_to new_session_path, notice: "Password reset instructions sent (if user with that email address exists)." }
 
