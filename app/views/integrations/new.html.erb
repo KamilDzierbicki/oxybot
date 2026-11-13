@@ -1,0 +1,23 @@
+<% content_for :title, "Connect #{@integration.display_name}" %>
+<h1>Connect <%= @integration.display_name %></h1>
+<p class="muted">Leave the token empty to start in mock mode; add it later on the integration's page to go live.</p>
+<%= form_with model: @integration, scope: :integration, url: integrations_path, class: "form" do |form| %>
+  <%= render "shared/errors", record: @integration %>
+  <%= form.hidden_field :kind, value: @integration.kind %>
+  <label><%= @integration.class.external_id_label %><%= form.text_field :external_id, required: true %></label>
+  <% case @integration.kind %>
+  <% when "slack" %>
+    <label>Feedback channel ids (comma separated)<%= form.text_field :feedback_channel_ids, value: "" %></label>
+    <label>Bot token (xoxb-…)<%= form.password_field :access_token %></label>
+  <% when "hubspot" %>
+    <label>Company property with ARR<%= form.text_field :arr_property, value: "arr" %></label>
+    <label>Private app access token<%= form.password_field :access_token %></label>
+  <% when "linear" %>
+    <label>Team id<%= form.text_field :team_id %></label>
+    <label>Personal API key<%= form.password_field :access_token %></label>
+  <% when "github" %>
+    <label>Fine-grained token with read access to contents<%= form.password_field :access_token %></label>
+  <% end %>
+  <%= form.submit "Connect", class: "button button--primary" %>
+<% end %>
+<%= render "integrations/#{@integration.kind}_setup" if lookup_context.exists?("integrations/_#{@integration.kind}_setup") %>

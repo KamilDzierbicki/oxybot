@@ -3,6 +3,7 @@
      · <%= link_to "#{integration.account.customers.count} customers", customers_path %></p>
   <%= button_to "Sync now", integration_sync_path(integration), class: "button button--primary" %>
 </div>
+<% if Current.user.admin? %>
 <h2 class="section-title">Settings</h2>
 <%= form_with model: integration, scope: :integration, url: integration_path(integration), method: :patch, class: "form" do |form| %>
   <div class="form__row">
@@ -11,4 +12,5 @@
   </div>
   <label>Private app access token<%= form.password_field :access_token, value: nil, placeholder: integration.mock? ? "Not set (mock mode)" : "Stored, leave empty to keep" %></label>
   <%= form.submit "Save", class: "button" %>
+<% end %>
 <% end %>

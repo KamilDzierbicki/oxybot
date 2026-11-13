@@ -12,6 +12,15 @@ class Integration::Linear < Integration
 
   store_accessor :settings, :team_id, :mock_issues
 
+  def self.external_id_label = "Organization id (Settings, Workspace, General)"
+
+  def verify_connection
+    organization = Integration::Linear::Client.new(access_token).organization
+    return [ false, "The key belongs to organization #{organization["id"]}, not #{external_id}." ] if organization["id"] != external_id
+
+    [ true, "Connected to #{organization["name"]}." ]
+  end
+
   def create_issue(title:, description:)
     client.create_issue(team_id: team_id, title: title, description: description)
   end

@@ -8,5 +8,5 @@
     <label>Password<%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72 %></label>
     <%= form.submit "Sign in", class: "button button--primary" %>
   <% end %>
-  <%= link_to "Forgot password?", new_password_path, class: "muted small" %>
+  <div class="row"><%= link_to "Forgot password?", new_password_path, class: "muted small" %> <%= link_to "Create a workspace", new_signup_path, class: "small" %></div>
 </div>

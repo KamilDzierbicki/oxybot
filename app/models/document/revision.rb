@@ -27,6 +27,6 @@ class Document::Revision
   def revenue_visible? = true
 
   def trace_metadata
-    { trace_id: "document-#{document.id}", generation_name: "revise-#{document.kind}", tags: [ "account-#{account.id}" ] }
+    { trace_id: "document-#{document.id}", generation_name: "revise-#{document.kind}", tags: [ "account-#{account.id}", Prompt.version_tag("document-reviser") ] }
   end
 end

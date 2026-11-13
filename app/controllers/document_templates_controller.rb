@@ -1,4 +1,5 @@
 class DocumentTemplatesController < ApplicationController
+  admin_only except: :index
   before_action :set_template, only: %i[edit update]
 
   def index

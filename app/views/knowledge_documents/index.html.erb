@@ -5,9 +5,13 @@
 </div>
 <p class="muted">Company context the agent always reads: strategy, personas, pricing, competitors. Keep each document short.</p>
 <div class="card">
+  <% if Current.user.admin? %>
   <%= form_with model: Current.account, url: team_instructions_path, method: :patch, class: "form" do |form| %>
     <label>Team instructions for the agent<%= form.text_area :custom_instructions, rows: 3, placeholder: "Write specs in English. Always name the customer segment. Mark guesses as open questions." %></label>
     <%= form.submit "Save instructions", class: "button" %>
+  <% end %>
+  <% else %>
+    <p class="muted small">Team instructions: <%= Current.account.custom_instructions.presence || "none" %> (admins edit them)</p>
   <% end %>
 </div>
 <% @documents.each do |document| %>

@@ -7,4 +7,18 @@
   <p class="muted">Mock mode: no access token is set. <%= @integration.is_a?(Integration::Slack) ? "Replies are recorded below instead of being posted to Slack." : "Sync reads config/mocks/hubspot.yml instead of the HubSpot API." %></p>
 <% end %>
 
+<div class="card row check-row">
+  <% if @integration.last_checked_at %>
+    <%= status_pill(@integration.last_check_ok ? "connected" : "failed") %>
+    <span class="small"><%= @integration.last_check_message %> <span class="muted">(<%= time_ago_in_words(Time.zone.parse(@integration.last_checked_at)) %> ago)</span></span>
+  <% else %>
+    <span class="muted small">Connection not tested yet.</span>
+  <% end %>
+  <% if Current.user.admin? %>
+    <%= button_to "Test connection", integration_connection_check_path(@integration), class: "button" %>
+    <%= button_to "Disconnect", @integration, method: :delete, class: "button button--quiet", form: { data: { turbo_confirm: "Disconnect #{@integration.display_name}? Its settings and token are deleted." } } %>
+  <% end %>
+</div>
+
 <%= render @integration.kind, integration: @integration %>
+<%= render "integrations/slack_setup" if @integration.kind == "slack" %>

@@ -28,7 +28,12 @@
           <%= nav_link "Customers", customers_path, active: controller_name == "customers" %>
           <%= nav_link "Knowledge", knowledge_documents_path, active: controller_name == "knowledge_documents" %>
           <%= nav_link "Skills", skills_path, active: controller_name == "skills" %>
-          <%= nav_link "Integrations", integrations_path, active: controller_name.in?(%w[integrations simulated_messages syncs]) %>
+          <div class="nav-group">Settings</div>
+          <%= nav_link "Integrations", integrations_path, active: controller_name.in?(%w[integrations simulated_messages syncs connection_checks]) %>
+          <% if Current.user.admin? %>
+            <%= nav_link "Users", users_path, active: controller_name.in?(%w[users invitations]) %>
+            <%= nav_link "AI settings", ai_settings_path, active: controller_name.in?(%w[ai_settings prompt_refreshes]) %>
+          <% end %>
           <div class="sidebar__footer">
             <%= link_to Current.user.name, profile_path %>
             <%= button_to "Sign out", session_path, method: :delete, class: "link-button" %>

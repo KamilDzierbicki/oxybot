@@ -5,11 +5,13 @@
 # Development mounts it at /mock_llm when LITELLM_URL is blank (config/routes.rb). Tests route the
 # http://mock-llm.test host to it through WebMock (test/test_helper.rb).
 #
-# It answers per LiteLLM alias:
-#   oxybot-extract  splits feedback into sentences and assigns each to the product with the most shared words
-#   oxybot-judge    picks the candidate feature with the most shared words, or none below two
-#   oxybot-assistant    calls one tool chosen by keywords, then writes the answer from the tool's JSON
-#   oxybot-embed    hashed bag of word stems, so texts sharing words are close in cosine distance
+# It answers per task (read from metadata.generation_name, since each account picks its own model aliases):
+#   extract   splits feedback into sentences and assigns each to the product with the most shared words
+#   judge     picks the candidate feature with the most shared words, or none below two
+#   assistant calls one tool chosen by keywords, then writes the answer from the tool's JSON
+#   write     fills the template's headings with matching lines from the brief
+#   revise    shortens sections or records the request
+# Embeddings are a hashed bag of word stems, so texts sharing words are close in cosine distance.
 class MockLlm
   DIMENSIONS = 1536
   STOP_WORDS = %w[
@@ -22,6 +24,8 @@ class MockLlm
 
   def call(env)
     request = Rack::Request.new(env)
+    return json(models) if request.get? && request.path_info.end_with?("/models")
+
     body = JSON.parse(request.body.read)
 
     case request.path_info
@@ -51,12 +55,12 @@ class MockLlm
   end
 
   def chat_completion(body)
-    message = case body["model"]
-    when "oxybot-extract" then { role: "assistant", content: extract(body["messages"]).to_json }
-    when "oxybot-judge" then { role: "assistant", content: judge(body["messages"]).to_json }
-    when "oxybot-assistant" then assistant(body["messages"], Array(body["tools"]))
-    when "oxybot-writer"
-      body["response_format"] ? { role: "assistant", content: revise(body["messages"]).to_json } : { role: "assistant", content: write(body["messages"]) }
+    message = case task(body)
+    when "extract" then { role: "assistant", content: extract(body["messages"]).to_json }
+    when "judge" then { role: "assistant", content: judge(body["messages"]).to_json }
+    when "assistant" then assistant(body["messages"], Array(body["tools"]))
+    when "write" then { role: "assistant", content: write(body["messages"]) }
+    when "revise" then { role: "assistant", content: revise(body["messages"]).to_json }
     else { role: "assistant", content: "Mock model has no behavior for #{body["model"]}." }
     end
 
@@ -65,6 +69,22 @@ class MockLlm
       choices: [ { index: 0, message: message, finish_reason: message[:tool_calls] ? "tool_calls" : "stop" } ],
       usage: { prompt_tokens: body["messages"].to_json.size / 4, completion_tokens: message.to_json.size / 4, total_tokens: 0 }
     }
+  end
+
+  def models
+    { object: "list", data: %w[oxybot-extract oxybot-judge oxybot-assistant oxybot-writer oxybot-embed].map { |id| { id: id, object: "model" } } }
+  end
+
+  # The model alias is configurable per account, so the task is read from the trace metadata the app sends
+  def task(body)
+    name = body.dig("metadata", "generation_name").to_s
+    case name
+    when "extract-insights" then "extract"
+    when "match-feature" then "judge"
+    when "product-agent" then "assistant"
+    when /\Awrite-/ then "write"
+    when /\Arevise-/ then "revise"
+    end
   end
 
   def embeddings(body)

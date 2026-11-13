@@ -31,6 +31,6 @@ class Document::Generation
 
   def trace_metadata
     { trace_id: "document-#{document.id}", generation_name: "write-#{document.kind}",
-      tags: [ "account-#{account.id}", "document-#{document.kind}" ] }
+      tags: [ "account-#{account.id}", "document-#{document.kind}", Prompt.version_tag("document-writer") ] }
   end
 end

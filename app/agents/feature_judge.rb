@@ -10,10 +10,18 @@ class FeatureJudge < RubyLLM::Agent
     additionalProperties: false
   }.freeze
 
-  model "oxybot-judge", provider: :openai, protocol: :chat_completions, assume_model_exists: true
+  model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
+    insight.account.ai_model("judge")
+  end
   inputs :insight, :candidates
-  instructions { RubyLLM.render_prompt("feature_judge/instructions", insight: insight, candidates: candidates) }
+  instructions do
+    Prompt.render("feature-judge", insight_summary: insight.summary.squish, insight_quote: insight.quote.squish,
+                                   candidates: candidates.map { |feature| "- [#{feature.id}] #{feature.title.squish}: #{feature.description.squish}" }.join("\n"))
+  end
   schema SCHEMA
   end_user { "account-#{insight.account_id}" }
-  provider_options { { metadata: { trace_name: "match-feature", trace_id: "insight-#{insight.id}", tags: [ "account-#{insight.account_id}" ] } } }
+  provider_options do
+    { metadata: { trace_name: "match-feature", generation_name: "match-feature", trace_id: "insight-#{insight.id}",
+                  tags: [ "account-#{insight.account_id}", Prompt.version_tag("feature-judge") ] } }
+  end
 end

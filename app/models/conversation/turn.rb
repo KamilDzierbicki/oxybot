@@ -3,8 +3,6 @@
 class Conversation::Turn
   include CitationTracking
 
-  MAX_TOOL_ROUNDS = 6
-
   attr_reader :reply, :conversation
 
   delegate :account, :user, :revenue_visible?, to: :conversation
@@ -35,7 +33,14 @@ class Conversation::Turn
   # Grouped in Langfuse by conversation (session) and tagged with the tenant
   def trace_metadata
     { session_id: "conversation-#{conversation.id}", trace_user_id: "user-#{user.id}",
-      tags: [ "account-#{account.id}", "channel-#{conversation.channel}" ], generation_name: "product-agent" }
+      tags: [ "account-#{account.id}", "channel-#{conversation.channel}", Prompt.version_tag("product-agent") ], generation_name: "product-agent" }
+  end
+
+  def prompt_variables
+    Prompt::Context.new(account, user).to_h.merge(
+      revenue_rule: revenue_visible? ? "" : "This answer is posted in a shared Slack channel. Do not mention revenue, ARR or contract values; counts of customers are fine.",
+      skill: skill ? "The user ran the \"/#{skill.name}\" skill (#{skill.description}). Follow it for this answer:\n#{skill.instructions.strip}" : ""
+    )
   end
 
   # "/voc reporting" runs the voc skill with "reporting" as the request

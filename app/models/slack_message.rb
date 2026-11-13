@@ -1,6 +1,7 @@
 # Every Slack message OxyBot received or sent. Inbound ones are routed once by #process.
 class SlackMessage < ApplicationRecord
   DIRECTIONS = %w[inbound outbound].freeze
+  DM_SESSION_GAP = 1.hour
 
   belongs_to :integration, class_name: "Integration::Slack"
 
@@ -29,7 +30,7 @@ class SlackMessage < ApplicationRecord
   end
 
   def addressed_to_app?
-    mentions_app || channel_type == "im" || channel_id.start_with?("D")
+    mentions_app || direct_message?
   end
 
   private
@@ -37,16 +38,29 @@ class SlackMessage < ApplicationRecord
   def answer
     user = integration.user_for(slack_user_id)
     unless user
-      return integration.post_message(channel_id: channel_id, thread_ts: thread_ts || ts,
+      return integration.post_message(channel_id: channel_id, thread_ts: direct_message? ? thread_ts : thread_ts || ts,
                                       text: "I don't know you yet. Ask an admin to add your Slack member ID to your OxyBot profile.")
     end
 
-    conversation = account.conversations.create_or_find_by!(slack_channel_id: channel_id, slack_thread_ts: thread_ts || ts) do |record|
-      record.user = user
-      record.channel = "slack"
-    end
-    conversation.ask(integration.strip_mention(text))
+    conversation_for(user).ask(integration.strip_mention(text))
   end
+
+  # A direct message continues one rolling conversation with plain replies, like chatting with a colleague;
+  # after a quiet hour it starts fresh. A Slack thread (in a channel, or one started in the DM) is its own conversation.
+  def conversation_for(user)
+    if direct_message? && thread_ts.blank?
+      account.conversations.where(user: user, slack_channel_id: channel_id, slack_thread_ts: nil)
+             .where(updated_at: DM_SESSION_GAP.ago..).order(:updated_at).last ||
+        account.conversations.create!(user: user, channel: "slack", slack_channel_id: channel_id)
+    else
+      account.conversations.create_or_find_by!(slack_channel_id: channel_id, slack_thread_ts: thread_ts || ts) do |record|
+        record.user = user
+        record.channel = "slack"
+      end
+    end
+  end
+
+  def direct_message? = channel_type == "im" || channel_id.start_with?("D")
 
   def record_feedback
     author = integration.user_for(slack_user_id)

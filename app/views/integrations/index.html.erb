@@ -1,17 +1,23 @@
 <% content_for :title, "Integrations" %>
 <h1>Integrations</h1>
 <div class="grid">
-  <% { "slack" => "Feedback channels become feedback notes; mention the app or DM it to ask the agent. The weekly opportunity report is posted to a channel.",
+  <% { "slack" => "Feedback channels become feedback notes; DM the app or mention it to ask the agent. The weekly opportunity report is posted to a channel.",
        "hubspot" => "Companies with ARR and contacts sync every hour, so feedback is weighted by revenue.",
        "linear" => "Send features with their spec as issues; status syncs both ways through Linear's webhook.",
        "github" => "The spec writer searches your repository for technical context. Read-only." }.each do |kind, text| %>
     <% integration = @integrations[kind] %>
     <div class="card">
-      <div class="insight__head"><strong><%= { "slack" => "Slack", "hubspot" => "HubSpot", "linear" => "Linear", "github" => "GitHub" }[kind] %></strong>
+      <div class="insight__head"><strong><%= Integration.class_for(kind).new.display_name %></strong>
         <%= status_pill(integration ? (integration.mock? ? "mock" : "live") : "not_connected") %>
       </div>
       <p class="muted"><%= text %></p>
-      <%= link_to "Open", integration, class: "button" if integration %>
+      <% if integration %>
+        <%= link_to "Open", integration, class: "button" %>
+      <% elsif Current.user.admin? %>
+        <%= link_to "Connect", new_integration_path(kind: kind), class: "button button--primary" %>
+      <% else %>
+        <span class="muted small">Ask an admin to connect it.</span>
+      <% end %>
     </div>
   <% end %>
 </div>
