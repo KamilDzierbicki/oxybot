@@ -1,8 +1,9 @@
 class ProductsController < ApplicationController
+  include Paginated
   before_action :set_product, only: %i[edit update]
 
   def index
-    @products = Current.account.products.alphabetically
+    @products = paginate(Current.account.products.alphabetically)
   end
 
   def new
@@ -12,7 +13,7 @@ class ProductsController < ApplicationController
   def create
     @product = Current.account.products.new(product_params)
     if save_unique(@product)
-      redirect_to products_path, notice: "Product added."
+      redirect_to products_path
     else
       render :new, status: :unprocessable_entity
     end
@@ -22,7 +23,7 @@ class ProductsController < ApplicationController
 
   def update
     if @product.update(product_params)
-      redirect_to products_path, notice: "Product saved."
+      redirect_to products_path
     else
       render :edit, status: :unprocessable_entity
     end

@@ -29,7 +29,7 @@
       <% @chat_messages.each do |message| %>
         <div class="slack-message slack-message--<%= message.direction %>">
           <div class="muted small">
-            <%= message.private_chat? ? "private" : "##{message.channel_id}" %> · <%= message.inbound? ? message.external_user_id : "OxyBot" %><%= " · in thread" if message.thread_id %>
+            <%= message.private_chat? || message.channel_id == "DIRECT" ? "private" : "##{message.channel_id}" %> · <%= message.inbound? ? message.external_user_id : "OxyBot" %><%= " · in thread" if message.thread_id %>
           </div>
           <div><%= integration.kind == "slack" ? slack_text(message.text) : markdown(message.text) %></div>
         </div>

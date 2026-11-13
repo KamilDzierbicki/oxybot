@@ -1,1 +1,6 @@
-# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+# OxyBot is a logged-in work tool: only the sign-in pages are public, and nothing in it is meant for search
+# engines or AI training. Change this if you publish a marketing site from the same host.
+User-agent: *
+Allow: /session/new
+Allow: /signup/new
+Disallow: /

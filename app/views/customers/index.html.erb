@@ -1,5 +1,6 @@
 <% content_for :title, "Customers" %>
 <div class="page-header"><h1>Customers</h1><%= link_to "HubSpot sync", integrations_path, class: "button" %></div>
+<div class="table-wrap">
 <table class="table">
   <thead><tr><th>Customer</th><th>Domain</th><th>Plan</th><th class="num">ARR</th><th>Synced</th></tr></thead>
   <tbody>
@@ -14,4 +15,6 @@
     <% end %>
   </tbody>
 </table>
+</div>
 <%= tag.p("No customers yet. Sync HubSpot on the Integrations page.", class: "empty") if @customers.empty? %>
+<%= render "shared/pagination", total_count: @total_count %>

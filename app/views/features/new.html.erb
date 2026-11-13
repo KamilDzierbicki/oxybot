@@ -1,3 +1,6 @@
 <% content_for :title, "New feature" %>
 <h1>New feature</h1>
+<% if Current.account.products.none? %>
+  <div class="flash flash--alert" role="alert">Add a product first: every feature belongs to one. <%= link_to "Add a product", new_product_path %></div>
+<% end %>
 <%= render "form", feature: @feature %>

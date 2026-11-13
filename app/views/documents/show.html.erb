@@ -17,7 +17,12 @@
 <div class="doc-layout">
   <article class="card doc">
     <% if @document.drafting? %>
-      <p class="message__thinking"><span class="dots"><i></i><i></i><i></i></span> The agent is drafting this document from your feedback<%= ", backlog and code" if @document.kind == "prd" %>…</p>
+      <p class="message__thinking" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> The agent is drafting this document from your feedback<%= ", backlog and code" if @document.kind == "prd" %>…</p>
+      <div class="skeleton" aria-hidden="true">
+        <i class="skeleton__heading"></i><i></i><i></i><i></i>
+        <i class="skeleton__heading"></i><i></i><i></i>
+        <i class="skeleton__heading"></i><i></i><i></i><i></i>
+      </div>
     <% else %>
       <div class="prose"><%= markdown(@document.body) %></div>
     <% end %>
@@ -27,7 +32,7 @@
     <section class="card">
       <h2 class="section-title section-title--flush">Ask the agent</h2>
       <%= form_with url: document_suggestions_path(@document), class: "form" do |form| %>
-        <%= form.text_area :instruction, rows: 3, required: true, placeholder: "Make the problem section shorter and add an out-of-scope list" %>
+        <%= form.text_area :instruction, rows: 3, required: true, placeholder: "Make the problem section shorter and add an out-of-scope list", aria: { label: "What should the agent change?" } %>
         <%= form.submit "Suggest a change", class: "button button--primary", disabled: @document.drafting? %>
       <% end %>
       <%= form_with model: @document, class: "auto-accept", data: { controller: "auto-submit" } do |form| %>
@@ -51,7 +56,7 @@
             <%= button_to "Reject", document_suggestion_rejection_path(@document, suggestion), class: "button button--quiet" %>
           </div>
         <% else %>
-          <p class="small flash--alert"><%= suggestion.rationale %></p>
+          <p class="flash flash--alert small"><%= suggestion.rationale %></p>
         <% end %>
       </section>
     <% end %>

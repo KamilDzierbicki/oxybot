@@ -1,0 +1,18 @@
+<% content_for :title, "Workspace" %>
+<h1>Workspace</h1>
+<p class="muted page-intro"><%= @account.name %> · created <%= @account.created_at.to_date.to_fs(:long) %></p>
+
+<section class="card">
+  <h2 class="section-title section-title--flush">Export</h2>
+  <p class="small">Download everything this workspace holds as one JSON file: users, products, features, customers, feedback, insights, documents, conversations. Tokens and passwords are not included.</p>
+  <p><%= link_to "Download export", workspace_export_path, class: "button", data: { turbo: false } %></p>
+</section>
+
+<section class="card">
+  <h2 class="section-title section-title--flush">Delete the workspace</h2>
+  <p class="small">Deletes the workspace and all its data for good: users, feedback, documents and integrations. It cannot be undone.</p>
+  <%= form_with url: workspace_path, method: :delete, class: "form", data: { turbo_confirm: "Delete #{@account.name} and all its data for good?" } do |form| %>
+    <label>Type <strong><%= @account.name %></strong> to confirm<%= form.text_field :confirmation, required: true, autocomplete: "off" %></label>
+    <%= form.submit "Delete workspace", class: "button" %>
+  <% end %>
+</section>

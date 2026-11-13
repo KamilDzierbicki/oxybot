@@ -1,4 +1,5 @@
 class DocumentsController < ApplicationController
+  include Paginated
   # Each call costs model tokens; the limit keeps one user from running up the bill
   rate_limit to: 5, within: 1.minute, only: :create, by: -> { Current.user.id },
              with: -> { redirect_back_or_to root_path, alert: "Slow down a little: too many requests in a minute." }
@@ -8,8 +9,9 @@ class DocumentsController < ApplicationController
   STANDALONE_KINDS = %w[voc_report opportunity_report release_notes].freeze
 
   def index
-    @documents = Current.account.documents.includes(:feature, :creator).latest_first
-    @documents = @documents.where(kind: params[:kind]) if Document::KINDS.key?(params[:kind])
+    documents = Current.account.documents.includes(:feature, :creator).latest_first
+    documents = documents.where(kind: params[:kind]) if Document::KINDS.key?(params[:kind])
+    @documents = paginate(documents)
   end
 
   def show

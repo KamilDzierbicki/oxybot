@@ -23,7 +23,8 @@
   </div>
 
   <h2 class="section-title">Weekly opportunity report</h2>
-  <label class="checkbox"><%= form.check_box :weekly_report_enabled, checked: @account.ai_setting("weekly_report_enabled") %> Draft it every week and post it to Slack</label>
+  <label class="checkbox"><%= form.check_box :weekly_report_enabled, checked: @account.ai_setting("weekly_report_enabled") %> Draft it every week<%= " and post it to your chat report channel" if @account.integrations.any?(&:chat?) %></label>
+  <% unless @account.integrations.any?(&:chat?) %><p class="muted small">No Slack or Mattermost is connected, so the report is saved in Documents only.</p><% end %>
   <div class="form__row">
     <label>Day<%= form.select :weekly_report_day, Date::DAYNAMES.each_with_index.map { |day, index| [ day, index ] }, selected: @account.ai_setting("weekly_report_day") %></label>
     <label>Hour<%= form.select :weekly_report_hour, (0..23).map { |hour| [ format("%02d:00", hour), hour ] }, selected: @account.ai_setting("weekly_report_hour") %></label>
@@ -40,6 +41,7 @@
     Langfuse is not configured, so the files in <code>config/prompts</code> are used. Set LANGFUSE_URL and keys, then run <code>bin/rails langfuse:push_prompts</code> to edit prompts in Langfuse.
   <% end %>
 </p>
+<div class="table-wrap">
 <table class="table">
   <thead><tr><th>Prompt</th><th>Source</th><th>Version</th></tr></thead>
   <tbody>
@@ -48,4 +50,5 @@
     <% end %>
   </tbody>
 </table>
+</div>
 <%= button_to "Reload prompts now", prompt_refresh_path, class: "button" if Prompt::Langfuse.configured? %>

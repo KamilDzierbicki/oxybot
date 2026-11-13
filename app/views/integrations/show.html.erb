@@ -1,4 +1,6 @@
 <% content_for :title, @integration.display_name %>
+<% content_for :head do %><meta name="turbo-refresh-method" content="morph"><meta name="turbo-refresh-scroll" content="preserve"><% end %>
+<%= turbo_stream_from @integration %>
 <div class="page-header">
   <h1><%= @integration.display_name %></h1>
   <%= status_pill(@integration.mock? ? "mock" : "live") %>

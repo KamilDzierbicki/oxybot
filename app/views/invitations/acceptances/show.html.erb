@@ -5,7 +5,8 @@
   <%= form_with scope: :user, url: invitation_acceptance_path(token: params[:token]), class: "form" do |form| %>
     <%= render "shared/errors", record: @user if @user %>
     <label>Your name<%= form.text_field :name, required: true, autofocus: true %></label>
-    <label>Password (10+ characters)<%= form.password_field :password, required: true, autocomplete: "new-password", minlength: 10, maxlength: 72 %></label>
+    <label>Password (<%= User::MIN_PASSWORD_LENGTH %>+ characters)<%= form.password_field :password, required: true, autocomplete: "new-password", minlength: User::MIN_PASSWORD_LENGTH, maxlength: 72 %></label>
     <%= form.submit "Join", class: "button button--primary" %>
   <% end %>
+  <%= render "shared/legal_links" %>
 </div>

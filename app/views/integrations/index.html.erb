@@ -9,13 +9,13 @@
     <% integration = @integrations[kind] %>
     <div class="card">
       <div class="insight__head"><strong><%= Integration.class_for(kind).new.display_name %></strong>
-        <%= status_pill(integration ? (integration.mock? ? "mock" : "live") : "not_connected") %>
+        <%= status_pill(integration.mock? ? "mock" : "live") if integration %>
       </div>
       <p class="muted"><%= text %></p>
       <% if integration %>
-        <%= link_to "Open", integration, class: "button" %>
+        <%= link_to "Open", integration, class: "button card__actions" %>
       <% elsif Current.user.admin? %>
-        <%= link_to "Connect", new_integration_path(kind: kind), class: "button button--primary" %>
+        <%= link_to "Connect", new_integration_path(kind: kind), class: "button card__actions" %>
       <% else %>
         <span class="muted small">Ask an admin to connect it.</span>
       <% end %>

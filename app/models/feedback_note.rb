@@ -8,6 +8,8 @@ class FeedbackNote < ApplicationRecord
   belongs_to :customer, optional: true
   has_many :insights, dependent: :destroy
 
+  broadcasts_refreshes
+
   normalizes :author_email, with: ->(email) { email.strip.downcase.presence }
   normalizes :body, :author, with: ->(text) { VisibleText.clean(text) }
 

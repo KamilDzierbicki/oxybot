@@ -6,6 +6,8 @@ class Integration < ApplicationRecord
 
   encrypts :access_token
 
+  broadcasts_refreshes
+
   validates :external_id, presence: true, uniqueness: { scope: :type }
 
   # Every kind shares the integrations routes and params (integration_path, params[:integration])

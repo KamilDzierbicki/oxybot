@@ -31,7 +31,7 @@ module OxyBot
     config.x.llm_url = ENV["LITELLM_URL"].presence ||
       (Rails.env.test? ? "http://mock-llm.test/v1" : "http://localhost:#{ENV.fetch("PORT", 3120)}/mock_llm/v1")
 
-    config.middleware.insert_before Rack::Head, NullByteFilter
+    config.middleware.insert 0, NullByteFilter
 
     # Kill switch: AI_ENABLED=false stops every model call (answers, drafts, extraction) without a deploy
     config.x.ai_enabled = ENV.fetch("AI_ENABLED", "true") != "false"

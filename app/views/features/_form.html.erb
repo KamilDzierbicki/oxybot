@@ -2,7 +2,7 @@
   <%= render "shared/errors", record: feature %>
   <label>Title<%= form.text_field :title, required: true %></label>
   <div class="form__row">
-    <label>Product<%= form.collection_select :product_id, Current.account.products.alphabetically, :id, :name, {}, required: true %></label>
+    <label>Product<%= form.collection_select :product_id, Current.account.products.alphabetically, :id, :name, { selected: feature.product_id || Current.account.products.alphabetically.first&.id }, required: true %></label>
     <label>Status<%= form.select :status, Feature::STATUSES.map { |status| [status.humanize, status] } %></label>
   </div>
   <label>Description<%= form.text_area :description, rows: 4 %></label>

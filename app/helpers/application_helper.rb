@@ -33,6 +33,16 @@ module ApplicationHelper
     text
   end
 
+  TOOL_LABELS = { "search_feedback" => "a feedback search", "feature_demand" => "feature demand", "list_features" => "the backlog",
+                   "search_code" => "a code search", "read_file" => "the code" }.freeze
+
+  def tool_label(name) = TOOL_LABELS.fetch(name, name.to_s.humanize.downcase)
+
+  TOOL_LABELS = { "search_feedback" => "a feedback search", "feature_demand" => "feature demand", "list_features" => "the backlog",
+                   "search_code" => "a code search", "read_file" => "the code" }.freeze
+
+  def tool_label(name) = TOOL_LABELS.fetch(name, name.to_s.humanize.downcase)
+
   def money(cents)
     number_to_currency(cents.to_i / 100, precision: 0)
   end

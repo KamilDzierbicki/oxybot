@@ -16,10 +16,11 @@
     <% @documents.each do |document| %>
       <div class="list__item"><%= link_to document.title, document %> <%= status_pill document.status %></div>
     <% end %>
+    <% unless @feature.status == "released" %><p class="muted small">A launch review is possible once the feature is released.</p><% end %>
+    <% unless @feature.status == "released" %><p class="muted small">A launch review is possible once the feature is released.</p><% end %>
     <div class="row">
       <%= button_to "Write spec", feature_spec_path(@feature), class: "button button--primary" %>
-      <%= button_to "Launch review", feature_launch_review_path(@feature), class: "button", disabled: @feature.status != "released",
-                    title: ("Available once the feature is released" if @feature.status != "released") %>
+      <%= button_to "Launch review", feature_launch_review_path(@feature), class: "button", disabled: @feature.status != "released" %>
     </div>
   </section>
   <section class="card">

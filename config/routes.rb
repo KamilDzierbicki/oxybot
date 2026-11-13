@@ -19,7 +19,9 @@ Rails.application.routes.draw do
     resources :messages, only: :create
   end
 
-  resources :feedback_notes, only: %i[index show new create]
+  resources :feedback_notes, only: %i[index show new create destroy] do
+    resource :extraction, only: :create, module: :feedback_notes
+  end
 
   resources :insights, only: %i[index show] do
     scope module: :insights do
@@ -55,7 +57,10 @@ Rails.application.routes.draw do
   resource :profile, only: %i[show update] do
     resource :mcp_token, only: :create, module: :profiles
   end
-  resources :customers, only: %i[index show]
+  resources :customers, only: %i[index show destroy]
+  resource :workspace, only: %i[show destroy] do
+    resource :export, only: :show, module: :workspaces
+  end
   resources :knowledge_documents, except: :show
 
   resources :integrations, only: %i[index show new create update destroy] do

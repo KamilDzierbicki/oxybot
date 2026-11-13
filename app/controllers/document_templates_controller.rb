@@ -13,7 +13,7 @@ class DocumentTemplatesController < ApplicationController
   def create
     @template = Current.account.document_templates.new(template_params)
     if @template.save
-      redirect_to document_templates_path, notice: "Template added."
+      redirect_to document_templates_path
     else
       render :new, status: :unprocessable_entity
     end
@@ -23,7 +23,7 @@ class DocumentTemplatesController < ApplicationController
 
   def update
     if @template.update(template_params)
-      redirect_to document_templates_path, notice: "Template saved."
+      redirect_to document_templates_path
     else
       render :edit, status: :unprocessable_entity
     end

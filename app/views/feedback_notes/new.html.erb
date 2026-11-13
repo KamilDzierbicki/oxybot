@@ -1,12 +1,15 @@
 <% content_for :title, "Add feedback" %>
 <h1>Add feedback</h1>
-<%= form_with model: @feedback_note, class: "form" do |form| %>
+<% if Current.account.products.none? %>
+  <div class="flash flash--alert" role="alert">Add a product first: OxyBot assigns every customer need to a product. <%= link_to "Add a product", new_product_path %></div>
+<% end %>
+<%= form_with model: @feedback_note, class: "form", data: { controller: "unsaved-changes" } do |form| %>
   <%= render "shared/errors", record: @feedback_note %>
   <label>Feedback<%= form.text_area :body, rows: 8, required: true, placeholder: "Paste an email, call notes or a support ticket" %></label>
   <div class="form__row">
     <label>Author<%= form.text_field :author, placeholder: "Anna Kowalska" %></label>
     <label>Author email<%= form.email_field :author_email, placeholder: "anna@customer.com" %>
-      <small class="muted">The email's domain links the note to a customer.</small></label>
+      <small class="muted">Links the note to a customer by email or domain, once customers are synced from HubSpot.</small></label>
   </div>
   <%= form.submit "Save feedback", class: "button button--primary" %>
 <% end %>

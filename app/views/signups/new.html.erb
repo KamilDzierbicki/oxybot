@@ -1,14 +1,16 @@
 <% content_for :title, "Create your workspace" %>
 <div class="card auth">
-  <h1><span class="sidebar__logo">◆</span> OxyBot</h1>
-  <p class="muted">Create a workspace for your product team. You become its admin.</p>
+  <div class="sidebar__brand"><span class="sidebar__logo" aria-hidden="true">◆</span> OxyBot</div>
+  <h1>Create your workspace</h1>
+  <p class="muted">For your product team. You become its admin and can invite colleagues.</p>
   <%= form_with model: @signup, url: signup_path, scope: :signup, class: "form" do |form| %>
     <%= render "shared/errors", record: @signup %>
     <label>Company<%= form.text_field :account_name, required: true, autofocus: true %></label>
     <label>Your name<%= form.text_field :name, required: true %></label>
     <label>Email<%= form.email_field :email_address, required: true, autocomplete: "username" %></label>
-    <label>Password (10+ characters)<%= form.password_field :password, required: true, autocomplete: "new-password", minlength: 10, maxlength: 72 %></label>
+    <label>Password (<%= User::MIN_PASSWORD_LENGTH %>+ characters)<%= form.password_field :password, required: true, autocomplete: "new-password", minlength: User::MIN_PASSWORD_LENGTH, maxlength: 72 %></label>
     <%= form.submit "Create workspace", class: "button button--primary" %>
   <% end %>
-  <%= link_to "I already have an account", new_session_path, class: "muted small" %>
+  <div class="auth__links"><%= link_to "I already have an account", new_session_path %></div>
+  <%= render "shared/legal_links" %>
 </div>

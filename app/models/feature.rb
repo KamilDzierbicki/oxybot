@@ -15,6 +15,8 @@ class Feature < ApplicationRecord
   validate :product_in_same_account
 
   after_save_commit :embed_later, if: -> { saved_change_to_title? || saved_change_to_description? }
+  # Needs that found no feature before get another look once the backlog grows
+  after_create_commit -> { product.insights.pending.where(suggested_feature_id: nil).find_each(&:match_later) }
 
   # Insight count, distinct customers and their ARR, each customer counted once per feature
   scope :with_demand, -> {

@@ -1,9 +1,24 @@
 <% content_for :title, "Assistant" %>
+<% steps = { "Describe a product" => [ Current.account.products.exists?, new_product_path ],
+             "Add a feature to the backlog" => [ Current.account.features.exists?, new_feature_path ],
+             "Add customer feedback" => [ Current.account.feedback_notes.exists?, new_feedback_note_path ],
+             "Connect a chat or CRM" => [ Current.account.integrations.exists?, integrations_path ] } %>
+<% unless steps.values.all?(&:first) %>
+  <section class="card">
+    <h2 class="section-title section-title--flush">Get started</h2>
+    <p class="muted small">OxyBot needs a product to sort feedback into, and a backlog to match it against.</p>
+    <ol class="checklist">
+      <% steps.each do |label, (done, path)| %>
+        <li><%= done ? tag.span("Done", class: "checklist__done") : link_to("Start", path, class: "button") %> <%= label %></li>
+      <% end %>
+    </ol>
+  </section>
+<% end %>
 <div class="hero">
   <h1>What do your customers need?</h1>
   <p class="muted">Ask about feedback, demand and the backlog. Answers cite the customer insights they come from.</p>
   <%= form_with url: conversations_path, class: "composer composer--large" do |form| %>
-    <%= form.text_area :question, rows: 3, required: true, autofocus: true, class: "composer__input",
+    <%= form.text_area :question, rows: 3, required: true, autofocus: true, class: "composer__input", aria: { label: "Ask OxyBot" },
                        placeholder: "Which features have the most demand from enterprise customers?",
                        data: { controller: "submit-on-enter", action: "keydown->submit-on-enter#submit" } %>
     <%= form.submit "Ask", class: "button button--primary" %>
@@ -26,3 +41,4 @@
     <% end %>
   </ul>
 <% end %>
+<%= render "shared/pagination", total_count: @total_count %>
