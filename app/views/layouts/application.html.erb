@@ -17,6 +17,7 @@
   </head>
 
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <% if authenticated? %>
       <div class="shell">
         <nav class="sidebar" data-controller="menu" aria-label="Main">
@@ -29,14 +30,19 @@
                     data-menu-target="button" data-action="menu#toggle">Menu</button>
           </div>
           <div class="sidebar__nav" id="main-nav">
+            <%= form_with url: search_path, method: :get, class: "sidebar__search", role: "search" do |form| %>
+              <%= form.search_field :q, value: (params[:q] if controller_name == "searches"), placeholder: "Search", aria: { label: "Search insights, features, feedback and documents" } %>
+            <% end %>
             <%= nav_link "Assistant", conversations_path, active: controller_name.in?(%w[conversations messages]) %>
-            <%= nav_link "Inbox", insights_path, count: Current.account.insights.pending.count, active: controller_name == "insights" %>
+            <%= nav_link "Insights", insights_path, count: Current.account.insights.pending.count, active: controller_name.in?(%w[insights restorations]) && controller_path.start_with?("insights") %>
             <%= nav_link "Features", features_path, active: controller_name.in?(%w[features specs launch_reviews linear_issues linear_simulations]) %>
-            <%= nav_link "Products", products_path, active: controller_name == "products" %>
-            <%= nav_link "Documents", documents_path, active: controller_name.in?(%w[documents document_templates suggestions versions acceptances rejections regenerations]) %>
+            <%= nav_link "Documents", documents_path, active: controller_name.in?(%w[documents document_templates suggestions versions acceptances rejections regenerations]) || controller_path == "documents/restorations" %>
+            <div class="nav-group">Sources</div>
             <%= nav_link "Feedback", feedback_notes_path, active: controller_name.in?(%w[feedback_notes extractions]) %>
             <%= nav_link "Customers", customers_path, active: controller_name == "customers" %>
-            <%= nav_link "Knowledge", knowledge_documents_path, active: controller_name == "knowledge_documents" %>
+            <div class="nav-group">Agent context</div>
+            <%= nav_link "Products", products_path, active: controller_name == "products" %>
+            <%= nav_link "Knowledge base", knowledge_documents_path, active: controller_name == "knowledge_documents" %>
             <%= nav_link "Skills", skills_path, active: controller_name == "skills" %>
             <div class="nav-group">Settings</div>
             <%= nav_link "Integrations", integrations_path, active: controller_name.in?(%w[integrations simulated_messages syncs connection_checks]) %>

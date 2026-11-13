@@ -1,3 +1,5 @@
-<% flash.to_hash.slice("notice", "alert").each do |type, text| %>
-  <div class="flash flash--<%= type %>" role="<%= type == "alert" ? "alert" : "status" %>"><%= text %></div>
-<% end %>
+<div id="flash">
+  <% flash.to_hash.slice("notice", "alert").each do |type, text| %>
+    <%= render "shared/flash_message", type: type, text: text, undo: (flash[:undo] if type == "notice") %>
+  <% end %>
+</div>

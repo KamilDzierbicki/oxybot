@@ -1,5 +1,6 @@
 <% content_for :title, "Integrations" %>
 <h1>Integrations</h1>
+<p class="muted page-intro">A new integration starts in test mode: nothing leaves OxyBot, and you can try it with simulated messages. Add the real credentials on its page to go live.</p>
 <div class="grid">
   <% { "slack" => "Feedback channels become feedback notes; DM the app or mention it to ask the agent. The weekly opportunity report is posted to a channel.",
        "mattermost" => "Self-hosted chat: feedback channels through outgoing webhooks, questions with @oxybot in channels or privately with /oxybot.",
@@ -9,7 +10,7 @@
     <% integration = @integrations[kind] %>
     <div class="card">
       <div class="insight__head"><strong><%= Integration.class_for(kind).new.display_name %></strong>
-        <%= status_pill(integration.mock? ? "mock" : "live") if integration %>
+        <%= status_pill(integration.mock? ? "test mode" : "live") if integration %>
       </div>
       <p class="muted"><%= text %></p>
       <% if integration %>

@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   patch "passwords" => "passwords#update", as: :update_password
 
   root "conversations#index"
+  resource :search, only: :show
 
   resources :conversations, only: %i[index show create] do
     resources :messages, only: :create
@@ -27,6 +28,7 @@ Rails.application.routes.draw do
     scope module: :insights do
       resource :link, only: :create
       resource :dismissal, only: :create
+      resource :restoration, only: :create
       resource :feature, only: :create
     end
   end
@@ -47,7 +49,9 @@ Rails.application.routes.draw do
         resource :acceptance, only: :create
         resource :rejection, only: :create
       end
-      resources :versions, only: %i[index show]
+      resources :versions, only: %i[index show] do
+        resource :restoration, only: :create
+      end
       resource :regeneration, only: :create
     end
   end
@@ -58,7 +62,7 @@ Rails.application.routes.draw do
     resource :mcp_token, only: :create, module: :profiles
   end
   resources :customers, only: %i[index show destroy]
-  resource :workspace, only: %i[show destroy] do
+  resource :workspace, only: %i[show update destroy] do
     resource :export, only: :show, module: :workspaces
   end
   resources :knowledge_documents, except: :show

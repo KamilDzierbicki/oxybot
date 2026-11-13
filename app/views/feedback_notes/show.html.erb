@@ -3,7 +3,7 @@
 <%= turbo_stream_from @feedback_note %>
 <div class="page-header">
   <h1>Feedback from <%= @feedback_note.author.presence || @feedback_note.customer&.name || "unknown author" %></h1>
-  <%= status_pill @feedback_note.source %>
+  <span class="muted"><%= @feedback_note.source.humanize %></span>
 </div>
 <p class="muted">
   <%= link_to @feedback_note.customer.name, @feedback_note.customer if @feedback_note.customer %>
@@ -27,6 +27,11 @@
     <%= button_to "Extract again", feedback_note_extraction_path(@feedback_note), class: "button" %>
     <%= button_to "Delete feedback", @feedback_note, method: :delete, class: "button button--quiet", form: { data: { turbo_confirm: "Delete this feedback and its insights?" } } %>
   </div>
+<% elsif @feedback_note.awaiting_product? %>
+  <div class="empty" role="status">
+    Waiting for a product. Every insight belongs to a product, so this note is split as soon as you add the first one.
+    <div class="row empty__actions"><%= link_to "Add a product", new_product_path, class: "button button--primary" %></div>
+  </div>
 <% else %>
-  <div class="card"><p class="message__thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Extracting insights… they appear here in a few seconds.</p></div>
+  <div class="card"><p class="message__thinking" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Extracting insights… they appear here in a few seconds.</p></div>
 <% end %>

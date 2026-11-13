@@ -15,10 +15,11 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert cookies[:session_id]
   end
 
-  test "create with invalid credentials" do
+  test "a wrong password keeps the typed email, so only the password has to be typed again" do
     post session_path, params: { email_address: @user.email_address, password: "wrong" }
 
-    assert_redirected_to new_session_path
+    assert_response :unprocessable_entity
+    assert_select "input[name=email_address][value=?]", @user.email_address
     assert_nil cookies[:session_id]
   end
 

@@ -6,9 +6,9 @@
 <p class="muted"><%= @feature.product.name %></p>
 <p><%= @feature.description %></p>
 <div class="stats">
-  <div class="stat"><div class="stat__value"><%= @feature.insight_count %></div><div class="stat__label">insights</div></div>
-  <div class="stat"><div class="stat__value"><%= @feature.customer_count %></div><div class="stat__label">customers</div></div>
-  <div class="stat"><div class="stat__value"><%= money(@feature.demand_arr_cents) %></div><div class="stat__label">ARR asking</div></div>
+  <div class="stat stat--focus"><div class="stat__value arr"><%= money(@feature.demand_arr_cents) %></div><div class="stat__label">ARR of the customers asking</div></div>
+  <div class="stat"><div class="stat__value"><%= @feature.customer_count %></div><div class="stat__label"><%= "customer".pluralize(@feature.customer_count) %></div></div>
+  <div class="stat"><div class="stat__value"><%= @feature.insight_count %></div><div class="stat__label"><%= "insight".pluralize(@feature.insight_count) %></div></div>
 </div>
 <div class="grid grid--tight">
   <section class="card">
@@ -16,10 +16,17 @@
     <% @documents.each do |document| %>
       <div class="list__item"><%= link_to document.title, document %> <%= status_pill document.status %></div>
     <% end %>
+    <%= tag.p("No documents yet.", class: "muted small") if @documents.empty? %>
     <% unless @feature.status == "released" %><p class="muted small">A launch review is possible once the feature is released.</p><% end %>
-    <% unless @feature.status == "released" %><p class="muted small">A launch review is possible once the feature is released.</p><% end %>
+    <% spec = @documents.find { |document| document.kind == "prd" } %>
     <div class="row">
-      <%= button_to "Write spec", feature_spec_path(@feature), class: "button button--primary" %>
+      <% if spec %>
+        <%= link_to "Open spec", spec, class: "button button--primary" %>
+        <%= button_to "Write a new spec", feature_spec_path(@feature), class: "button",
+                      form: { data: { turbo_confirm: "This feature already has a spec. Draft another one with the AI model?" } } %>
+      <% else %>
+        <%= button_to "Write spec", feature_spec_path(@feature), class: "button button--primary" %>
+      <% end %>
       <%= button_to "Launch review", feature_launch_review_path(@feature), class: "button", disabled: @feature.status != "released" %>
     </div>
   </section>
@@ -30,13 +37,14 @@
       <p class="muted small">Status syncs both ways: change it here and the issue moves; move the issue and this feature follows.</p>
       <% if Current.account.linear_integration&.mock? %>
         <%= form_with url: feature_linear_simulation_path(@feature), class: "inline-form" do |form| %>
-          <%= form.select :state_type, Integration::Linear::STATUS_BY_STATE_TYPE.keys.map { |type| [type.humanize, type] } %>
+          <%= form.select :state_type, Integration::Linear::STATUS_BY_STATE_TYPE.keys.map { |type| [type.humanize, type] }, {}, aria: { label: "Linear state" } %>
           <%= form.submit "Simulate move in Linear", class: "button" %>
         <% end %>
       <% end %>
     <% elsif Current.account.linear_integration %>
       <p class="muted small">Sends the latest spec (or the description) as an issue.</p>
-      <%= button_to "Send to Linear", feature_linear_issue_path(@feature), class: "button" %>
+      <%= button_to "Send to Linear", feature_linear_issue_path(@feature), class: "button",
+                    form: { data: { turbo_confirm: "Create a Linear issue “#{@feature.title}” from the latest spec?" } } %>
     <% else %>
       <p class="muted small"><%= link_to "Connect Linear", integrations_path %> to hand features to engineering.</p>
     <% end %>
@@ -45,10 +53,15 @@
 </div>
 
 <h2 class="section-title">What customers said</h2>
-<% @insights.each do |insight| %>
-  <div class="card">
-    <blockquote class="quote quote--small">“<%= insight.quote %>”</blockquote>
-    <div class="muted"><%= insight.customer&.name || "unknown customer" %> · <%= link_to "##{insight.id}", insight %> · <%= time_ago_in_words(insight.created_at) %> ago</div>
-  </div>
-<% end %>
+<ul class="quotes">
+  <% @insights.each do |insight| %>
+    <li class="quotes__item">
+      <blockquote class="quote quote--small">“<%= insight.quote %>”</blockquote>
+      <div class="muted small">
+        <%= insight.customer ? safe_join([ insight.customer.name, tag.span("#{money(insight.customer.arr_cents)} ARR", class: "arr") ], " · ") : "Unknown customer" %>
+        · <%= link_to "insight ##{insight.id}", insight %> · <%= time_ago_in_words(insight.created_at) %> ago
+      </div>
+    </li>
+  <% end %>
+</ul>
 <%= tag.p("No linked insights yet.", class: "empty") if @insights.empty? %>

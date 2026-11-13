@@ -25,6 +25,11 @@ module Account::AiSettings
 
   # Aliases LiteLLM serves (GET /v1/models), for the model pickers; the defaults when it cannot be asked
   def self.available_models
+    served_models || DEFAULTS.select { |key, _| key.start_with?("model_") }.values
+  end
+
+  # The live list, or nil when LiteLLM cannot be asked (then model names cannot be checked)
+  def self.served_models
     Rails.cache.fetch("litellm/models", expires_in: 10.minutes) do
       uri = URI("#{Rails.configuration.x.llm_url}/models")
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 2, read_timeout: 3) do |http|
@@ -34,7 +39,7 @@ module Account::AiSettings
     end
   rescue StandardError => e
     Rails.logger.info("[ai_settings] model list unavailable: #{e.class}")
-    DEFAULTS.select { |key, _| key.start_with?("model_") }.values
+    nil
   end
 
   included do
@@ -53,8 +58,10 @@ module Account::AiSettings
   end
 
   def update_ai_settings(values)
-    merged = ai_settings.merge(values.to_h.stringify_keys.slice(*DEFAULTS.keys).to_h { |key, value| [ key, cast_setting(key, value) ] })
-    update(ai_settings: merged)
+    changes = values.to_h.stringify_keys.slice(*DEFAULTS.keys).to_h { |key, value| [ key, cast_setting(key, value) ] }
+    self.ai_settings = ai_settings.merge(changes)
+    unknown_models(changes).each { |task, model| errors.add(:base, "#{TASKS[task]}: LiteLLM does not serve a model called “#{model}”") }
+    errors.none? && save
   end
 
   # The weekly report is due in the account's chosen hour, once per week
@@ -67,6 +74,16 @@ module Account::AiSettings
   end
 
   private
+
+  # A misspelled alias would silently break extraction, so new model names must be ones LiteLLM serves.
+  # When LiteLLM cannot be asked, names are not checked rather than blocking the save.
+  def unknown_models(changes)
+    served = Account::AiSettings.served_models
+    return {} if served.nil?
+
+    TASKS.keys.to_h { |task| [ task, changes["model_#{task}"] ] }
+         .select { |task, model| model.present? && model != ai_settings_was["model_#{task}"] && served.exclude?(model) }
+  end
 
   def cast_setting(key, value)
     case DEFAULTS.fetch(key)

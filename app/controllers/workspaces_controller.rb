@@ -6,6 +6,15 @@ class WorkspacesController < ApplicationController
     @account = Current.account
   end
 
+  def update
+    @account = Current.account
+    if @account.update(time_zone: params.expect(account: [ :time_zone ])[:time_zone])
+      redirect_to workspace_path, notice: "Time zone saved."
+    else
+      render :show, status: :unprocessable_entity
+    end
+  end
+
   # Deletes the account and everything in it; the name must be typed to confirm
   def destroy
     account = Current.account

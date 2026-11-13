@@ -34,6 +34,10 @@ class Insight < ApplicationRecord
     update!(feature: nil, triage_state: "dismissed")
   end
 
+  def restore
+    update!(feature: nil, triage_state: "pending")
+  end
+
   private
 
   def feature_in_same_product

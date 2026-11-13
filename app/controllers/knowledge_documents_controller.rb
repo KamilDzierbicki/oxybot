@@ -30,7 +30,7 @@ class KnowledgeDocumentsController < ApplicationController
 
   def destroy
     @document.destroy!
-    redirect_to knowledge_documents_path, notice: "Document deleted."
+    redirect_to knowledge_documents_path
   end
 
   private

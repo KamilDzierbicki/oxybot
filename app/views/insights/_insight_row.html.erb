@@ -1,8 +1,8 @@
 <div class="card insight">
   <div class="insight__head">
     <%= link_to insight.summary, insight, class: "insight__summary" %>
-    <%= status_pill insight.urgency %>
+    <%= urgency_pill insight.urgency %>
   </div>
-  <div class="muted"><%= insight.product.name %> · <%= insight.customer&.name || "unknown customer" %>
+  <div class="muted"><%= insight.product.name %> · <%= insight.customer&.name || "Unknown customer" %>
     · <%= insight.feature ? link_to("→ #{insight.feature.title}", insight.feature) : insight.triage_state %></div>
 </div>

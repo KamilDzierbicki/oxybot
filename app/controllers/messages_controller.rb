@@ -10,8 +10,8 @@ class MessagesController < ApplicationController
     @conversation.ask(question)
 
     respond_to do |format|
-      # Both messages arrive through the conversation's Turbo Stream; only the form is reset here
-      format.turbo_stream { render turbo_stream: turbo_stream.replace("message_form", partial: "messages/form", locals: { conversation: @conversation }) }
+      # Both messages arrive through the conversation's Turbo Stream; the form clears itself and keeps focus
+      format.turbo_stream { head :no_content }
       format.html { redirect_to @conversation }
     end
   end

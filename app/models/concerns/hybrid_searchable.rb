@@ -12,6 +12,11 @@ module HybridSearchable
       fuse(vector_matches(vector), text_matches(text)).first(limit)
     end
 
+    # Full-text only: no model call, for the search box
+    def keyword_search(text, limit: 8)
+      text_matches(text).first(limit)
+    end
+
     private
 
     def vector_matches(vector)

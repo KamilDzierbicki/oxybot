@@ -3,7 +3,7 @@
 <%= turbo_stream_from @integration %>
 <div class="page-header">
   <h1><%= @integration.display_name %></h1>
-  <%= status_pill(@integration.mock? ? "mock" : "live") %>
+  <%= status_pill(@integration.mock? ? "test mode" : "live") %>
 </div>
 <% if @integration.mock? %>
   <p class="muted">Mock mode: no access token is set. <%= { "slack" => "Replies are recorded below instead of being posted to Slack.",

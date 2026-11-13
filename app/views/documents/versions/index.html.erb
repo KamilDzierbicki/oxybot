@@ -6,7 +6,7 @@
     <li class="list__item">
       <span><%= link_to version.summary.presence || "Version #{version.id}", document_version_path(@document, version) %>
         <span class="muted">· <%= version.author_name %></span></span>
-      <span class="muted"><%= version.created_at.to_fs(:short) %></span>
+      <span class="muted"><%= version == @versions.first ? "Current · " : "" %><%= version.created_at.to_fs(:short) %></span>
     </li>
   <% end %>
 </ul>

@@ -6,8 +6,10 @@ class Documents::AcceptancesController < ApplicationController
     if suggestion.stale? && params[:confirm_stale] != "1"
       redirect_to @document, alert: "The document changed after the agent read it. Accepting would replace those edits; confirm to continue."
     else
+      previous = @document.versions.last
       suggestion.accept(user: Current.user)
-      redirect_to @document, notice: "Suggestion applied."
+      undo = document_version_restoration_path(@document, previous) if previous
+      redirect_to @document, notice: "Applied the agent's change.", flash: { undo: undo }.compact
     end
   end
 end
