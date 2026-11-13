@@ -15,7 +15,7 @@ class SearchFeedbackTool < ApplicationTool
 
   def row(insight)
     { id: insight.id, summary: insight.summary, quote: insight.quote, urgency: insight.urgency,
-      product: insight.product.slug, customer: insight.customer&.name, arr: insight.customer && arr(insight.customer.arr_cents),
+      product: insight.product.slug, customer: insight.customer&.name, plan: insight.customer&.plan, arr: insight.customer && arr(insight.customer.arr_cents),
       feature: insight.feature&.title, date: insight.created_at.to_date.iso8601 }.compact
   end
 end

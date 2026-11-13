@@ -28,9 +28,8 @@ class InsightExtractor < RubyLLM::Agent
   inputs :note
   instructions { Prompt.render("insight-extractor", products: Prompt::Context.new(note.account).products) }
   schema SCHEMA
-  end_user { "account-#{note.account_id}" }
   provider_options do
-    { metadata: { trace_name: "extract-insights", generation_name: "extract-insights", trace_id: "feedback-note-#{note.id}",
+    { user: "account-#{note.account_id}", metadata: { trace_name: "extract-insights", generation_name: "extract-insights", trace_id: "feedback-note-#{note.id}",
                   tags: [ "account-#{note.account_id}", Prompt.version_tag("insight-extractor") ] } }
   end
 end

@@ -13,9 +13,11 @@ class Document::Revision
 
   def run
     remember_insights(document.cited_insight_ids)
-    reply = DocumentReviser.new(revision: self).ask("Request: #{suggestion.instruction}").parsed || {}
-    body, _cited = checked_citations(reply["body"])
-    raise RubyLLM::Error, "empty revision" if body.blank?
+    reply = DocumentReviser.new(revision: self).ask("<document>\n#{base_body}\n</document>\n\nRequest: #{suggestion.instruction}").parsed || {}
+    body, _cited = checked_citations(clean(reply["body"]))
+    if body.blank? || body.squish == base_body.squish
+      return suggestion.update!(status: "failed", rationale: "The agent returned the document unchanged. Try a more specific request.")
+    end
 
     suggestion.update!(body: body, rationale: reply["rationale"].to_s.truncate(1_000), status: "pending")
     suggestion.accept(user: suggestion.user) if document.auto_accept? && !suggestion.stale?
@@ -28,5 +30,16 @@ class Document::Revision
 
   def trace_metadata
     { trace_id: "document-#{document.id}", generation_name: "revise-#{document.kind}", tags: [ "account-#{account.id}", Prompt.version_tag("document-reviser") ] }
+  end
+
+  private
+
+  def base_body
+    suggestion.base_version&.body || document.body
+  end
+
+  # Models sometimes echo the framing around the document; it is never part of the document
+  def clean(text)
+    text.to_s.gsub(%r{</?document>}, "").sub(/\A\s*(Current version|Request):.*\n/, "").strip
   end
 end

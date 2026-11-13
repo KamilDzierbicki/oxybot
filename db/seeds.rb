@@ -108,7 +108,7 @@ end
 
 # A feature that shipped three weeks ago, with feedback after the release, for the launch review
 shopify = account.features.find_by!(title: "Shopify connector")
-shopify.update_columns(released_at: 21.days.ago) if shopify.released_at.nil?
+shopify.update_columns(released_at: 21.days.ago) if shopify.released_at.nil? || shopify.released_at > 21.days.ago
 account.feedback_notes.find_or_create_by!(source: "manual", body: "The Shopify connector stops syncing every few weeks and we have to reconnect it. Orders from the last two days were missing in our sales dashboard.") do |note|
   note.author = "Mark Lee"
   note.author_email = "mark@contoso.example"

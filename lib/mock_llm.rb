@@ -13,7 +13,7 @@
 #   revise    shortens sections or records the request
 # Embeddings are a hashed bag of word stems, so texts sharing words are close in cosine distance.
 class MockLlm
-  DIMENSIONS = 1536
+  DIMENSIONS = 768
   STOP_WORDS = %w[
     the and for with that this from have has are was were not but you your our they them when what which
     there their about would could should into than then also just very more most some only will can
@@ -45,7 +45,7 @@ class MockLlm
 
   # Lowercased, transliterated words of 3+ letters without stop words, cut to 5 letters as a crude stemmer
   def self.stems(text)
-    I18n.transliterate(text.to_s.downcase).scan(/[a-z0-9]{3,}/).reject { |word| STOP_WORDS.include?(word) }.map { |word| word[0, 5] }
+    I18n.transliterate(text.to_s.downcase.sub(/\Asearch_(document|query): /, "")).scan(/[a-z0-9]{3,}/).reject { |word| STOP_WORDS.include?(word) }.map { |word| word[0, 5] }
   end
 
   private
@@ -172,9 +172,9 @@ class MockLlm
 
   # The current document is in the instructions after "Current version:", the request in the user message
   def revise(messages)
-    instructions = messages.select { |message| message["role"].in?(%w[system developer]) }.map { |message| content_text(message) }.join("\n")
-    current = instructions.split(/^Current version:\s*$/).last.to_s.strip
-    request = content_text(messages.reverse.find { |message| message["role"] == "user" }).delete_prefix("Request:").strip
+    user_text = content_text(messages.reverse.find { |message| message["role"] == "user" })
+    current = user_text[%r{<document>\n?(.*?)\n?</document>}m, 1].to_s.strip
+    request = user_text.split("</document>").last.to_s.strip.delete_prefix("Request:").strip
 
     if request.match?(/short|concise|trim|brief|skr[oó]|kr[oó]t/i)
       kept = []

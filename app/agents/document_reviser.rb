@@ -15,9 +15,8 @@ class DocumentReviser < RubyLLM::Agent
   inputs :revision
   instructions do
     document = revision.document
-    Prompt.render("document-reviser", document_title: document.title, document_kind: document.kind_name, document_body: document.body)
+    Prompt.render("document-reviser", document_title: document.title, document_kind: document.kind_name)
   end
   schema SCHEMA
-  end_user { "account-#{revision.account.id}" }
-  provider_options { { metadata: revision.trace_metadata } }
+  provider_options { { user: "account-#{revision.account.id}", metadata: revision.trace_metadata } }
 end
