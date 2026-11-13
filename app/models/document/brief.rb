@@ -87,7 +87,7 @@ class Document::Brief
     return "#{heading}\n- none" if insights.empty?
 
     lines = insights.map do |insight|
-      who = insight.customer ? "#{insight.customer.name}, #{ActiveSupport::NumberHelper.number_to_currency(insight.customer.arr, precision: 0)} ARR" : "unknown customer"
+      who = insight.customer ? "#{insight.customer.name}, #{insight.customer.plan || "no plan"} plan, #{ActiveSupport::NumberHelper.number_to_currency(insight.customer.arr, precision: 0)} ARR" : "unknown customer"
       "- [insight:#{insight.id}] #{insight.summary} (#{who}, #{insight.urgency} urgency). Quote: \"#{insight.quote.squish.truncate(200)}\""
     end
     "#{heading}\n#{lines.join("\n")}"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -129,7 +129,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_200000) do
     t.string "title", null: false
     t.text "description", default: "", null: false
     t.string "status", default: "idea", null: false
-    t.vector "embedding", limit: 1536
     t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(title, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", stored: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -138,6 +137,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_200000) do
     t.string "linear_identifier"
     t.string "linear_url"
     t.string "linear_state"
+    t.vector "embedding", limit: 768
     t.index ["account_id", "linear_issue_id"], name: "index_features_on_account_id_and_linear_issue_id", unique: true, where: "(linear_issue_id IS NOT NULL)"
     t.index ["account_id"], name: "index_features_on_account_id"
     t.index ["embedding"], name: "index_features_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
@@ -174,10 +174,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_200000) do
     t.string "triage_state", default: "pending", null: false
     t.float "match_confidence"
     t.string "match_reason"
-    t.vector "embedding", limit: 1536
     t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(summary, ''::character varying))::text || ' '::text) || COALESCE(quote, ''::text)))", stored: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.vector "embedding", limit: 768
     t.index ["account_id", "triage_state"], name: "index_insights_on_account_id_and_triage_state"
     t.index ["account_id"], name: "index_insights_on_account_id"
     t.index ["customer_id"], name: "index_insights_on_customer_id"

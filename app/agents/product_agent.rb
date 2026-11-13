@@ -9,6 +9,5 @@ class ProductAgent < RubyLLM::Agent
   tools { [ SearchFeedbackTool.new(turn), FeatureDemandTool.new(turn), ListFeaturesTool.new(turn) ] }
   tool_options { { rounds: turn.account.ai_setting("agent_max_rounds") } }
   # LiteLLM counts spend per end user, so each tenant's cost is visible and can get its own budget
-  end_user { "account-#{turn.account.id}" }
-  provider_options { { metadata: turn.trace_metadata } }
+  provider_options { { user: "account-#{turn.account.id}", metadata: turn.trace_metadata } }
 end

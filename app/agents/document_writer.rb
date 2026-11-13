@@ -12,6 +12,5 @@ class DocumentWriter < RubyLLM::Agent
     tools
   end
   tool_options { { rounds: generation.account.ai_setting("agent_max_rounds") } }
-  end_user { "account-#{generation.account.id}" }
-  provider_options { { metadata: generation.trace_metadata } }
+  provider_options { { user: "account-#{generation.account.id}", metadata: generation.trace_metadata } }
 end

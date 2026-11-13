@@ -100,6 +100,21 @@ class DocumentTest < ActiveSupport::TestCase
     assert_includes post.text, "/documents/#{report.id}|Open in OxyBot>"
   end
 
+  test "a revision that changes nothing is reported as failed, not offered for review" do
+    spec = draft("prd", feature: features(:pdf_export))
+    stub_request(:post, "http://mock-llm.test/v1/chat/completions").to_return do |request|
+      body = JSON.parse(request.body)
+      unchanged = body["messages"].last["content"].to_s[%r{<document>\n(.*)\n</document>}m, 1]
+      { status: 200, headers: { "Content-Type" => "application/json" },
+        body: { choices: [ { index: 0, finish_reason: "stop", message: { role: "assistant", content: { body: unchanged, rationale: "Shortened it." }.to_json } } ] }.to_json }
+    end
+
+    suggestion = spec.request_change("Make it shorter", user: users(:kamil))
+    perform_enqueued_jobs(only: ReviseDocumentJob)
+
+    assert_equal "failed", suggestion.reload.status
+  end
+
   test "a failed model call marks the document failed instead of leaving it drafting" do
     stub_request(:post, "http://mock-llm.test/v1/chat/completions").to_return(status: 500, body: { error: { message: "down" } }.to_json)
 

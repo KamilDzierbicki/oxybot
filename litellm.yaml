@@ -43,11 +43,20 @@ model_list:
         - location: message
           role: system
 
-  # 1536 dimensions, matching insights.embedding and features.embedding. Multilingual, so Polish feedback works.
+  # A cheap general alias, handy for testing every task on Haiku (pick it per task in AI settings)
+  - model_name: oxybot-haiku
+    litellm_params:
+      model: anthropic/claude-haiku-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 3
+      budget_duration: 1d
+
+  # Local embeddings (768 dimensions, matching insights.embedding and features.embedding), no key needed.
+  # The app adds nomic's "search_document:" / "search_query:" prefixes itself.
   - model_name: oxybot-embed
     litellm_params:
-      model: openai/text-embedding-3-small
-      api_key: os.environ/OPENAI_API_KEY
+      model: ollama/nomic-embed-text
+      api_base: os.environ/OLLAMA_API_BASE
 
 litellm_settings:
   callbacks: ["langfuse_otel"]

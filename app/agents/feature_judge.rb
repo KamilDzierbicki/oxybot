@@ -19,9 +19,8 @@ class FeatureJudge < RubyLLM::Agent
                                    candidates: candidates.map { |feature| "- [#{feature.id}] #{feature.title.squish}: #{feature.description.squish}" }.join("\n"))
   end
   schema SCHEMA
-  end_user { "account-#{insight.account_id}" }
   provider_options do
-    { metadata: { trace_name: "match-feature", generation_name: "match-feature", trace_id: "insight-#{insight.id}",
+    { user: "account-#{insight.account_id}", metadata: { trace_name: "match-feature", generation_name: "match-feature", trace_id: "insight-#{insight.id}",
                   tags: [ "account-#{insight.account_id}", Prompt.version_tag("feature-judge") ] } }
   end
 end

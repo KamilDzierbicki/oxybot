@@ -8,7 +8,7 @@ module HybridSearchable
 
   class_methods do
     def hybrid_search(text, vector: nil, limit: 8)
-      vector ||= embed(text)
+      vector ||= embed(text, task: :query)
       fuse(vector_matches(vector), text_matches(text)).first(limit)
     end
 
