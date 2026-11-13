@@ -1,0 +1,20 @@
+northwind:
+  account: acme
+  name: Northwind Logistics
+  domain: northwind.example
+  arr_cents: 12000000
+  plan: Enterprise
+
+contoso:
+  account: acme
+  name: Contoso Retail
+  domain: contoso.example
+  arr_cents: 4800000
+  plan: Growth
+
+initech:
+  account: globex
+  name: Initech
+  domain: initech.example
+  arr_cents: 9900000
+  plan: Enterprise

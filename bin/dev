@@ -1,2 +1,5 @@
 #!/usr/bin/env ruby
+# Puma on port 3100 with the Solid Queue supervisor inside it, so one command runs the web app and the jobs.
+ENV["PORT"] ||= "3100"
+ENV["SOLID_QUEUE_IN_PUMA"] ||= "1"
 exec "./bin/rails", "server", *ARGV

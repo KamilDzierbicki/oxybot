@@ -1,0 +1,17 @@
+reports:
+  account: acme
+  name: Reports
+  slug: reports
+  description: Dashboards and reports with export to PDF and CSV, scheduled email reports.
+
+mobile:
+  account: acme
+  name: Mobile app
+  slug: mobile
+  description: iOS and Android app for viewing dashboards on the phone, with offline mode and notifications.
+
+billing:
+  account: globex
+  name: Billing
+  slug: billing
+  description: Invoices, payments and PDF export of invoices.
