@@ -1,0 +1,8 @@
+<% last_page = (total_count.to_f / Paginated::PER_PAGE).ceil %>
+<% if last_page > 1 %>
+  <nav class="pagination" aria-label="Pages">
+    <span><%= link_to "Newer", url_for(request.query_parameters.merge(page: page_number - 1)) if page_number > 1 %></span>
+    <span class="muted">Page <%= page_number %> of <%= last_page %> · <%= total_count %> in total</span>
+    <span><%= link_to "Older", url_for(request.query_parameters.merge(page: page_number + 1)) if page_number < last_page %></span>
+  </nav>
+<% end %>

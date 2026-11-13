@@ -6,6 +6,8 @@ class Product < ApplicationRecord
   # Non-Latin names (Hebrew, Arabic) transliterate to nothing; they get a generated slug instead of an error
   normalizes :slug, with: ->(slug) { slug.strip.downcase.parameterize.presence || "product-#{SecureRandom.hex(3)}" }
 
+  before_validation { self.slug = name if slug.blank? && name.present? }
+
   validates :name, :description, presence: true
   validates :slug, presence: true, uniqueness: { scope: :account_id }
 

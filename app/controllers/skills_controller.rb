@@ -22,7 +22,7 @@ class SkillsController < ApplicationController
 
   def update
     if @skill.update(skill_params)
-      redirect_to skills_path, notice: "Skill saved."
+      redirect_to skills_path
     else
       render :edit, status: :unprocessable_entity
     end

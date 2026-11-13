@@ -1,4 +1,6 @@
 <% content_for :title, "Feedback" %>
+<% content_for :head do %><meta name="turbo-refresh-method" content="morph"><meta name="turbo-refresh-scroll" content="preserve"><% end %>
+<%= turbo_stream_from @feedback_note %>
 <div class="page-header">
   <h1>Feedback from <%= @feedback_note.author.presence || @feedback_note.customer&.name || "unknown author" %></h1>
   <%= status_pill @feedback_note.source %>
@@ -11,7 +13,20 @@
 <h2 class="section-title">Insights</h2>
 <% if @feedback_note.processed? %>
   <%= render partial: "insights/insight_row", collection: @feedback_note.insights.includes(:product, :feature, :suggested_feature), as: :insight %>
-  <%= tag.p("No product needs found in this note.", class: "empty") if @feedback_note.insights.empty? %>
+  <% if @feedback_note.insights.empty? %>
+    <div class="empty">
+      <% if Current.account.products.none? %>
+        No insights: this workspace has no products yet, so the needs could not be assigned.
+        <div class="row empty__actions"><%= link_to "Add a product", new_product_path, class: "button button--primary" %></div>
+      <% else %>
+        No product needs found in this note.
+      <% end %>
+    </div>
+  <% end %>
+  <div class="row">
+    <%= button_to "Extract again", feedback_note_extraction_path(@feedback_note), class: "button" %>
+    <%= button_to "Delete feedback", @feedback_note, method: :delete, class: "button button--quiet", form: { data: { turbo_confirm: "Delete this feedback and its insights?" } } %>
+  </div>
 <% else %>
-  <p class="muted">Extracting insights… refresh in a moment.</p>
+  <div class="card"><p class="message__thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Extracting insights… they appear here in a few seconds.</p></div>
 <% end %>

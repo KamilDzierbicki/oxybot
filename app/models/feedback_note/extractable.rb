@@ -8,6 +8,15 @@ module FeedbackNote::Extractable
     after_create_commit :extract_insights_later
   end
 
+  # Pending insights are replaced; insights a person already linked or dismissed are kept
+  def reextract
+    transaction do
+      insights.pending.destroy_all
+      update!(processed_at: nil)
+    end
+    extract_insights_later
+  end
+
   def extract_insights_later
     ExtractInsightsJob.perform_later(self)
   end

@@ -19,37 +19,45 @@
   <body>
     <% if authenticated? %>
       <div class="shell">
-        <nav class="sidebar">
-          <div class="sidebar__brand">
-            <span class="sidebar__logo">◆</span> OxyBot
-            <div class="sidebar__account"><%= Current.account.name %></div>
+        <nav class="sidebar" data-controller="menu" aria-label="Main">
+          <div class="sidebar__top">
+            <div class="sidebar__brand">
+              <span class="sidebar__logo" aria-hidden="true">◆</span> OxyBot
+              <div class="sidebar__account"><%= Current.account.name %></div>
+            </div>
+            <button type="button" class="button menu-toggle" aria-expanded="false" aria-controls="main-nav"
+                    data-menu-target="button" data-action="menu#toggle">Menu</button>
           </div>
-          <%= nav_link "Assistant", conversations_path, active: controller_name.in?(%w[conversations messages]) %>
-          <%= nav_link "Inbox", insights_path, count: Current.account.insights.pending.count, active: controller_name == "insights" %>
-          <%= nav_link "Features", features_path, active: controller_name.in?(%w[features products specs launch_reviews linear_issues linear_simulations]) %>
-          <%= nav_link "Documents", documents_path, active: controller_name.in?(%w[documents document_templates suggestions versions acceptances rejections regenerations]) %>
-          <%= nav_link "Feedback", feedback_notes_path, active: controller_name == "feedback_notes" %>
-          <%= nav_link "Customers", customers_path, active: controller_name == "customers" %>
-          <%= nav_link "Knowledge", knowledge_documents_path, active: controller_name == "knowledge_documents" %>
-          <%= nav_link "Skills", skills_path, active: controller_name == "skills" %>
-          <div class="nav-group">Settings</div>
-          <%= nav_link "Integrations", integrations_path, active: controller_name.in?(%w[integrations simulated_messages syncs connection_checks]) %>
-          <% if Current.user.admin? %>
-            <%= nav_link "Users", users_path, active: controller_name.in?(%w[users invitations]) %>
-            <%= nav_link "AI settings", ai_settings_path, active: controller_name.in?(%w[ai_settings prompt_refreshes]) %>
-          <% end %>
+          <div class="sidebar__nav" id="main-nav">
+            <%= nav_link "Assistant", conversations_path, active: controller_name.in?(%w[conversations messages]) %>
+            <%= nav_link "Inbox", insights_path, count: Current.account.insights.pending.count, active: controller_name == "insights" %>
+            <%= nav_link "Features", features_path, active: controller_name.in?(%w[features specs launch_reviews linear_issues linear_simulations]) %>
+            <%= nav_link "Products", products_path, active: controller_name == "products" %>
+            <%= nav_link "Documents", documents_path, active: controller_name.in?(%w[documents document_templates suggestions versions acceptances rejections regenerations]) %>
+            <%= nav_link "Feedback", feedback_notes_path, active: controller_name.in?(%w[feedback_notes extractions]) %>
+            <%= nav_link "Customers", customers_path, active: controller_name == "customers" %>
+            <%= nav_link "Knowledge", knowledge_documents_path, active: controller_name == "knowledge_documents" %>
+            <%= nav_link "Skills", skills_path, active: controller_name == "skills" %>
+            <div class="nav-group">Settings</div>
+            <%= nav_link "Integrations", integrations_path, active: controller_name.in?(%w[integrations simulated_messages syncs connection_checks]) %>
+            <% if Current.user.admin? %>
+              <%= nav_link "Users", users_path, active: controller_name.in?(%w[users invitations]) %>
+              <%= nav_link "AI settings", ai_settings_path, active: controller_name.in?(%w[ai_settings prompt_refreshes]) %>
+              <%= nav_link "Workspace", workspace_path, active: controller_name.in?(%w[workspaces exports]) %>
+            <% end %>
+          </div>
           <div class="sidebar__footer">
             <%= link_to Current.user.name, profile_path %>
             <%= button_to "Sign out", session_path, method: :delete, class: "link-button" %>
           </div>
         </nav>
-        <main class="main">
+        <main class="main" id="main">
           <%= render "shared/flash" %>
           <%= yield %>
         </main>
       </div>
     <% else %>
-      <main class="main main--centered"><%= yield %></main>
+      <main class="main main--centered" id="main"><%= yield %></main>
     <% end %>
   </body>
 </html>

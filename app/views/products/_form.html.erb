@@ -2,7 +2,8 @@
   <%= render "shared/errors", record: product %>
   <div class="form__row">
     <label>Name<%= form.text_field :name, required: true %></label>
-    <label>Slug<%= form.text_field :slug, required: true, placeholder: "reports" %></label>
+    <label>Short id (optional)<%= form.text_field :slug %>
+      <small class="muted">Used in links and by the AI, for example "reports". Filled from the name when empty.</small></label>
   </div>
   <label>Description<%= form.text_area :description, rows: 4, required: true, placeholder: "What the product covers, in the words customers use" %></label>
   <%= form.submit "Save", class: "button button--primary" %>

@@ -64,7 +64,7 @@ class TeamManagementTest < ActionDispatch::IntegrationTest
     user = User.find_by!(email_address: "peter@initech.example")
     assert user.admin?
     assert_equal Document::KINDS.size, user.account.document_templates.count
-    assert_redirected_to integrations_path
+    assert_redirected_to root_path
   end
 
   test "an admin connects an integration in mock mode and checks it" do

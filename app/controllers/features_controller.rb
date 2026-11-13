@@ -1,11 +1,12 @@
 class FeaturesController < ApplicationController
+  include Paginated
   before_action :set_feature, only: %i[show edit update]
 
   def index
     @products = Current.account.products.alphabetically
-    @product = @products.find { |product| product.slug == params[:product] }
+    @product = Current.account.products.find_by(slug: params[:product]) if params[:product].present?
     features = Current.account.features.includes(:product).by_demand
-    @features = @product ? features.where(product: @product) : features
+    @features = paginate(@product ? features.where(product: @product) : features)
   end
 
   def show
@@ -20,7 +21,7 @@ class FeaturesController < ApplicationController
   def create
     @feature = Current.account.features.new(feature_params)
     if @feature.save
-      redirect_to @feature, notice: "Feature added."
+      redirect_to @feature
     else
       render :new, status: :unprocessable_entity
     end
@@ -30,7 +31,7 @@ class FeaturesController < ApplicationController
 
   def update
     if @feature.update(feature_params)
-      redirect_to @feature, notice: "Feature saved."
+      redirect_to @feature
     else
       render :edit, status: :unprocessable_entity
     end

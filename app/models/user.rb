@@ -61,6 +61,7 @@ class User < ApplicationRecord
   end
 
   def ensure_not_last_admin
+    return if destroyed_by_association # the whole workspace is being deleted
     return unless admin? && !account.users.where(role: "admin").where.not(id: id).exists?
 
     errors.add(:base, "The last admin cannot be removed")

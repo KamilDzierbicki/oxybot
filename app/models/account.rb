@@ -26,6 +26,23 @@ class Account < ApplicationRecord
 
   after_create_commit -> { DocumentTemplate.install_defaults(self) }
 
+  EXPORTED = {
+    users: %i[id name email_address role slack_user_id mattermost_user_id created_at],
+    products: %i[id name slug description], features: %i[id product_id title description status released_at linear_identifier],
+    customers: %i[id name domain plan arr_cents], contacts: %i[id customer_id email name],
+    feedback_notes: %i[id customer_id source author author_email body created_at],
+    insights: %i[id feedback_note_id product_id customer_id feature_id quote summary urgency triage_state created_at],
+    documents: %i[id feature_id kind title body status created_at updated_at],
+    knowledge_documents: %i[id title body], skills: %i[id user_id name description instructions],
+    conversations: %i[id user_id channel title created_at]
+  }.freeze
+
+  def export
+    EXPORTED.to_h { |association, columns| [ association, public_send(association).order(:id).map { |record| record.slice(*columns) } ] }
+            .merge(account: slice(:id, :name, :time_zone, :custom_instructions, :created_at),
+                   messages: Message.joins(:conversation).where(conversations: { account_id: id }).order(:id).map { |message| message.slice(:id, :conversation_id, :role, :content, :created_at) })
+  end
+
   # The weekly opportunity report (config/recurring.yml); it is posted to Slack when it is ready
   def discover_opportunities
     Document.draft(account: self, kind: "opportunity_report")

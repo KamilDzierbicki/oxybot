@@ -10,7 +10,7 @@ class SignupsController < ApplicationController
     @signup = Signup.new(params.expect(signup: %i[account_name name email_address password]))
     if @signup.save
       start_new_session_for @signup.user
-      redirect_to integrations_path, notice: "Welcome to OxyBot. Connect your tools to start collecting feedback."
+      redirect_to root_path
     else
       render :new, status: :unprocessable_entity
     end

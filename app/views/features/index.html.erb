@@ -6,12 +6,20 @@
     <%= link_to "Add feature", new_feature_path(product: @product&.slug), class: "button button--primary" %>
   </div>
 </div>
-<nav class="tabs">
-  <%= link_to "All", features_path, class: ["tab", ("tab--active" unless @product)] %>
-  <% @products.each do |product| %>
-    <%= link_to product.name, features_path(product: product.slug), class: ["tab", ("tab--active" if product == @product)] %>
+<% if @products.size <= 8 %>
+  <nav class="tabs" aria-label="Products">
+    <%= link_to "All", features_path, class: ["tab", ("tab--active" unless @product)] %>
+    <% @products.each do |product| %>
+      <%= link_to product.name, features_path(product: product.slug), class: ["tab", ("tab--active" if product == @product)] %>
+    <% end %>
+  </nav>
+<% else %>
+  <%= form_with url: features_path, method: :get, class: "inline-form", data: { controller: "auto-submit" } do |form| %>
+    <%= form.select :product, @products.map { |product| [ product.name, product.slug ] }, { include_blank: "All products", selected: @product&.slug },
+                    aria: { label: "Filter by product" }, data: { action: "change->auto-submit#submit" } %>
   <% end %>
-</nav>
+<% end %>
+<div class="table-wrap">
 <table class="table">
   <thead><tr><th>Feature</th><th>Product</th><th>Status</th><th class="num">Insights</th><th class="num">Customers</th><th class="num">ARR asking</th></tr></thead>
   <tbody>
@@ -27,4 +35,6 @@
     <% end %>
   </tbody>
 </table>
+</div>
 <%= tag.p("No features yet.", class: "empty") if @features.empty? %>
+<%= render "shared/pagination", total_count: @total_count %>

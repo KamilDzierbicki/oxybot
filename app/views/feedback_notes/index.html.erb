@@ -4,6 +4,7 @@
   <%= link_to "Add feedback", new_feedback_note_path, class: "button button--primary" %>
 </div>
 <p class="muted">Raw feedback from Slack feedback channels and the form. Each note is split into insights automatically.</p>
+<div class="table-wrap">
 <table class="table">
   <thead><tr><th>Feedback</th><th>Source</th><th>Customer</th><th>Insights</th><th>Received</th></tr></thead>
   <tbody>
@@ -18,4 +19,6 @@
     <% end %>
   </tbody>
 </table>
+</div>
+<%= render "shared/pagination", total_count: @total_count %>
 <%= tag.p("No feedback yet.", class: "empty") if @feedback_notes.empty? %>

@@ -1,9 +1,10 @@
 class ConversationsController < ApplicationController
+  include Paginated
   # Each call costs model tokens; the limit keeps one user from running up the bill
   rate_limit to: 20, within: 1.minute, only: :create, by: -> { Current.user.id },
              with: -> { redirect_back_or_to root_path, alert: "Slow down a little: too many requests in a minute." }
   def index
-    @conversations = Current.user.conversations.latest_first.limit(30)
+    @conversations = paginate(Current.user.conversations.latest_first)
   end
 
   def show

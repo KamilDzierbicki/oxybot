@@ -22,7 +22,7 @@ class KnowledgeDocumentsController < ApplicationController
 
   def update
     if @document.update(document_params)
-      redirect_to knowledge_documents_path, notice: "Document saved."
+      redirect_to knowledge_documents_path
     else
       render :edit, status: :unprocessable_entity
     end
