@@ -60,6 +60,9 @@ model_list:
 
 litellm_settings:
   callbacks: ["langfuse_otel"]
+  # Traces keep timings, tokens and cost but not the text: feedback is personal data and Langfuse keeps it separately.
+  # Set to false only if you accept customer text in Langfuse and give it a retention period.
+  turn_off_message_logging: true
   num_retries: 2
   request_timeout: 60
 

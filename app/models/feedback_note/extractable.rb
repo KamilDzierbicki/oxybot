@@ -15,6 +15,7 @@ module FeedbackNote::Extractable
   # Idempotent: a retried job finds processed_at set and does nothing.
   def extract_insights
     return if processed?
+    return unless Rails.configuration.x.ai_enabled
 
     reply = InsightExtractor.new(note: self).ask("Feedback:\n#{body}")
     transaction do

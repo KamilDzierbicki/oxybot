@@ -11,6 +11,7 @@ class Integration::Mattermost < Integration
   store_accessor :settings, :server_url, :trigger_word
 
   validates :server_url, format: { with: %r{\Ahttps?://[^\s/]+/?\z}, message: "must be the server's address, like https://chat.example.com" }
+  validate :server_url_reachable_safely, if: :server_url
 
   def self.external_id_label = "Team id (System Console, Teams, or /api/v4/teams)"
 
@@ -59,8 +60,12 @@ class Integration::Mattermost < Integration
   end
 
   # Several tokens may be saved (one per outgoing webhook), comma separated
+  def server_url_reachable_safely
+    errors.add(:server_url, "points to a private or local address (set ALLOW_PRIVATE_INTEGRATION_HOSTS=true for a server on your own network)") unless Integration::OutboundUrl.allowed?(server_url)
+  end
+
   def token_matches?(stored, token)
-    token.present? && stored.to_s.split(/[\s,]+/).any? { |candidate| ActiveSupport::SecurityUtils.secure_compare(candidate, token) }
+    token.is_a?(String) && token.present? && stored.to_s.split(/[\s,]+/).any? { |candidate| ActiveSupport::SecurityUtils.secure_compare(candidate, token) }
   end
 
   # Only URLs on our own Mattermost server are called back, so a forged command cannot make OxyBot call elsewhere

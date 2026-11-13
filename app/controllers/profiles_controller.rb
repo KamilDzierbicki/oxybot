@@ -4,7 +4,11 @@ class ProfilesController < ApplicationController
   end
 
   def update
-    Current.user.update!(params.expect(user: %i[name slack_user_id mattermost_user_id custom_instructions]))
-    redirect_to profile_path, notice: "Profile saved."
+    @user = Current.user
+    if @user.update(params.expect(user: %i[name custom_instructions]))
+      redirect_to profile_path
+    else
+      render :show, status: :unprocessable_entity
+    end
   end
 end

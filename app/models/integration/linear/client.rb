@@ -38,8 +38,9 @@ class Integration::Linear::Client
   private
 
   def query(graphql, **variables)
-    response = Net::HTTP.post(URL, { query: graphql, variables: variables }.to_json,
-                              "Content-Type" => "application/json", "Authorization" => @api_key)
+    request = Net::HTTP::Post.new(URL, "Content-Type" => "application/json", "Authorization" => @api_key)
+    request.body = { query: graphql, variables: variables }.to_json
+    response = Net::HTTP.start(URL.host, URL.port, use_ssl: true, open_timeout: 5, read_timeout: 15) { |http| http.request(request) }
     body = JSON.parse(response.body)
     raise Error, "Linear: #{body["errors"].map { |error| error["message"] }.join(", ")}" if body["errors"].present?
     raise Error, "Linear answered #{response.code}" unless response.is_a?(Net::HTTPSuccess)

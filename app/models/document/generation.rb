@@ -12,6 +12,9 @@ class Document::Generation
   end
 
   def run
+    return unless document.drafting?
+    return document.update!(status: "failed", body: "AI drafting is paused on this server.") unless Rails.configuration.x.ai_enabled
+
     brief = Document::Brief.new(document, self).to_s
     response = DocumentWriter.new(generation: self).ask(brief)
     body, cited = checked_citations(response.content)

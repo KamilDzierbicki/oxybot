@@ -13,7 +13,8 @@ class Slack::EventsController < ApplicationController
     when "url_verification"
       render json: { challenge: payload["challenge"] }
     when "event_callback"
-      Integration::Slack.find_by(external_id: payload["team_id"])&.receive(payload["event"])
+      integration = Integration::Slack.find_by(external_id: payload["team_id"])
+      integration.receive(payload["event"]) if integration && routable?(integration) && payload["event"].is_a?(Hash)
       head :ok
     else
       head :ok
@@ -21,6 +22,12 @@ class Slack::EventsController < ApplicationController
   end
 
   private
+
+  # All workspaces share one app signing secret, so a typed-in team id proves nothing. In production only an
+  # integration whose token Slack confirmed belongs to that team receives its events.
+  def routable?(integration)
+    integration.verified? || !Rails.env.production?
+  end
 
   def verify_signature
     timestamp = request.headers["X-Slack-Request-Timestamp"].to_i

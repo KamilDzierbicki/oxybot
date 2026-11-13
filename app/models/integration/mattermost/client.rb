@@ -25,6 +25,7 @@ class Integration::Mattermost::Client
   private
 
   def request(method, url, payload = nil, authorize: true)
+    Integration::OutboundUrl.check!(url)
     uri = URI(url)
     request = method.new(uri, "Content-Type" => "application/json")
     request["Authorization"] = "Bearer #{@token}" if authorize

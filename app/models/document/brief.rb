@@ -51,9 +51,10 @@ class Document::Brief
 
     features.map do |feature|
       customers = feature.insights.filter_map(&:customer).uniq
-      contacts = customers.flat_map(&:contacts).map { |contact| "#{contact.name || contact.email} <#{contact.email}> (#{contact.customer&.name})" }
+      # Names only: email addresses are not needed to write release notes, so they never reach the model
+      contacts = customers.flat_map(&:contacts).map { |contact| "#{contact.name || "a contact"} (#{contact.customer&.name})" }
       [ "Released: #{feature.title} (#{feature.product.name}) on #{feature.released_at.to_date.to_fs(:long)}\n#{feature.description}",
-        evidence("Customers who asked for it:", feature.insights.includes(:customer).limit(8)),
+        evidence("Customers who asked for it:", feature.insights.sort_by(&:id).first(8)),
         "Contacts to notify: #{contacts.presence&.join("; ") || "none known"}" ].join("\n")
     end
   end

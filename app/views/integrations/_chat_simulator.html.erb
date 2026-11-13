@@ -1,7 +1,7 @@
 <div class="split">
   <section>
     <h2 class="section-title"><%= integration.display_name %> simulator</h2>
-    <% if integration.mock? %>
+    <% if integration.mock? && Current.user.admin? %>
       <p class="muted small">Hands a message to OxyBot the way <%= integration.display_name %> would. Pick a feedback channel to record feedback, mention OxyBot in a shared channel, or use a direct message for a private answer.</p>
       <%= form_with scope: :simulated_message, url: integration_simulated_messages_path(integration), class: "form" do |form| %>
         <div class="form__row">
@@ -16,10 +16,13 @@
         <label class="checkbox"><%= form.check_box :mention %> Address OxyBot (mention)</label>
         <%= form.submit "Send to OxyBot", class: "button button--primary" %>
       <% end %>
+    <% elsif integration.mock? %>
+      <p class="muted small">An admin can try the integration here before it goes live.</p>
     <% else %>
-      <p class="muted small">Live: messages arrive from <%= integration.display_name %> itself.</p>
+      <p class="muted small">Live: messages arrive from <%= integration.display_name %> itself. Conversations stay private to each person.</p>
     <% end %>
   </section>
+  <% if @chat_messages %>
   <section>
     <h2 class="section-title">Messages</h2>
     <div class="slack-log">
@@ -35,4 +38,5 @@
     </div>
     <%= link_to "Refresh", integration_path(integration), class: "button button--quiet" %>
   </section>
+  <% end %>
 </div>

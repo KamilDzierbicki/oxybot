@@ -11,7 +11,7 @@ class ProductsController < ApplicationController
 
   def create
     @product = Current.account.products.new(product_params)
-    if @product.save
+    if save_unique(@product)
       redirect_to products_path, notice: "Product added."
     else
       render :new, status: :unprocessable_entity
@@ -29,6 +29,13 @@ class ProductsController < ApplicationController
   end
 
   private
+
+  def save_unique(product)
+    product.save
+  rescue ActiveRecord::RecordNotUnique
+    product.errors.add(:slug, "is already taken")
+    false
+  end
 
   def set_product
     @product = Current.account.products.find_by!(slug: params[:id])

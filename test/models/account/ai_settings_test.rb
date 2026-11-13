@@ -38,7 +38,7 @@ class Account::AiSettingsTest < ActiveSupport::TestCase
     assert @account.opportunity_report_due?(monday_8am_warsaw)
     assert_not @account.opportunity_report_due?(monday_8am_warsaw + 1.hour)
 
-    travel_to(monday_8am_warsaw) { @account.documents.create!(kind: "opportunity_report", title: "Week", status: "ready") }
+    travel_to(monday_8am_warsaw) { @account.documents.create!(kind: "opportunity_report", title: "Week", status: "ready", body: "## Summary") }
     assert_not @account.opportunity_report_due?(monday_8am_warsaw), "already drafted this week"
   end
 

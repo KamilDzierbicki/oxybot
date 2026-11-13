@@ -1,17 +1,19 @@
 <% content_for :title, "Users" %>
 <h1>Users</h1>
-<p class="muted">Admins manage integrations, users, AI settings, team instructions and templates. Members use everything else.</p>
+<p class="muted">Admins manage integrations, users, AI settings, team instructions, team skills and templates. Members use everything else. Chat ids link a person's Slack or Mattermost messages to their OxyBot account.</p>
+<div class="table-wrap">
 <table class="table">
-  <thead><tr><th>Name</th><th>Email</th><th>Slack</th><th>Role</th><th></th></tr></thead>
+  <thead><tr><th>Name</th><th>Role and chat ids</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
   <tbody>
     <% @users.each do |user| %>
       <tr>
-        <td><%= user.name %><%= tag.span(" (you)", class: "muted") if user == Current.user %></td>
-        <td class="muted"><%= user.email_address %></td>
-        <td class="muted"><%= user.slack_user_id || "–" %></td>
+        <td><%= user.name %><%= tag.span(" (you)", class: "muted") if user == Current.user %><div class="muted small"><%= user.email_address %></div></td>
         <td>
-          <%= form_with model: user, class: "inline-form", data: { controller: "auto-submit" } do |form| %>
-            <%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, {}, data: { action: "change->auto-submit#submit" } %>
+          <%= form_with model: user, class: "inline-form inline-form--wrap" do |form| %>
+            <%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, {}, aria: { label: "Role for #{user.name}" } %>
+            <%= form.text_field :slack_user_id, placeholder: "Slack id", aria: { label: "Slack member id for #{user.name}" }, size: 12 %>
+            <%= form.text_field :mattermost_user_id, placeholder: "Mattermost id", aria: { label: "Mattermost user id for #{user.name}" }, size: 14 %>
+            <%= form.submit "Save", class: "button" %>
           <% end %>
         </td>
         <td><%= button_to "Remove", user, method: :delete, class: "button button--quiet", form: { data: { turbo_confirm: "Remove #{user.name}?" } } unless user == Current.user %></td>
@@ -19,14 +21,16 @@
     <% end %>
   </tbody>
 </table>
+</div>
 
 <h2 class="section-title">Invite someone</h2>
 <% if flash[:invitation_url] %>
   <div class="card"><p class="small">If email is not set up yet, share this link (valid 7 days):</p><pre class="mono-block"><%= flash[:invitation_url] %></pre></div>
 <% end %>
-<%= form_with model: Invitation.new, class: "inline-form" do |form| %>
-  <%= form.email_field :email, required: true, placeholder: "colleague@company.com" %>
-  <%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, selected: "member" %>
+<%= form_with model: @invitation || Invitation.new, class: "inline-form inline-form--wrap" do |form| %>
+  <%= render "shared/errors", record: @invitation if @invitation %>
+  <%= form.email_field :email, required: true, placeholder: "colleague@company.com", aria: { label: "Email to invite" } %>
+  <%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, { selected: @invitation&.role || "member" }, aria: { label: "Role for the invited person" } %>
   <%= form.submit "Send invitation", class: "button button--primary" %>
 <% end %>
 <% if @invitations.any? %>

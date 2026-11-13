@@ -12,11 +12,14 @@ module Insight::Matchable
   end
 
   def match
+    return unless Rails.configuration.x.ai_enabled
+
     embed if embedding.nil?
     candidates = product.features.hybrid_search(summary, vector: embedding, limit: account.ai_setting("match_candidates"))
     return update!(suggested_feature: nil, match_confidence: nil, match_reason: "No features in #{product.name} yet.") if candidates.empty?
 
-    verdict = FeatureJudge.new(insight: self, candidates: candidates).ask("Which feature does this insight ask for?").parsed || {}
+    question = "<insight>\nInsight: #{summary.squish}\nQuote: #{quote.squish}\n</insight>\n\nWhich feature does this insight ask for?"
+    verdict = FeatureJudge.new(insight: self, candidates: candidates).ask(question).parsed || {}
     # The model can only pick from the candidates it was shown
     suggested = candidates.find { |feature| feature.id == verdict["feature_id"] }
     update!(suggested_feature: suggested, match_confidence: verdict["confidence"].to_f.clamp(0, 1),

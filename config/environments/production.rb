@@ -25,16 +25,18 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # Turn off with FORCE_SSL=false only for a local production test without TLS
+  config.assume_ssl = ENV.fetch("FORCE_SSL", "true") == "true"
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  config.force_ssl = ENV.fetch("FORCE_SSL", "true") == "true"
 
   # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
-  config.log_tags = [ :request_id ]
+  # The user agent shows which bots and AI assistants fetch pages
+  config.log_tags = [ :request_id, ->(request) { request.user_agent.to_s.truncate(120) } ]
   config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
@@ -58,7 +60,15 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
+  config.action_mailer.default_url_options = config.x.url_options
+
+  # Outgoing mail: any SMTP server (SMTP_ADDRESS, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD)
+  if ENV["SMTP_ADDRESS"].present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = { address: ENV["SMTP_ADDRESS"], port: ENV.fetch("SMTP_PORT", 587).to_i,
+                                           user_name: ENV["SMTP_USERNAME"], password: ENV["SMTP_PASSWORD"],
+                                           authentication: :plain, enable_starttls_auto: true, open_timeout: 5, read_timeout: 10 }
+  end
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {
@@ -80,11 +90,9 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
+  # Only answer for our own host (APP_HOST); this also stops DNS rebinding against /mcp
+  config.hosts = [ ENV.fetch("APP_HOST", "localhost").split(":").first ]
   #
   # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

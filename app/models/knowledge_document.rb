@@ -3,7 +3,9 @@
 class KnowledgeDocument < ApplicationRecord
   belongs_to :account
 
+  normalizes :title, :body, with: ->(text) { VisibleText.clean(text) }
+
   validates :title, :body, presence: true
 
-  scope :alphabetically, -> { order(:title) }
+  scope :alphabetically, -> { order(:title, :id) }
 end

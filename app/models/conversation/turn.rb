@@ -14,6 +14,10 @@ class Conversation::Turn
   end
 
   def run
+    # A retried or recovered job must not answer (and post to chat, and pay the model) twice
+    return unless reply.with_lock { reply.thinking? && reply.update!(status: "thinking", updated_at: Time.current) }
+    return paused unless Rails.configuration.x.ai_enabled
+
     agent = ProductAgent.new(turn: self)
     history.each { |message| agent.add_message(role: message.role.to_sym, content: message.content) }
     agent.before_tool_call { |call| @tool_calls << { name: call.name, arguments: call.arguments } }
@@ -49,6 +53,11 @@ class Conversation::Turn
   end
 
   private
+
+  def paused
+    reply.update!(status: "failed", content: "AI answers are paused on this server. Try again later.")
+    deliver_to_chat
+  end
 
   def invocation
     return @invocation if defined?(@invocation)

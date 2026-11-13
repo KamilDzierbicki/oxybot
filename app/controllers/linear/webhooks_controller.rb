@@ -6,6 +6,8 @@ class Linear::WebhooksController < ApplicationController
 
   def create
     payload = JSON.parse(request.raw_post)
+    return head :bad_request unless payload.is_a?(Hash)
+
     integration = Integration::Linear.find_by(external_id: payload["organizationId"])
     return head :unauthorized unless integration && valid_signature?(integration) && fresh?(payload)
 

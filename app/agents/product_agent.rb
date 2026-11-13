@@ -4,6 +4,7 @@ class ProductAgent < RubyLLM::Agent
   model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
     turn.account.ai_model("assistant")
   end
+  max_output_tokens 1500
   inputs :turn
   instructions { Prompt.render("product-agent", **turn.prompt_variables) }
   tools { [ SearchFeedbackTool.new(turn), FeatureDemandTool.new(turn), ListFeaturesTool.new(turn) ] }

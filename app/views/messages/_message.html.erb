@@ -10,6 +10,6 @@
       </div>
     <% end %>
   <% else %>
-    <div class="message__body"><%= simple_format(message.content) %></div>
+    <div class="message__body"><%= simple_format(h(message.content)) %></div>
   <% end %>
 </div>

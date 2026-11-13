@@ -2,7 +2,7 @@
 <div class="card auth">
   <h1><span class="sidebar__logo">◆</span> OxyBot</h1>
   <p class="muted">Customer feedback, turned into product decisions.</p>
-  <% flash.each do |type, text| %><div class="flash flash--<%= type %>"><%= text %></div><% end %>
+  <%= render "shared/flash" %>
   <%= form_with url: session_path, class: "form" do |form| %>
     <label>Email<%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address] %></label>
     <label>Password<%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72 %></label>

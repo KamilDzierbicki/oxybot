@@ -6,10 +6,11 @@ class PromptTest < ActiveSupport::TestCase
   teardown { Rails.cache.clear }
 
   test "without Langfuse the file is used and variables are filled" do
-    text = Prompt.render("feature-judge", insight_summary: "PDF export", insight_quote: "q", candidates: "- [1] PDF")
+    text = Prompt.render("feature-judge", candidates: "- [1] PDF export of reports")
 
-    assert_includes text, "Insight: PDF export"
+    assert_includes text, "- [1] PDF export of reports"
     assert_not_includes text, "{{"
+    assert_not_includes text, "Quote:", "customer text never goes into the system instructions"
   end
 
   test "empty optional sections leave no gaps" do

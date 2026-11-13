@@ -9,6 +9,7 @@ class FeedbackNote < ApplicationRecord
   has_many :insights, dependent: :destroy
 
   normalizes :author_email, with: ->(email) { email.strip.downcase.presence }
+  normalizes :body, :author, with: ->(text) { VisibleText.clean(text) }
 
   validates :body, presence: true
   validates :source, inclusion: { in: SOURCES }

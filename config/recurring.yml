@@ -4,6 +4,10 @@ default: &default
     class: SyncHubspotJob
     queue: default
     schedule: every hour at minute 17
+  purge_expired_data:
+    class: PurgeExpiredDataJob
+    queue: default
+    schedule: every day at 3:23am
   opportunity_discovery:
     class: OpportunityDiscoveryJob
     queue: default

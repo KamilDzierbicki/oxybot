@@ -22,8 +22,12 @@ class Integration::Github::Client
     get("/repos/#{@repository}")
   end
 
+  # The path comes from a model, so it is checked and encoded segment by segment
   def read_file(path)
-    body = get("/repos/#{@repository}/contents/#{path.delete_prefix("/")}")
+    segments = path.to_s.delete_prefix("/").split("/")
+    raise ArgumentError, "invalid path" if segments.empty? || segments.any? { |segment| segment.empty? || segment == ".." || segment == "." }
+
+    body = get("/repos/#{@repository}/contents/#{segments.map { |segment| ERB::Util.url_encode(segment) }.join("/")}")
     Base64.decode64(body.fetch("content")).force_encoding("UTF-8")
   end
 
@@ -32,8 +36,9 @@ class Integration::Github::Client
   def get(path, params = {})
     uri = URI("#{BASE_URL}#{path}")
     uri.query = URI.encode_www_form(params) if params.any?
-    response = Net::HTTP.get_response(uri, "Authorization" => "Bearer #{@token}", "Accept" => "application/vnd.github.text-match+json",
-                                           "X-GitHub-Api-Version" => "2022-11-28")
+    request = Net::HTTP::Get.new(uri, "Authorization" => "Bearer #{@token}", "Accept" => "application/vnd.github.text-match+json",
+                                      "X-GitHub-Api-Version" => "2022-11-28")
+    response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 15) { |http| http.request(request) }
     raise Error, "GitHub #{path} answered #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 
     JSON.parse(response.body)

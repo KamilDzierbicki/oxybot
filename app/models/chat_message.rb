@@ -5,6 +5,8 @@ class ChatMessage < ApplicationRecord
 
   belongs_to :integration
 
+  normalizes :text, with: ->(text) { VisibleText.clean(text) }
+
   validates :direction, inclusion: { in: DIRECTIONS }
   validates :channel_id, :message_id, :text, presence: true
 

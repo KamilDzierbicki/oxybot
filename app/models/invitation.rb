@@ -34,11 +34,13 @@ class Invitation < ApplicationRecord
       update!(accepted_at: Time.current) if user.persisted?
       user
     end
+  rescue ActiveRecord::RecordNotUnique
+    account.users.new(email_address: email).tap { |user| user.errors.add(:email_address, "already has an OxyBot account") }
   end
 
   private
 
   def email_not_taken
-    errors.add(:email, "already has an OxyBot account") if User.exists?(email_address: email)
+    errors.add(:email, "cannot be invited") if User.exists?(email_address: email)
   end
 end

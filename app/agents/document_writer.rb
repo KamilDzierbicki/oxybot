@@ -4,6 +4,7 @@ class DocumentWriter < RubyLLM::Agent
   model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
     generation.account.ai_model("writer")
   end
+  max_output_tokens 4000
   inputs :generation
   instructions { Prompt.render("document-writer", **Prompt::Context.new(generation.account, generation.user).to_h) }
   tools do

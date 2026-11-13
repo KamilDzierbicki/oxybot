@@ -41,7 +41,9 @@ module Integration::Chat
     return if report_channel_id.blank?
 
     link = Rails.application.routes.url_helpers.document_url(document, **Rails.application.config.x.url_options)
-    post_message(channel_id: report_channel_id, text: format_text("**#{document.title}**\n\n#{document.body.truncate(2_500)}") + "\n\n" + format_link(link, "Open in OxyBot"))
+    # A channel is shared, so the post carries the headline and a link, never the revenue figures in the report
+    summary = document.section("Summary").to_s.lines.reject { |line| line.match?(/\$\s?\d|ARR|revenue/i) }.first(4).join.strip
+    post_message(channel_id: report_channel_id, text: format_text("**#{document.title}**\n\n#{summary}").strip + "\n\n" + format_link(link, "Open the full report in OxyBot"))
   end
 
   # Mock mode records the reply instead of sending it

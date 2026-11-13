@@ -3,6 +3,7 @@
 # and where demand and the roadmap disagree.
 class Account::OpportunityDiscovery
   THEME_WINDOW = 30.days
+  THEME_LIMIT = 400
 
   def initialize(account, now: Time.current)
     @account = account
@@ -27,8 +28,9 @@ class Account::OpportunityDiscovery
 
   # Unlinked needs without a suggested feature, grouped greedily by embedding distance: candidates for new features
   def emerging_themes(min_size: 2)
+    # The newest unlinked needs only: grouping is pairwise, so the window is capped to keep the weekly job quick
     insights = @account.insights.pending.where(suggested_feature_id: nil, created_at: THEME_WINDOW.ago..)
-                       .where.not(embedding: nil).includes(:customer).order(:id).to_a
+                       .where.not(embedding: nil).includes(:customer).order(id: :desc).limit(THEME_LIMIT).to_a.reverse
     themes = []
     insights.each do |insight|
       theme = themes.find { |members| cosine_distance(members.first.embedding, insight.embedding) < @account.ai_setting("theme_distance") }

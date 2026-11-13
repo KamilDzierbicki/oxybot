@@ -19,6 +19,7 @@ class Document < ApplicationRecord
   has_many :suggestions, -> { order(:id) }, class_name: "DocumentSuggestion", dependent: :destroy
 
   validates :title, presence: true
+  validates :body, presence: true, if: -> { status == "ready" }
   validates :kind, inclusion: { in: KINDS.keys }
   validates :status, inclusion: { in: STATUSES }
 
@@ -32,18 +33,18 @@ class Document < ApplicationRecord
   def self.draft(account:, kind:, creator: nil, feature: nil, title: nil)
     template = account.document_templates.where(kind: kind).order(:id).first
     document = account.documents.create!(kind: kind, creator: creator, feature: feature, document_template: template,
-                                         title: title || default_title(kind, feature))
+                                         title: title || default_title(kind, feature, today: Time.current.in_time_zone(account.time_zone).to_date))
     document.generate_later
     document
   end
 
-  def self.default_title(kind, feature)
+  def self.default_title(kind, feature, today: Date.current)
     case kind
     when "prd" then "Spec: #{feature.title}"
     when "launch_review" then "Launch review: #{feature.title}"
-    when "opportunity_report" then "Opportunities, week of #{Date.current.beginning_of_week.to_fs(:long)}"
-    when "release_notes" then "Release notes, #{Date.current.to_fs(:long)}"
-    else "#{KINDS.fetch(kind)}, #{Date.current.to_fs(:long)}"
+    when "opportunity_report" then "Opportunities, week of #{today.beginning_of_week.to_fs(:long)}"
+    when "release_notes" then "Release notes, #{today.to_fs(:long)}"
+    else "#{KINDS.fetch(kind)}, #{today.to_fs(:long)}"
     end
   end
 

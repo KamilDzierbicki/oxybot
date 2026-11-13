@@ -13,10 +13,10 @@ class FeatureJudge < RubyLLM::Agent
   model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
     insight.account.ai_model("judge")
   end
+  max_output_tokens 400
   inputs :insight, :candidates
   instructions do
-    Prompt.render("feature-judge", insight_summary: insight.summary.squish, insight_quote: insight.quote.squish,
-                                   candidates: candidates.map { |feature| "- [#{feature.id}] #{feature.title.squish}: #{feature.description.squish}" }.join("\n"))
+    Prompt.render("feature-judge", candidates: candidates.map { |feature| "- [#{feature.id}] #{feature.title.squish}: #{feature.description.squish}" }.join("\n"))
   end
   schema SCHEMA
   provider_options do

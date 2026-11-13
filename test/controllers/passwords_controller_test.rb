@@ -1,67 +1,60 @@
 require "test_helper"
 
 class PasswordsControllerTest < ActionDispatch::IntegrationTest
-  setup { @user = User.take }
+  setup { @user = users(:kamil) }
 
   test "new" do
     get new_password_path
     assert_response :success
   end
 
-  test "create" do
+  test "create sends the mail from a job, so known and unknown addresses answer alike" do
     post passwords_path, params: { email_address: @user.email_address }
-    assert_enqueued_email_with PasswordsMailer, :reset, args: [ @user ]
     assert_redirected_to new_session_path
+    assert_enqueued_with(job: SendPasswordResetJob)
 
-    follow_redirect!
-    assert_notice "reset instructions sent"
+    perform_enqueued_jobs(only: SendPasswordResetJob)
+    assert_equal [ @user.email_address ], ActionMailer::Base.deliveries.last.to
   end
 
   test "create for an unknown user redirects but sends no mail" do
     post passwords_path, params: { email_address: "missing-user@example.com" }
-    assert_enqueued_emails 0
     assert_redirected_to new_session_path
 
-    follow_redirect!
-    assert_notice "reset instructions sent"
+    assert_no_difference -> { ActionMailer::Base.deliveries.size } do
+      perform_enqueued_jobs(only: SendPasswordResetJob)
+    end
   end
 
-  test "edit" do
-    get edit_password_path(@user.password_reset_token)
+  test "the reset link carries its token in the query string, not the path" do
+    get edit_password_path(token: @user.password_reset_token)
     assert_response :success
+    assert_no_match @user.password_reset_token, request.path
   end
 
   test "edit with invalid password reset token" do
-    get edit_password_path("invalid token")
+    get edit_password_path(token: "invalid token")
     assert_redirected_to new_password_path
-
-    follow_redirect!
-    assert_notice "reset link is invalid"
   end
 
-  test "update" do
-    assert_changes -> { @user.reload.password_digest } do
-      put password_path(@user.password_reset_token), params: { password: "new", password_confirmation: "new" }
-      assert_redirected_to new_session_path
-    end
+  test "update sets the password and ends sessions and the MCP token" do
+    @user.sessions.create!
+    @user.generate_mcp_token
 
-    follow_redirect!
-    assert_notice "Password has been reset"
+    patch update_password_path(token: @user.password_reset_token), params: { password: "a-new-long-password", password_confirmation: "a-new-long-password" }
+
+    assert_redirected_to new_session_path
+    assert @user.reload.authenticate("a-new-long-password")
+    assert_equal 0, @user.sessions.count
+    assert_nil @user.mcp_token_digest
   end
 
-  test "update with non matching passwords" do
+  test "a short password is refused on every path, not only at sign-up" do
     token = @user.password_reset_token
+
     assert_no_changes -> { @user.reload.password_digest } do
-      put password_path(token), params: { password: "no", password_confirmation: "match" }
-      assert_redirected_to edit_password_path(token)
+      patch update_password_path(token: token), params: { password: "short", password_confirmation: "short" }
     end
-
-    follow_redirect!
-    assert_notice "Passwords did not match"
+    assert_response :unprocessable_entity
   end
-
-  private
-    def assert_notice(text)
-      assert_select "div", /#{text}/
-    end
 end

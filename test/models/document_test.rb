@@ -77,7 +77,8 @@ class DocumentTest < ActiveSupport::TestCase
 
     notes = draft("release_notes")
 
-    assert_includes notes.body, "anna@northwind.example"
+    assert_includes notes.body, "Anna Kowalska"
+    assert_not_includes notes.body, "anna@northwind.example", "contact emails are not sent to the model"
     assert_includes notes.cited_insight_ids, insight.id
   end
 
@@ -97,7 +98,8 @@ class DocumentTest < ActiveSupport::TestCase
 
     post = integrations(:acme_slack).chat_messages.find_by!(channel_id: "C_PRODUCT")
     assert_includes post.text, report.title
-    assert_includes post.text, "/documents/#{report.id}|Open in OxyBot>"
+    assert_includes post.text, "/documents/#{report.id}|Open the full report in OxyBot>"
+    assert_no_match(/\$\s?\d/, post.text, "a shared channel never gets revenue figures")
   end
 
   test "a revision that changes nothing is reported as failed, not offered for review" do

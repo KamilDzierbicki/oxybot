@@ -2,7 +2,7 @@
 <div class="card auth">
   <h1>Join <%= @invitation.account.name %></h1>
   <p class="muted"><%= @invitation.invited_by.name %> invited <strong><%= @invitation.email %></strong> as <%= @invitation.role %>.</p>
-  <%= form_with scope: :user, url: invitation_acceptance_path(params[:invitation_token]), class: "form" do |form| %>
+  <%= form_with scope: :user, url: invitation_acceptance_path(token: params[:token]), class: "form" do |form| %>
     <%= render "shared/errors", record: @user if @user %>
     <label>Your name<%= form.text_field :name, required: true, autofocus: true %></label>
     <label>Password (10+ characters)<%= form.password_field :password, required: true, autocomplete: "new-password", minlength: 10, maxlength: 72 %></label>
