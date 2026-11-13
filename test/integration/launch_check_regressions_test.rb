@@ -17,9 +17,11 @@ class LaunchCheckRegressionsTest < ActionDispatch::IntegrationTest
   test "a member cannot claim a colleague's chat identity from the profile" do
     sign_in_as users(:mia)
 
-    patch profile_path, params: { user: { name: "Mia", slack_user_id: "U_KAMIL" } }
+    # An id nobody has linked yet (a colleague who has not set theirs) is the real risk
+    patch profile_path, params: { user: { name: "Mia", slack_user_id: "U_NEW_COLLEAGUE", mattermost_user_id: "mm-new-colleague" } }
 
     assert_equal "U_MIA", users(:mia).reload.slack_user_id
+    assert_nil users(:mia).mattermost_user_id
   end
 
   test "a connected integration's workspace id cannot be switched to another workspace" do
