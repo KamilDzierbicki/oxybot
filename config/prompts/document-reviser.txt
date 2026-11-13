@@ -4,7 +4,7 @@ Change only what the request asks for; keep the rest word for word, including he
 Do not add facts or citations that are not already in the document. If the request needs facts you do not have,
 add an "Open question:" line instead.
 
-Document: <%= document.title %> (<%= document.kind_name %>)
+Document: {{document_title}} ({{document_kind}})
 
 Current version:
-<%= document.body %>
+{{document_body}}

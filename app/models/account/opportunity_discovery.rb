@@ -2,7 +2,6 @@
 # what grew this week, which needs have no feature yet (emerging themes), which segments ask for what,
 # and where demand and the roadmap disagree.
 class Account::OpportunityDiscovery
-  THEME_DISTANCE = 0.35 # cosine distance under which two unlinked insights count as the same theme
   THEME_WINDOW = 30.days
 
   def initialize(account, now: Time.current)
@@ -32,7 +31,7 @@ class Account::OpportunityDiscovery
                        .where.not(embedding: nil).includes(:customer).order(:id).to_a
     themes = []
     insights.each do |insight|
-      theme = themes.find { |members| cosine_distance(members.first.embedding, insight.embedding) < THEME_DISTANCE }
+      theme = themes.find { |members| cosine_distance(members.first.embedding, insight.embedding) < @account.ai_setting("theme_distance") }
       theme ? theme << insight : themes << [ insight ]
     end
     themes.select { |members| members.size >= min_size }.sort_by { |members| -members.sum { |insight| insight.customer&.arr_cents.to_i } }

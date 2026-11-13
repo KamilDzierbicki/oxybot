@@ -1,0 +1,2 @@
+<p><%= @invitation.invited_by.name %> invited you to <strong><%= @invitation.account.name %></strong> on OxyBot, the product agent your team uses for customer feedback.</p>
+<p><%= link_to "Join #{@invitation.account.name}", @url %> (the link works for 7 days)</p>

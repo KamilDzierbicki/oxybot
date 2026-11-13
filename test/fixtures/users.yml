@@ -6,6 +6,15 @@ kamil:
   email_address: kamil@acme.example
   password_digest: <%= password_digest %>
   slack_user_id: U_KAMIL
+  role: admin
+
+mia:
+  account: acme
+  name: Mia
+  email_address: mia@acme.example
+  password_digest: <%= password_digest %>
+  slack_user_id: U_MIA
+  role: member
 
 eve:
   account: globex
@@ -13,3 +22,4 @@ eve:
   email_address: eve@globex.example
   password_digest: <%= password_digest %>
   slack_user_id: U_EVE
+  role: admin

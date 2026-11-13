@@ -32,6 +32,7 @@
     <%= link_to "Refresh", integration_path(integration), class: "button button--quiet" %>
   </section>
 </div>
+<% if Current.user.admin? %>
 <h2 class="section-title">Settings</h2>
 <%= form_with model: integration, scope: :integration, url: integration_path(integration), method: :patch, class: "form" do |form| %>
   <div class="form__row">
@@ -41,4 +42,5 @@
   <label>Channel id for the weekly opportunity report<%= form.text_field :report_channel_id, placeholder: "C_PRODUCT" %></label>
   <label>Bot token<%= form.password_field :access_token, value: nil, placeholder: integration.mock? ? "Not set (mock mode)" : "Stored, leave empty to keep" %></label>
   <%= form.submit "Save", class: "button" %>
+<% end %>
 <% end %>

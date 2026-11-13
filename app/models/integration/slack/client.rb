@@ -13,6 +13,10 @@ class Integration::Slack::Client
     request("chat.postMessage", { channel: channel, text: text, thread_ts: thread_ts }.compact).fetch("ts")
   end
 
+  def auth_test
+    request("auth.test", {})
+  end
+
   private
 
   def request(method, payload)

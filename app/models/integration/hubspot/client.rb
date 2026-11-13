@@ -23,6 +23,10 @@ class Integration::Hubspot::Client
     end
   end
 
+  def sample_company_count
+    get("/crm/v3/objects/companies", limit: 1).fetch("results").size
+  end
+
   private
 
   def each_page(path, **params)

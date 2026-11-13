@@ -3,8 +3,6 @@
 module Insight::Matchable
   extend ActiveSupport::Concern
 
-  CANDIDATES = 5
-
   included do
     after_create_commit :match_later
   end
@@ -15,7 +13,7 @@ module Insight::Matchable
 
   def match
     embed if embedding.nil?
-    candidates = product.features.hybrid_search(summary, vector: embedding, limit: CANDIDATES)
+    candidates = product.features.hybrid_search(summary, vector: embedding, limit: account.ai_setting("match_candidates"))
     return update!(suggested_feature: nil, match_confidence: nil, match_reason: "No features in #{product.name} yet.") if candidates.empty?
 
     verdict = FeatureJudge.new(insight: self, candidates: candidates).ask("Which feature does this insight ask for?").parsed || {}

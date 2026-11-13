@@ -1,8 +1,11 @@
 class OpportunityDiscoveryJob < ApplicationJob
   queue_as :default
 
-  # Without an account: the weekly run (config/recurring.yml) covers every account
+  # Runs every hour (config/recurring.yml) and drafts the report for each account whose chosen day and hour it is.
+  # With an account it drafts that account's report right away.
   def perform(account = nil)
-    account ? account.discover_opportunities : Account.find_each { |each_account| OpportunityDiscoveryJob.perform_later(each_account) }
+    return account.discover_opportunities if account
+
+    Account.find_each { |each_account| each_account.discover_opportunities if each_account.opportunity_report_due? }
   end
 end

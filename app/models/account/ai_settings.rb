@@ -1,0 +1,90 @@
+# Per-account AI settings from the dashboard: which LiteLLM alias runs each task, matching and theme thresholds,
+# the agent's step limit and when the weekly opportunity report runs. Missing keys use DEFAULTS.
+module Account::AiSettings
+  extend ActiveSupport::Concern
+
+  TASKS = {
+    "extract" => "Split feedback into insights",
+    "judge" => "Match insights to features",
+    "assistant" => "Chat assistant (app and Slack)",
+    "writer" => "Write and revise documents"
+  }.freeze
+
+  DEFAULTS = {
+    "model_extract" => "oxybot-extract", "model_judge" => "oxybot-judge",
+    "model_assistant" => "oxybot-spark", "model_writer" => "oxybot-writer",
+    "match_candidates" => 5, "theme_distance" => 0.35, "agent_max_rounds" => 6,
+    "weekly_report_enabled" => true, "weekly_report_day" => 1, "weekly_report_hour" => 8
+  }.freeze
+
+  # Valid range per numeric setting; values outside are refused, so a typo cannot disable matching
+  LIMITS = {
+    "match_candidates" => 1..20, "theme_distance" => 0.05..0.9, "agent_max_rounds" => 1..12,
+    "weekly_report_day" => 0..6, "weekly_report_hour" => 0..23
+  }.freeze
+
+  # Aliases LiteLLM serves (GET /v1/models), for the model pickers; the defaults when it cannot be asked
+  def self.available_models
+    Rails.cache.fetch("litellm/models", expires_in: 10.minutes) do
+      uri = URI("#{Rails.configuration.x.llm_url}/models")
+      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 2, read_timeout: 3) do |http|
+        http.get(uri.request_uri, "Authorization" => "Bearer #{ENV.fetch("LITELLM_API_KEY", "sk-oxybot-local")}")
+      end
+      JSON.parse(response.body).fetch("data").map { |model| model["id"] }.sort
+    end
+  rescue StandardError => e
+    Rails.logger.info("[ai_settings] model list unavailable: #{e.class}")
+    DEFAULTS.select { |key, _| key.start_with?("model_") }.values
+  end
+
+  included do
+    validate :ai_settings_in_range
+
+    # Readers for forms (account.match_candidates)
+    DEFAULTS.each_key { |key| define_method(key) { ai_setting(key) } }
+  end
+
+  def ai_setting(key)
+    ai_settings.fetch(key.to_s) { DEFAULTS.fetch(key.to_s) }
+  end
+
+  def ai_model(task)
+    ai_setting("model_#{task}")
+  end
+
+  def update_ai_settings(values)
+    merged = ai_settings.merge(values.to_h.stringify_keys.slice(*DEFAULTS.keys).to_h { |key, value| [ key, cast_setting(key, value) ] })
+    update(ai_settings: merged)
+  end
+
+  # The weekly report is due in the account's chosen hour, once per week
+  def opportunity_report_due?(now = Time.current)
+    return false unless ai_setting("weekly_report_enabled")
+
+    local = now.in_time_zone(time_zone)
+    local.wday == ai_setting("weekly_report_day") && local.hour == ai_setting("weekly_report_hour") &&
+      !documents.where(kind: "opportunity_report", created_at: local.beginning_of_week..).exists?
+  end
+
+  private
+
+  def cast_setting(key, value)
+    case DEFAULTS.fetch(key)
+    when true, false then ActiveModel::Type::Boolean.new.cast(value)
+    when Integer then Integer(value, exception: false)
+    when Float then Float(value, exception: false)
+    else value.to_s.strip
+    end
+  end
+
+  def ai_settings_in_range
+    LIMITS.each do |key, range|
+      value = ai_settings[key]
+      errors.add(:ai_settings, "#{key.humanize} must be between #{range.min} and #{range.max}") if ai_settings.key?(key) && !(value.is_a?(Numeric) && range.cover?(value))
+    end
+    TASKS.each_key do |task|
+      errors.add(:ai_settings, "Model for #{TASKS[task].downcase} cannot be empty") if ai_settings.key?("model_#{task}") && ai_settings["model_#{task}"].blank?
+    end
+    errors.add(:time_zone, "is not a known time zone") unless ActiveSupport::TimeZone[time_zone]
+  end
+end

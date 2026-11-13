@@ -9,6 +9,7 @@ account.users.find_or_create_by!(email_address: "demo@oxybot.local") do |user|
   user.name = "Demo PM"
   user.password = "oxybot-demo"
   user.slack_user_id = "U_DEMO"
+  user.role = "admin"
 end
 
 products = {

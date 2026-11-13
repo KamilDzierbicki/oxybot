@@ -1,5 +1,7 @@
 # A tenant: one company using OxyBot. Every other record belongs to exactly one account.
 class Account < ApplicationRecord
+  include AiSettings
+
   has_many :users, dependent: :destroy
   has_many :products, dependent: :destroy
   has_many :features, dependent: :destroy
@@ -13,6 +15,7 @@ class Account < ApplicationRecord
   has_many :documents, dependent: :destroy
   has_many :document_templates, dependent: :destroy
   has_many :skills, dependent: :destroy
+  has_many :invitations, dependent: :destroy
   has_one :slack_integration, class_name: "Integration::Slack"
   has_one :hubspot_integration, class_name: "Integration::Hubspot"
   has_one :linear_integration, class_name: "Integration::Linear"

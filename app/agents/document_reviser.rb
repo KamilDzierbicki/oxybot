@@ -9,9 +9,14 @@ class DocumentReviser < RubyLLM::Agent
     additionalProperties: false
   }.freeze
 
-  model "oxybot-writer", provider: :openai, protocol: :chat_completions, assume_model_exists: true
+  model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
+    revision.account.ai_model("writer")
+  end
   inputs :revision
-  instructions { RubyLLM.render_prompt("document_reviser/instructions", document: revision.document) }
+  instructions do
+    document = revision.document
+    Prompt.render("document-reviser", document_title: document.title, document_kind: document.kind_name, document_body: document.body)
+  end
   schema SCHEMA
   end_user { "account-#{revision.account.id}" }
   provider_options { { metadata: revision.trace_metadata } }

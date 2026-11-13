@@ -1,0 +1,12 @@
+<details class="card setup">
+  <summary><strong>How to create the Slack app</strong></summary>
+  <ol class="small">
+    <li>At api.slack.com/apps create an app for your workspace.</li>
+    <li><strong>OAuth &amp; Permissions</strong>, bot token scopes: <code>chat:write</code>, <code>app_mentions:read</code>, <code>im:history</code> (direct messages) and <code>channels:history</code> (feedback channels; add <code>groups:history</code> for private ones).</li>
+    <li><strong>Event Subscriptions</strong>: request URL <code><%= slack_events_url %></code>; bot events <code>app_mention</code>, <code>message.im</code>, <code>message.channels</code> (and <code>message.groups</code> for private channels).</li>
+    <li><strong>App Home</strong>: turn on the Messages tab and allow users to send messages, so people can DM the app.</li>
+    <li>Install the app, copy the bot token here, and set <code>SLACK_SIGNING_SECRET</code> on the server from <strong>Basic Information</strong>.</li>
+    <li>Invite the app to each feedback channel (<code>/invite @YourApp</code>). Each person adds their Slack member id on their OxyBot profile.</li>
+  </ol>
+  <p class="muted small">In a direct message the conversation continues across messages (a new one starts after an hour of silence) and may show ARR; in channels the app answers mentions in a thread, without revenue.</p>
+</details>

@@ -1,0 +1,51 @@
+<% content_for :title, "AI settings" %>
+<h1>AI settings</h1>
+<p class="muted">Models are LiteLLM aliases: LiteLLM maps each to a provider and caps its daily spend (litellm.yaml or LiteLLM's own admin UI). Embeddings stay on <code><%= Embeddable::MODEL %></code>, because changing them means re-embedding everything.</p>
+
+<%= form_with model: @account, url: ai_settings_path, method: :patch, class: "form" do |form| %>
+  <%= render "shared/errors", record: @account %>
+  <datalist id="litellm-models"><% @models.each do |model| %><option value="<%= model %>"><% end %></datalist>
+  <h2 class="section-title section-title--flush">Models</h2>
+  <div class="form__row">
+    <% Account::AiSettings::TASKS.each do |task, label| %>
+      <label><%= label %><%= form.text_field "model_#{task}", value: @account.ai_model(task), list: "litellm-models", required: true %></label>
+    <% end %>
+  </div>
+
+  <h2 class="section-title">Behaviour</h2>
+  <div class="form__row">
+    <label>Candidate features per match<%= form.number_field :match_candidates, value: @account.ai_setting("match_candidates"), min: 1, max: 20 %>
+      <small class="muted">How many backlog features the judge compares an insight against.</small></label>
+    <label>Theme similarity threshold<%= form.number_field :theme_distance, value: @account.ai_setting("theme_distance"), min: 0.05, max: 0.9, step: 0.05 %>
+      <small class="muted">Lower groups only very similar needs into emerging themes.</small></label>
+    <label>Agent step limit<%= form.number_field :agent_max_rounds, value: @account.ai_setting("agent_max_rounds"), min: 1, max: 12 %>
+      <small class="muted">Tool rounds per answer or document, a cap on cost and loops.</small></label>
+  </div>
+
+  <h2 class="section-title">Weekly opportunity report</h2>
+  <label class="checkbox"><%= form.check_box :weekly_report_enabled, checked: @account.ai_setting("weekly_report_enabled") %> Draft it every week and post it to Slack</label>
+  <div class="form__row">
+    <label>Day<%= form.select :weekly_report_day, Date::DAYNAMES.each_with_index.map { |day, index| [ day, index ] }, selected: @account.ai_setting("weekly_report_day") %></label>
+    <label>Hour<%= form.select :weekly_report_hour, (0..23).map { |hour| [ format("%02d:00", hour), hour ] }, selected: @account.ai_setting("weekly_report_hour") %></label>
+  </div>
+  <label>Time zone<%= form.time_zone_select :time_zone, nil, { default: @account.time_zone } %></label>
+  <%= form.submit "Save AI settings", class: "button button--primary" %>
+<% end %>
+
+<h2 class="section-title">Prompts</h2>
+<p class="muted small">
+  <% if Prompt::Langfuse.configured? %>
+    Prompts come from Langfuse (label <code><%= Prompt::LABEL %></code>) and are cached for 5 minutes; edit them in Langfuse. The files in <code>config/prompts</code> are the fallback.
+  <% else %>
+    Langfuse is not configured, so the files in <code>config/prompts</code> are used. Set LANGFUSE_URL and keys, then run <code>bin/rails langfuse:push_prompts</code> to edit prompts in Langfuse.
+  <% end %>
+</p>
+<table class="table">
+  <thead><tr><th>Prompt</th><th>Source</th><th>Version</th></tr></thead>
+  <tbody>
+    <% @prompts.each do |prompt| %>
+      <tr><td><code><%= prompt.name %></code></td><td><%= status_pill(prompt.source == "langfuse" ? "langfuse" : "file") %></td><td><%= prompt.version || "–" %></td></tr>
+    <% end %>
+  </tbody>
+</table>
+<%= button_to "Reload prompts now", prompt_refresh_path, class: "button" if Prompt::Langfuse.configured? %>

@@ -18,6 +18,10 @@ class Integration::Github::Client
     end
   end
 
+  def repository_info
+    get("/repos/#{@repository}")
+  end
+
   def read_file(path)
     body = get("/repos/#{@repository}/contents/#{path.delete_prefix("/")}")
     Base64.decode64(body.fetch("content")).force_encoding("UTF-8")

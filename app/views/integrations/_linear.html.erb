@@ -2,6 +2,7 @@
   <p><%= link_to pluralize(integration.account.features.where.not(linear_issue_id: nil).count, "feature"), features_path %> linked to Linear issues.</p>
   <p class="muted small">Webhook URL for Linear (Settings, API, Webhooks, Issues events): <code><%= linear_webhooks_url %></code></p>
 </div>
+<% if Current.user.admin? %>
 <h2 class="section-title">Settings</h2>
 <%= form_with model: integration, scope: :integration, url: integration_path(integration), method: :patch, class: "form" do |form| %>
   <label>Team id<%= form.text_field :team_id %></label>
@@ -10,4 +11,5 @@
     <label>Webhook signing secret<%= form.password_field :webhook_secret, value: nil, placeholder: integration.webhook_secret.present? ? "Stored, leave empty to keep" : "Not set" %></label>
   </div>
   <%= form.submit "Save", class: "button" %>
+<% end %>
 <% end %>

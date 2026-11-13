@@ -4,10 +4,8 @@ Pick a candidate only if delivering it would solve the insight's need. Similar w
 "delete my account" and "create an account" are different needs. If no candidate fits, answer null.
 Confidence is your probability (0 to 1) that the pick is right.
 
-Insight: <%= insight.summary.squish %>
-Quote: <%= insight.quote.squish %>
+Insight: {{insight_summary}}
+Quote: {{insight_quote}}
 
 Candidates:
-<% candidates.each do |feature| -%>
-- [<%= feature.id %>] <%= feature.title.squish %>: <%= feature.description.squish %>
-<% end -%>
+{{candidates}}

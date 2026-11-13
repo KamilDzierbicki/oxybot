@@ -78,14 +78,34 @@ the agent never edits a document in place, it proposes a change that a person ac
 Not built yet: real-time co-editing between people, competitive research from public websites,
 real analytics connectors (launch reviews read `config/mocks/usage.yml`), and parallel subagents.
 
+## Settings in the dashboard
+
+| Setting | Where | Who |
+|---|---|---|
+| Connect, test and disconnect Slack, HubSpot, Linear, GitHub | Integrations | admins |
+| Users, roles (admin, member), invitations by email or link; new workspaces at `/signup/new` | Users | admins |
+| Model alias per task, matching and theme thresholds, agent step limit, weekly report day, hour and time zone | AI settings | admins |
+| Team instructions, templates | Knowledge, Documents → Templates | admins |
+| Products, features, knowledge documents, skills, personal instructions, Slack member id, MCP token | their pages, Profile | everyone |
+
+Outside the dashboard, on purpose: which provider and model each LiteLLM alias calls and its daily budget
+(`litellm.yaml` or LiteLLM's admin UI), secrets (`.env`), and the embedding model (changing it means re-embedding).
+
+**Prompts** live in Langfuse when `LANGFUSE_URL` and keys are set: `bin/rails langfuse:push_prompts` uploads
+`config/prompts/*.txt` as versions labeled `production`; edit them in Langfuse and OxyBot picks them up within
+5 minutes (or "Reload prompts now" in AI settings). Without Langfuse, or when it is down, the files are used.
+Every trace is tagged with the prompt version (`product-agent@v3`).
+
 ## Integrations
 
 Both run in mock mode until an access token is saved on the Integrations page.
 
-- **Slack:** create a Slack app with the Events API pointed at `/slack/events` (events `message.channels`,
-  `message.im`, `app_mention`; scope `chat:write`), set `SLACK_SIGNING_SECRET`, then save the bot token, the app's
-  member id and the feedback channel ids. Users are matched by their Slack member id (set on the user). In mock
-  mode the Slack page has a simulator that sends the same events and shows the replies.
+- **Slack:** the step-by-step app setup (scopes `chat:write`, `app_mentions:read`, `im:history`, `channels:history`;
+  events `app_mention`, `message.im`, `message.channels`; App Home messages tab on) is on the Slack integration page.
+  Set `SLACK_SIGNING_SECRET`, save the bot token, then "Test connection" fills in the app's member id. People talk to
+  OxyBot by direct message (one ongoing conversation, revenue visible) or by mentioning it in a channel (answer in
+  the thread, no revenue). Each person adds their Slack member id on their profile. In mock mode the Slack page has
+  a simulator that sends the same events and shows the replies.
 - **HubSpot:** create a private app with `crm.objects.companies.read` and `crm.objects.contacts.read`, save its
   token and the company property that holds ARR. Sync runs every hour and from the "Sync now" button. In mock mode
   data comes from `config/mocks/hubspot.yml`.

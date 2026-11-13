@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -20,6 +20,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_170000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "custom_instructions"
+    t.jsonb "ai_settings", default: {}, null: false
+    t.string "time_zone", default: "UTC", null: false
   end
 
   create_table "contacts", force: :cascade do |t|
@@ -202,6 +204,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_170000) do
     t.index ["type", "external_id"], name: "index_integrations_on_type_and_external_id", unique: true
   end
 
+  create_table "invitations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "invited_by_id", null: false
+    t.string "email", null: false
+    t.string "role", default: "member", null: false
+    t.string "token_digest", null: false
+    t.datetime "accepted_at"
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "email"], name: "index_invitations_on_account_id_and_email"
+    t.index ["account_id"], name: "index_invitations_on_account_id"
+    t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
+    t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
+  end
+
   create_table "knowledge_documents", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "title", null: false
@@ -285,6 +303,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_170000) do
     t.datetime "updated_at", null: false
     t.text "custom_instructions"
     t.string "mcp_token_digest"
+    t.string "role", default: "member", null: false
     t.index ["account_id", "slack_user_id"], name: "index_users_on_account_id_and_slack_user_id", unique: true, where: "(slack_user_id IS NOT NULL)"
     t.index ["account_id"], name: "index_users_on_account_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
@@ -317,6 +336,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_170000) do
   add_foreign_key "insights", "feedback_notes"
   add_foreign_key "insights", "products"
   add_foreign_key "integrations", "accounts"
+  add_foreign_key "invitations", "accounts"
+  add_foreign_key "invitations", "users", column: "invited_by_id"
   add_foreign_key "knowledge_documents", "accounts"
   add_foreign_key "messages", "conversations"
   add_foreign_key "products", "accounts"

@@ -31,6 +31,10 @@ class Integration::Linear::Client
     state["name"]
   end
 
+  def organization
+    query("query { organization { id name } }").fetch("organization")
+  end
+
   private
 
   def query(graphql, **variables)

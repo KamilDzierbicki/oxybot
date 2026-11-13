@@ -1,5 +1,12 @@
 Rails.application.routes.draw do
   resource :session
+  resource :signup, only: %i[new create]
+  resources :invitations, only: %i[create destroy]
+  get "invitations/:invitation_token/accept" => "invitations/acceptances#show", as: :invitation_acceptance
+  post "invitations/:invitation_token/accept" => "invitations/acceptances#create"
+  resources :users, only: %i[index update destroy]
+  resource :ai_settings, only: %i[show update]
+  resource :prompt_refresh, only: :create
   resources :passwords, param: :token
 
   root "conversations#index"
@@ -47,8 +54,9 @@ Rails.application.routes.draw do
   resources :customers, only: %i[index show]
   resources :knowledge_documents, except: :show
 
-  resources :integrations, only: %i[index show update] do
+  resources :integrations, only: %i[index show new create update destroy] do
     scope module: :integrations do
+      resource :connection_check, only: :create
       resource :sync, only: :create
       resources :simulated_messages, only: :create
     end

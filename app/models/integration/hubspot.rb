@@ -3,6 +3,13 @@
 class Integration::Hubspot < Integration
   store_accessor :settings, :arr_property, :plan_property
 
+  def self.external_id_label = "Portal (hub) id"
+
+  def verify_connection
+    count = Integration::Hubspot::Client.new(access_token).sample_company_count
+    [ true, "HubSpot answered; the token can read companies (#{count} on the first page)." ]
+  end
+
   def arr_property = super.presence || "arr"
   def plan_property = super.presence || "plan"
 

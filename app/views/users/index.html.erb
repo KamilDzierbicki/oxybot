@@ -1,0 +1,40 @@
+<% content_for :title, "Users" %>
+<h1>Users</h1>
+<p class="muted">Admins manage integrations, users, AI settings, team instructions and templates. Members use everything else.</p>
+<table class="table">
+  <thead><tr><th>Name</th><th>Email</th><th>Slack</th><th>Role</th><th></th></tr></thead>
+  <tbody>
+    <% @users.each do |user| %>
+      <tr>
+        <td><%= user.name %><%= tag.span(" (you)", class: "muted") if user == Current.user %></td>
+        <td class="muted"><%= user.email_address %></td>
+        <td class="muted"><%= user.slack_user_id || "–" %></td>
+        <td>
+          <%= form_with model: user, class: "inline-form", data: { controller: "auto-submit" } do |form| %>
+            <%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, {}, data: { action: "change->auto-submit#submit" } %>
+          <% end %>
+        </td>
+        <td><%= button_to "Remove", user, method: :delete, class: "button button--quiet", form: { data: { turbo_confirm: "Remove #{user.name}?" } } unless user == Current.user %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<h2 class="section-title">Invite someone</h2>
+<% if flash[:invitation_url] %>
+  <div class="card"><p class="small">If email is not set up yet, share this link (valid 7 days):</p><pre class="mono-block"><%= flash[:invitation_url] %></pre></div>
+<% end %>
+<%= form_with model: Invitation.new, class: "inline-form" do |form| %>
+  <%= form.email_field :email, required: true, placeholder: "colleague@company.com" %>
+  <%= form.select :role, User::ROLES.map { |role| [ role.humanize, role ] }, selected: "member" %>
+  <%= form.submit "Send invitation", class: "button button--primary" %>
+<% end %>
+<% if @invitations.any? %>
+  <h2 class="section-title">Pending invitations</h2>
+  <ul class="list">
+    <% @invitations.each do |invitation| %>
+      <li class="list__item"><span><%= invitation.email %> <span class="muted">· <%= invitation.role %> · expires <%= invitation.expires_at.to_date.to_fs(:long) %></span></span>
+        <%= button_to "Withdraw", invitation, method: :delete, class: "button button--quiet" %></li>
+    <% end %>
+  </ul>
+<% end %>

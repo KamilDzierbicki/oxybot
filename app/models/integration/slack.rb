@@ -6,6 +6,17 @@ class Integration::Slack < Integration
 
   store_accessor :settings, :feedback_channel_ids, :app_user_id, :report_channel_id
 
+  def self.external_id_label = "Workspace (team) id, like T012ABCDEF"
+
+  # auth.test tells which workspace the token belongs to and the bot's member id (used to detect mentions)
+  def verify_connection
+    identity = client.auth_test
+    return [ false, "The token belongs to workspace #{identity["team_id"]}, not #{external_id}." ] if identity["team_id"] != external_id
+
+    update!(app_user_id: identity["user_id"]) if app_user_id.blank?
+    [ true, "Connected to #{identity["team"]} as #{identity["user"]}." ]
+  end
+
   # Takes the "event" part of an Events API callback. Duplicate deliveries hit the unique index and stop here.
   def receive(event)
     return unless event["type"].in?(%w[message app_mention])

@@ -3,6 +3,15 @@
 class Integration::Github < Integration
   store_accessor :settings, :repository
 
+  def self.external_id_label = "Repository as owner/name"
+
+  before_validation { self.repository = external_id if repository.blank? }
+
+  def verify_connection
+    repo = Integration::Github::Client.new(access_token, repository).repository_info
+    [ true, "Can read #{repo["full_name"]} (#{repo["private"] ? "private" : "public"})." ]
+  end
+
   def search_code(query)
     client.search_code(query)
   end

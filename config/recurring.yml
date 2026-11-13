@@ -7,7 +7,7 @@ default: &default
   opportunity_discovery:
     class: OpportunityDiscoveryJob
     queue: default
-    schedule: every monday at 7:43am
+    schedule: every hour at minute 2
 
 development:
   <<: *default

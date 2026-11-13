@@ -22,10 +22,15 @@ class InsightExtractor < RubyLLM::Agent
     additionalProperties: false
   }.freeze
 
-  model "oxybot-extract", provider: :openai, protocol: :chat_completions, assume_model_exists: true
+  model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
+    note.account.ai_model("extract")
+  end
   inputs :note
-  instructions { RubyLLM.render_prompt("insight_extractor/instructions", products: note.account.products.alphabetically) }
+  instructions { Prompt.render("insight-extractor", products: Prompt::Context.new(note.account).products) }
   schema SCHEMA
   end_user { "account-#{note.account_id}" }
-  provider_options { { metadata: { trace_name: "extract-insights", trace_id: "feedback-note-#{note.id}", tags: [ "account-#{note.account_id}" ] } } }
+  provider_options do
+    { metadata: { trace_name: "extract-insights", generation_name: "extract-insights", trace_id: "feedback-note-#{note.id}",
+                  tags: [ "account-#{note.account_id}", Prompt.version_tag("insight-extractor") ] } }
+  end
 end
