@@ -12,7 +12,7 @@ class CreateFeedback < ActiveRecord::Migration[8.1]
       t.datetime :processed_at
       t.timestamps
     end
-    add_index :feedback_notes, [:account_id, :source, :external_id], unique: true, where: "external_id IS NOT NULL"
+    add_index :feedback_notes, [ :account_id, :source, :external_id ], unique: true, where: "external_id IS NOT NULL"
 
     create_table :insights do |t|
       t.references :account, null: false, foreign_key: true
@@ -33,7 +33,7 @@ class CreateFeedback < ActiveRecord::Migration[8.1]
         as: "to_tsvector('simple', coalesce(summary, '') || ' ' || coalesce(quote, ''))"
       t.timestamps
     end
-    add_index :insights, [:account_id, :triage_state]
+    add_index :insights, [ :account_id, :triage_state ]
     add_index :insights, :embedding, using: :hnsw, opclass: :vector_cosine_ops
     add_index :insights, :search_vector, using: :gin
   end

@@ -1,0 +1,14 @@
+<% content_for :title, "Integrations" %>
+<h1>Integrations</h1>
+<div class="grid">
+  <% [[@slack, "Slack", "Feedback channels become feedback notes. Mention the app or send it a direct message to ask the assistant; it answers in the thread."],
+      [@hubspot, "HubSpot", "Companies with ARR and contacts sync every hour, so feedback is weighted by revenue."]].each do |integration, name, text| %>
+    <div class="card">
+      <div class="insight__head"><strong><%= name %></strong>
+        <% if integration %><%= status_pill(integration.mock? ? "mock" : "live") %><% else %><%= status_pill "not_connected" %><% end %>
+      </div>
+      <p class="muted"><%= text %></p>
+      <%= link_to "Open", integration, class: "button" if integration %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,10 @@
+<%= form_with model: feature, class: "form" do |form| %>
+  <%= render "shared/errors", record: feature %>
+  <label>Title<%= form.text_field :title, required: true %></label>
+  <div class="form__row">
+    <label>Product<%= form.collection_select :product_id, Current.account.products.alphabetically, :id, :name, {}, required: true %></label>
+    <label>Status<%= form.select :status, Feature::STATUSES.map { |status| [status.humanize, status] } %></label>
+  </div>
+  <label>Description<%= form.text_area :description, rows: 4 %></label>
+  <%= form.submit "Save", class: "button button--primary" %>
+<% end %>

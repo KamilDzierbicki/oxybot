@@ -1,0 +1,13 @@
+<% content_for :title, "Knowledge" %>
+<div class="page-header">
+  <h1>Knowledge</h1>
+  <%= link_to "Add document", new_knowledge_document_path, class: "button button--primary" %>
+</div>
+<p class="muted">Company context the assistant always reads: strategy, personas, pricing, competitors. Keep each document short.</p>
+<% @documents.each do |document| %>
+  <div class="card">
+    <div class="insight__head"><strong><%= document.title %></strong> <%= link_to "Edit", edit_knowledge_document_path(document) %></div>
+    <div class="prose muted"><%= markdown(document.body.truncate(400)) %></div>
+  </div>
+<% end %>
+<%= tag.p("No documents yet.", class: "empty") if @documents.empty? %>

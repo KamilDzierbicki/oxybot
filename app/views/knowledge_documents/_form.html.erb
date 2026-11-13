@@ -1,0 +1,11 @@
+<%= form_with model: document, class: "form" do |form| %>
+  <%= render "shared/errors", record: document %>
+  <label>Title<%= form.text_field :title, required: true %></label>
+  <label>Content (Markdown)<%= form.text_area :body, rows: 14, required: true %></label>
+  <div class="row">
+    <%= form.submit "Save", class: "button button--primary" %>
+  </div>
+<% end %>
+<% if document.persisted? %>
+  <%= button_to "Delete", knowledge_document_path(document), method: :delete, class: "button button--quiet", form: { data: { turbo_confirm: "Delete this document?" } } %>
+<% end %>

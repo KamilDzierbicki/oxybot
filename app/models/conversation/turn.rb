@@ -38,7 +38,7 @@ class Conversation::Turn
   # Grouped in Langfuse by conversation (session) and tagged with the tenant
   def trace_metadata
     { session_id: "conversation-#{conversation.id}", trace_user_id: "user-#{user.id}",
-      tags: ["account-#{account.id}", "channel-#{conversation.channel}"], generation_name: "product-agent" }
+      tags: [ "account-#{account.id}", "channel-#{conversation.channel}" ], generation_name: "product-agent" }
   end
 
   private
@@ -61,7 +61,7 @@ class Conversation::Turn
       cited << id
       "[insight:#{id}]"
     end
-    [checked.gsub(/ +\n/, "\n").strip, cited.uniq]
+    [ checked.gsub(/ +\n/, "\n").strip, cited.uniq ]
   end
 
   def deliver_to_slack

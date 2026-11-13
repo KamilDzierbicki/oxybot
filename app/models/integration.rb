@@ -8,7 +8,12 @@ class Integration < ApplicationRecord
 
   validates :external_id, presence: true, uniqueness: { scope: :type }
 
+  # Every kind shares the integrations routes and params (integration_path, params[:integration])
+  def self.model_name = ActiveModel::Name.new(self, nil, "Integration")
+
   def mock? = access_token.blank?
 
   def kind = type.demodulize.downcase
+
+  def display_name = { "slack" => "Slack", "hubspot" => "HubSpot" }.fetch(kind)
 end

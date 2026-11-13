@@ -10,7 +10,7 @@ class CreateConversations < ActiveRecord::Migration[8.1]
       t.string :slack_thread_ts
       t.timestamps
     end
-    add_index :conversations, [:account_id, :slack_channel_id, :slack_thread_ts], unique: true,
+    add_index :conversations, [ :account_id, :slack_channel_id, :slack_thread_ts ], unique: true,
       where: "slack_thread_ts IS NOT NULL", name: "index_conversations_on_slack_thread"
 
     create_table :messages do |t|

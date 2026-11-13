@@ -11,12 +11,12 @@ class Conversation < ApplicationRecord
   scope :latest_first, -> { order(updated_at: :desc, id: :desc) }
 
   # Saves the question and an empty reply, then fills the reply in a job: a model turn takes seconds.
+  # Two separate commits on purpose: each message is broadcast on commit, and inside one transaction the
+  # broadcasts could reach the page in the wrong order. The question is saved first, so it survives a failure.
   def ask(text)
-    reply = transaction do
-      messages.create!(role: "user", content: text)
-      update!(title: text.truncate(80)) if title.blank?
-      messages.create!(role: "assistant", status: "thinking")
-    end
+    messages.create!(role: "user", content: text)
+    update!(title: text.truncate(80)) if title.blank?
+    reply = messages.create!(role: "assistant", status: "thinking")
     reply.generate_later
     reply
   end

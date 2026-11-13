@@ -1,0 +1,30 @@
+<% content_for :title, "Features" %>
+<div class="page-header">
+  <h1>Features by demand</h1>
+  <div class="row">
+    <%= link_to "Products", products_path, class: "button" %>
+    <%= link_to "Add feature", new_feature_path(product: @product&.slug), class: "button button--primary" %>
+  </div>
+</div>
+<nav class="tabs">
+  <%= link_to "All", features_path, class: ["tab", ("tab--active" unless @product)] %>
+  <% @products.each do |product| %>
+    <%= link_to product.name, features_path(product: product.slug), class: ["tab", ("tab--active" if product == @product)] %>
+  <% end %>
+</nav>
+<table class="table">
+  <thead><tr><th>Feature</th><th>Product</th><th>Status</th><th class="num">Insights</th><th class="num">Customers</th><th class="num">ARR asking</th></tr></thead>
+  <tbody>
+    <% @features.each do |feature| %>
+      <tr>
+        <td><%= link_to feature.title, feature %></td>
+        <td class="muted"><%= feature.product.name %></td>
+        <td><%= status_pill feature.status %></td>
+        <td class="num"><%= feature.insight_count %></td>
+        <td class="num"><%= feature.customer_count %></td>
+        <td class="num"><strong><%= money(feature.demand_arr_cents) %></strong></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+<%= tag.p("No features yet.", class: "empty") if @features.empty? %>

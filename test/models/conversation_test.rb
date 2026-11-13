@@ -17,19 +17,19 @@ class ConversationTest < ActiveSupport::TestCase
 
     reply.reload
     assert_equal "done", reply.status
-    assert_equal ["search_feedback"], reply.tool_calls.map { |call| call["name"] }
-    assert_equal [@pdf.id], reply.cited_insight_ids
+    assert_equal [ "search_feedback" ], reply.tool_calls.map { |call| call["name"] }
+    assert_equal [ @pdf.id ], reply.cited_insight_ids
     assert_includes reply.content, "Northwind Logistics"
     assert_includes reply.content, "$120,000", "the web app is private, so ARR is shown"
   end
 
   test "drops citations of insights no tool returned" do
     turn = Conversation::Turn.new(users(:kamil).conversations.create!(account: accounts(:acme)).messages.create!(role: "assistant", status: "thinking"))
-    turn.remember_insights([@pdf.id])
+    turn.remember_insights([ @pdf.id ])
 
     content, cited = turn.send(:checked_citations, "Real [insight:#{@pdf.id}] and invented [insight:999999].")
 
-    assert_equal [@pdf.id], cited
+    assert_equal [ @pdf.id ], cited
     assert_not_includes content, "999999"
   end
 
@@ -53,7 +53,7 @@ class ConversationTest < ActiveSupport::TestCase
     perform_enqueued_jobs(only: GenerateReplyJob)
 
     reply = conversation.messages.last
-    assert_equal ["feature_demand"], reply.tool_calls.map { |call| call["name"] }
+    assert_equal [ "feature_demand" ], reply.tool_calls.map { |call| call["name"] }
     assert_not_includes reply.content, "$", "every member of a channel would read customer revenue"
     assert_includes reply.content, "PDF export of reports"
   end

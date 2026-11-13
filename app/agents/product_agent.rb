@@ -7,7 +7,7 @@ class ProductAgent < RubyLLM::Agent
     RubyLLM.render_prompt("product_agent/instructions",
                           account: turn.account, user: turn.user, revenue_visible: turn.revenue_visible?)
   end
-  tools { [SearchFeedbackTool.new(turn), FeatureDemandTool.new(turn), ListFeaturesTool.new(turn)] }
+  tools { [ SearchFeedbackTool.new(turn), FeatureDemandTool.new(turn), ListFeaturesTool.new(turn) ] }
   tool_options rounds: Conversation::Turn::MAX_TOOL_ROUNDS
   # LiteLLM counts spend per end user, so each tenant's cost is visible and can get its own budget
   end_user { "account-#{turn.account.id}" }

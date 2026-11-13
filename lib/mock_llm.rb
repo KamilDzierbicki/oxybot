@@ -27,7 +27,7 @@ class MockLlm
     case request.path_info
     when %r{/chat/completions\z} then json(chat_completion(body))
     when %r{/embeddings\z} then json(embeddings(body))
-    else [404, { "content-type" => "application/json" }, [{ error: "not found" }.to_json]]
+    else [ 404, { "content-type" => "application/json" }, [ { error: "not found" }.to_json ] ]
     end
   end
 
@@ -47,7 +47,7 @@ class MockLlm
   private
 
   def json(payload)
-    [200, { "content-type" => "application/json" }, [payload.to_json]]
+    [ 200, { "content-type" => "application/json" }, [ payload.to_json ] ]
   end
 
   def chat_completion(body)
@@ -60,7 +60,7 @@ class MockLlm
 
     {
       id: "chatcmpl-mock-#{SecureRandom.hex(4)}", object: "chat.completion", created: Time.now.to_i, model: body["model"],
-      choices: [{ index: 0, message: message, finish_reason: message[:tool_calls] ? "tool_calls" : "stop" }],
+      choices: [ { index: 0, message: message, finish_reason: message[:tool_calls] ? "tool_calls" : "stop" } ],
       usage: { prompt_tokens: body["messages"].to_json.size / 4, completion_tokens: message.to_json.size / 4, total_tokens: 0 }
     }
   end
@@ -96,7 +96,7 @@ class MockLlm
     shared = text ? overlap(insight, text) : 0
 
     if shared >= 2
-      { feature_id: id.to_i, confidence: [0.5 + 0.1 * shared, 0.95].min.round(2), reason: "Shares #{shared} key terms with the feature." }
+      { feature_id: id.to_i, confidence: [ 0.5 + 0.1 * shared, 0.95 ].min.round(2), reason: "Shares #{shared} key terms with the feature." }
     else
       { feature_id: nil, confidence: 0.4, reason: "No candidate describes the same need." }
     end
@@ -113,17 +113,17 @@ class MockLlm
     return { role: "assistant", content: "I can only answer questions about your product feedback." } unless name
 
     { role: "assistant", content: nil,
-      tool_calls: [{ id: "call_#{SecureRandom.hex(4)}", type: "function", function: { name: name, arguments: arguments.to_json } }] }
+      tool_calls: [ { id: "call_#{SecureRandom.hex(4)}", type: "function", function: { name: name, arguments: arguments.to_json } } ] }
   end
 
   def pick_tool(question, names)
     text = question.downcase
     if text.match?(/\b(top|most|rank|priorit|demand|arr|revenue|biggest|najwi|przych|priorytet)/) && names.include?("feature_demand")
-      ["feature_demand", {}]
+      [ "feature_demand", {} ]
     elsif text.match?(/\b(features?|backlog|roadmap|funkcj|planned)\b/) && names.include?("list_features")
-      ["list_features", {}]
+      [ "list_features", {} ]
     elsif names.include?("search_feedback")
-      ["search_feedback", { query: question }]
+      [ "search_feedback", { query: question } ]
     end
   end
 
@@ -139,7 +139,7 @@ class MockLlm
         arr = row["arr"] ? ", #{row["arr"]} ARR" : ""
         "- **#{row["title"]}** (#{row["product"]}): #{row["insight_count"]} insights from #{row["customer_count"]} customers#{arr} #{ids}"
       elsif row.key?("quote")
-        who = [row["customer"], row["arr"]].compact.join(", ")
+        who = [ row["customer"], row["arr"] ].compact.join(", ")
         "- #{row["summary"]}#{" (#{who})" if who.present?} [insight:#{row["id"]}]"
       else
         "- **#{row["title"]}** (#{row["product"]}, #{row["status"]})"

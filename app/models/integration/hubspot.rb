@@ -12,8 +12,8 @@ class Integration::Hubspot < Integration
 
   def sync
     transaction do
-      companies = client.companies(properties: ["name", "domain", arr_property, plan_property]).to_h do |company|
-        [company[:id], sync_company(company)]
+      companies = client.companies(properties: [ "name", "domain", arr_property, plan_property ]).to_h do |company|
+        [ company[:id], sync_company(company) ]
       end
       client.contacts.each { |contact| sync_contact(contact, companies) }
       update!(synced_at: Time.current)
@@ -28,7 +28,12 @@ class Integration::Hubspot < Integration
 
   def sync_company(company)
     properties = company[:properties]
-    customer = account.customers.find_or_initialize_by(hubspot_id: company[:id])
+    # A customer added before the first sync (same domain, no HubSpot id yet) is adopted, not duplicated
+    domain = properties["domain"].to_s.strip.downcase.delete_prefix("www.").presence
+    customer = account.customers.find_by(hubspot_id: company[:id]) ||
+               (domain && account.customers.find_by(domain: domain, hubspot_id: nil)) ||
+               account.customers.new(hubspot_id: company[:id])
+    customer.hubspot_id = company[:id]
     customer.update!(name: properties["name"].presence || "HubSpot company #{company[:id]}", domain: properties["domain"],
                      arr_cents: (properties[arr_property].to_f * 100).round, plan: properties[plan_property], synced_at: Time.current)
     customer
@@ -39,7 +44,7 @@ class Integration::Hubspot < Integration
     return if email.blank?
 
     record = account.contacts.find_or_initialize_by(email: email.downcase)
-    name = [contact[:properties]["firstname"], contact[:properties]["lastname"]].compact_blank.join(" ")
+    name = [ contact[:properties]["firstname"], contact[:properties]["lastname"] ].compact_blank.join(" ")
     record.update!(hubspot_id: contact[:id], name: name.presence, customer: companies[contact[:company_id]] || record.customer)
   end
 end

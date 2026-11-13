@@ -1,0 +1,13 @@
+<% content_for :title, @conversation.title %>
+<%= turbo_stream_from @conversation %>
+<div class="page-header">
+  <h1><%= @conversation.title %></h1>
+  <%= link_to "New conversation", conversations_path, class: "button" %>
+</div>
+<% if @conversation.slack? %>
+  <p class="muted">This conversation is a Slack thread. Replies are posted there<%= " without revenue figures (shared channel)" unless @conversation.revenue_visible? %>.</p>
+<% end %>
+<div id="messages" class="messages" data-controller="scroll-to-latest">
+  <%= render @conversation.messages %>
+</div>
+<%= render "messages/form", conversation: @conversation unless @conversation.slack? %>

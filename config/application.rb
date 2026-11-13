@@ -28,9 +28,9 @@ module Flint
     # the MockLlm mounted in this app (port from bin/dev) and tests use a WebMock host routed to the same Rack app.
     config.x.mock_llm = ENV["LITELLM_URL"].blank?
     config.x.llm_url = ENV["LITELLM_URL"].presence ||
-      (Rails.env.test? ? "http://mock-llm.test/v1" : "http://localhost:#{ENV.fetch("PORT", 3100)}/mock_llm/v1")
+      (Rails.env.test? ? "http://mock-llm.test/v1" : "http://localhost:#{ENV.fetch("PORT", 3120)}/mock_llm/v1")
 
     # Absolute links outside a request, e.g. citations in Slack replies
-    config.x.url_options = { host: ENV.fetch("APP_HOST", "localhost:3100"), protocol: ENV.fetch("APP_PROTOCOL", "http") }
+    config.x.url_options = { host: ENV.fetch("APP_HOST", "localhost:3120"), protocol: ENV.fetch("APP_PROTOCOL", "http") }
   end
 end
