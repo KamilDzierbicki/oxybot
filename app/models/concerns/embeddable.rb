@@ -1,8 +1,8 @@
-# A record with a pgvector embedding of #embedding_text, made by the openspark-embed alias in LiteLLM.
+# A record with a pgvector embedding of #embedding_text, made by the oxybot-embed alias in LiteLLM.
 module Embeddable
   extend ActiveSupport::Concern
 
-  MODEL = "openspark-embed"
+  MODEL = "oxybot-embed"
 
   included do
     has_neighbors :embedding

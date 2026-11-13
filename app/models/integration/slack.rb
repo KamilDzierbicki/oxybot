@@ -40,7 +40,7 @@ class Integration::Slack < Integration
     return if report_channel_id.blank?
 
     link = Rails.application.routes.url_helpers.document_url(document, **Rails.application.config.x.url_options)
-    post_message(channel_id: report_channel_id, text: slack_text("**#{document.title}**\n\n#{document.body.truncate(2_500)}\n\n<#{link}|Open in OpenSpark>"))
+    post_message(channel_id: report_channel_id, text: slack_text("**#{document.title}**\n\n#{document.body.truncate(2_500)}\n\n<#{link}|Open in OxyBot>"))
   end
 
   def post_message(channel_id:, text:, thread_ts: nil)
@@ -63,7 +63,7 @@ class Integration::Slack < Integration
     Integration::Slack::Client.new(access_token)
   end
 
-  # Slack's mrkdwn: bold is *text*, headings become bold lines, citations become links to the insight in OpenSpark
+  # Slack's mrkdwn: bold is *text*, headings become bold lines, citations become links to the insight in OxyBot
   def slack_text(content)
     content.to_s.gsub(/^#+\s*(.+)$/, '**\1**').gsub(/\*\*(.+?)\*\*/, '*\1*').gsub(Message::CITATION) do
       "<#{Rails.application.routes.url_helpers.insight_url($1, **Rails.application.config.x.url_options)}|##{$1}>"

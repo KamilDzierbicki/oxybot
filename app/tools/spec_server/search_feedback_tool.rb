@@ -1,6 +1,6 @@
 class SpecServer::SearchFeedbackTool < SpecServer::BaseTool
   tool_name "search_feedback"
-  description "Searches customer feedback insights in your OpenSpark workspace by meaning and keywords."
+  description "Searches customer feedback insights in your OxyBot workspace by meaning and keywords."
   input_schema(properties: { query: { type: "string" } }, required: [ "query" ])
 
   def self.call(query:, server_context:)

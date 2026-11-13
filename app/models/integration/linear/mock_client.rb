@@ -11,9 +11,9 @@ class Integration::Linear::MockClient
     issues = @integration.mock_issues || {}
     number = issues.size + 1
     id = SecureRandom.uuid
-    issues[id] = { "identifier" => "OSP-#{number}", "title" => title, "state" => "backlog" }
+    issues[id] = { "identifier" => "OXY-#{number}", "title" => title, "state" => "backlog" }
     @integration.update!(mock_issues: issues)
-    { id: id, identifier: "OSP-#{number}", url: "https://linear.app/mock/issue/OSP-#{number}", state: STATE_NAMES["backlog"] }
+    { id: id, identifier: "OXY-#{number}", url: "https://linear.app/mock/issue/OXY-#{number}", state: STATE_NAMES["backlog"] }
   end
 
   def move_issue(issue_id, team_id:, state_type:)

@@ -11,9 +11,9 @@
         <label>As user<%= form.select :slack_user_id, Current.account.users.where.not(slack_user_id: nil).map { |user| [user.name, user.slack_user_id] } + [["Unknown Slack user", "U_UNKNOWN"]] %></label>
       </div>
       <label>Message<%= form.text_area :text, rows: 3, required: true, placeholder: "Customer call with Contoso: they need PDF export of reports for audits." %></label>
-      <label class="checkbox"><%= form.check_box :mention %> Mention @OpenSpark</label>
+      <label class="checkbox"><%= form.check_box :mention %> Mention @OxyBot</label>
       <%= form.hidden_field :thread_ts %>
-      <%= form.submit "Send to OpenSpark", class: "button button--primary" %>
+      <%= form.submit "Send to OxyBot", class: "button button--primary" %>
     <% end %>
   </section>
   <section>
@@ -22,7 +22,7 @@
       <% @slack_messages.each do |message| %>
         <div class="slack-message slack-message--<%= message.direction %>">
           <div class="muted small">
-            #<%= message.channel_id %> · <%= message.inbound? ? message.slack_user_id : "OpenSpark" %><%= " · in thread" if message.thread_ts %>
+            #<%= message.channel_id %> · <%= message.inbound? ? message.slack_user_id : "OxyBot" %><%= " · in thread" if message.thread_ts %>
           </div>
           <div><%= slack_text(message.text) %></div>
         </div>

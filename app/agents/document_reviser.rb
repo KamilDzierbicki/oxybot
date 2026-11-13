@@ -9,7 +9,7 @@ class DocumentReviser < RubyLLM::Agent
     additionalProperties: false
   }.freeze
 
-  model "openspark-writer", provider: :openai, protocol: :chat_completions, assume_model_exists: true
+  model "oxybot-writer", provider: :openai, protocol: :chat_completions, assume_model_exists: true
   inputs :revision
   instructions { RubyLLM.render_prompt("document_reviser/instructions", document: revision.document) }
   schema SCHEMA

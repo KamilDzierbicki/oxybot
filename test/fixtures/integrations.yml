@@ -2,7 +2,7 @@ acme_slack:
   account: acme
   type: Integration::Slack
   external_id: T_ACME
-  settings: { "feedback_channel_ids": ["C_FEEDBACK"], "app_user_id": "U_OPENSPARK" }
+  settings: { "feedback_channel_ids": ["C_FEEDBACK"], "app_user_id": "U_OXYBOT" }
 
 acme_hubspot:
   account: acme
@@ -14,7 +14,7 @@ globex_slack:
   account: globex
   type: Integration::Slack
   external_id: T_GLOBEX
-  settings: { "feedback_channel_ids": ["C_GLOBEX_FEEDBACK"], "app_user_id": "U_OPENSPARK_GLOBEX" }
+  settings: { "feedback_channel_ids": ["C_GLOBEX_FEEDBACK"], "app_user_id": "U_OXYBOT_GLOBEX" }
 
 acme_linear:
   account: acme

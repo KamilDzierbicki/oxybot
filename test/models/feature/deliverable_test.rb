@@ -8,7 +8,7 @@ class Feature::DeliverableTest < ActiveSupport::TestCase
 
     @feature.send_to_linear
 
-    assert_equal "OSP-1", @feature.linear_identifier
+    assert_equal "OXY-1", @feature.linear_identifier
     issue = integrations(:acme_linear).reload.mock_issues.fetch(@feature.linear_issue_id)
     assert_equal @feature.title, issue["title"]
     assert spec.persisted?

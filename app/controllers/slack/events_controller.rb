@@ -31,6 +31,6 @@ class Slack::EventsController < ApplicationController
   end
 
   def signing_secret
-    ENV.fetch("SLACK_SIGNING_SECRET") { Rails.env.production? ? raise("SLACK_SIGNING_SECRET is not set") : "openspark-local-signing-secret" }
+    ENV.fetch("SLACK_SIGNING_SECRET") { Rails.env.production? ? raise("SLACK_SIGNING_SECRET is not set") : "oxybot-local-signing-secret" }
   end
 end

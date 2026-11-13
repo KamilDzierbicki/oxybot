@@ -22,7 +22,7 @@ class SkillTest < ActiveSupport::TestCase
     conversation.ask("/voc PDF export")
     perform_enqueued_jobs(only: GenerateReplyJob)
 
-    request = JSON.parse(llm_requests("openspark-spark").first.body)
+    request = JSON.parse(llm_requests("oxybot-spark").first.body)
     system = request["messages"].find { |message| message["role"] == "system" }["content"].to_s
     assert_includes system, "Use exactly three bullets."
     assert_equal "PDF export", request["messages"].reverse.find { |message| message["role"] == "user" }["content"].to_s

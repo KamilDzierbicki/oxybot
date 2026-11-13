@@ -6,10 +6,10 @@
 # http://mock-llm.test host to it through WebMock (test/test_helper.rb).
 #
 # It answers per LiteLLM alias:
-#   openspark-extract  splits feedback into sentences and assigns each to the product with the most shared words
-#   openspark-judge    picks the candidate feature with the most shared words, or none below two
-#   openspark-spark    calls one tool chosen by keywords, then writes the answer from the tool's JSON
-#   openspark-embed    hashed bag of word stems, so texts sharing words are close in cosine distance
+#   oxybot-extract  splits feedback into sentences and assigns each to the product with the most shared words
+#   oxybot-judge    picks the candidate feature with the most shared words, or none below two
+#   oxybot-spark    calls one tool chosen by keywords, then writes the answer from the tool's JSON
+#   oxybot-embed    hashed bag of word stems, so texts sharing words are close in cosine distance
 class MockLlm
   DIMENSIONS = 1536
   STOP_WORDS = %w[
@@ -52,10 +52,10 @@ class MockLlm
 
   def chat_completion(body)
     message = case body["model"]
-    when "openspark-extract" then { role: "assistant", content: extract(body["messages"]).to_json }
-    when "openspark-judge" then { role: "assistant", content: judge(body["messages"]).to_json }
-    when "openspark-spark" then spark(body["messages"], Array(body["tools"]))
-    when "openspark-writer"
+    when "oxybot-extract" then { role: "assistant", content: extract(body["messages"]).to_json }
+    when "oxybot-judge" then { role: "assistant", content: judge(body["messages"]).to_json }
+    when "oxybot-spark" then spark(body["messages"], Array(body["tools"]))
+    when "oxybot-writer"
       body["response_format"] ? { role: "assistant", content: revise(body["messages"]).to_json } : { role: "assistant", content: write(body["messages"]) }
     else { role: "assistant", content: "Mock model has no behavior for #{body["model"]}." }
     end

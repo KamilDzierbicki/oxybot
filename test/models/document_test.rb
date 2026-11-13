@@ -97,7 +97,7 @@ class DocumentTest < ActiveSupport::TestCase
 
     post = integrations(:acme_slack).slack_messages.find_by!(channel_id: "C_PRODUCT")
     assert_includes post.text, report.title
-    assert_includes post.text, "/documents/#{report.id}|Open in OpenSpark>"
+    assert_includes post.text, "/documents/#{report.id}|Open in OxyBot>"
   end
 
   test "a failed model call marks the document failed instead of leaving it drafting" do

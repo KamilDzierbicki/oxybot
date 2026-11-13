@@ -1,13 +1,13 @@
 # Demo data: one tenant with products, a backlog, company knowledge, mock Slack and HubSpot, and raw feedback.
 # Feedback notes enqueue extraction and matching jobs, which run once the app is up (bin/dev).
 #
-# Sign in as demo@openspark.local with the password "openspark-demo" (local demo account only).
+# Sign in as demo@oxybot.local with the password "oxybot-demo" (local demo account only).
 
 account = Account.find_or_create_by!(name: "Acme Analytics")
 
-account.users.find_or_create_by!(email_address: "demo@openspark.local") do |user|
+account.users.find_or_create_by!(email_address: "demo@oxybot.local") do |user|
   user.name = "Demo PM"
-  user.password = "openspark-demo"
+  user.password = "oxybot-demo"
   user.slack_user_id = "U_DEMO"
 end
 
@@ -54,7 +54,7 @@ end
 
 Integration::Slack.find_or_create_by!(account: account, external_id: "T_DEMO") do |slack|
   slack.feedback_channel_ids = [ "C_FEEDBACK" ]
-  slack.app_user_id = "U_OPENSPARK"
+  slack.app_user_id = "U_OXYBOT"
   slack.report_channel_id = "C_PRODUCT"
 end
 Integration::Linear.find_or_create_by!(account: account, external_id: "org-demo") { |linear| linear.team_id = "team-demo" }

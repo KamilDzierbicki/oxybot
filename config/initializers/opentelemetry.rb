@@ -8,7 +8,7 @@ require "opentelemetry/exporter/otlp"
 require "opentelemetry/instrumentation/faraday"
 
 OpenTelemetry::SDK.configure do |config|
-  config.service_name = "openspark-rails"
+  config.service_name = "oxybot-rails"
   config.add_span_processor(
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
       OpenTelemetry::Exporter::OTLP::Exporter.new(

@@ -1,4 +1,4 @@
-# OpenSpark
+# OxyBot
 
 An open product agent for product teams: it turns scattered customer feedback into decisions, specs and
 release communication. Feedback arrives from Slack channels and a form,
@@ -42,11 +42,11 @@ sends the model calls, so one assistant turn is one trace, grouped by conversati
 |---|---|
 | Feedback arrives (form, Slack feedback channel) | `FeedbackNote`, `SlackMessage#process` |
 | Customer resolved from the author's email or domain | `FeedbackNote#resolve_customer` |
-| Split into insights, one product each (`openspark-extract`) | `FeedbackNote::Extractable`, `InsightExtractor` |
-| Hybrid search for candidate features, then a judge (`openspark-judge`) | `HybridSearchable`, `Insight::Matchable`, `FeatureJudge` |
+| Split into insights, one product each (`oxybot-extract`) | `FeedbackNote::Extractable`, `InsightExtractor` |
+| Hybrid search for candidate features, then a judge (`oxybot-judge`) | `HybridSearchable`, `Insight::Matchable`, `FeatureJudge` |
 | PM links, relinks, creates a feature or dismisses | Inbox (`InsightsController`, `Insights::*`) |
 | Demand: insights, distinct customers, their ARR | `Feature.by_demand` |
-| Assistant with read-only tools and checked citations (`openspark-spark`) | `ProductAgent`, `Conversation::Turn`, `app/tools` |
+| Assistant with read-only tools and checked citations (`oxybot-spark`) | `ProductAgent`, `Conversation::Turn`, `app/tools` |
 
 Design rules worth keeping:
 
@@ -96,7 +96,7 @@ Both run in mock mode until an access token is saved on the Integrations page.
 - **GitHub:** a fine-grained token with read access to the repository's contents, and the repository as `owner/name`.
   In mock mode the spec writer searches the sample repository in `config/mocks/github`.
 - **Coding agents (MCP):** create a token on the profile page, then
-  `claude mcp add --transport http openspark http://localhost:3120/mcp --header "Authorization: Bearer <token>"`.
+  `claude mcp add --transport http oxybot http://localhost:3120/mcp --header "Authorization: Bearer <token>"`.
   Tools: `list_specs`, `get_spec`, `search_feedback`, all read-only and limited to the token owner's account.
 
 ## Tests
