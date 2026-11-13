@@ -15,3 +15,15 @@ globex_slack:
   type: Integration::Slack
   external_id: T_GLOBEX
   settings: { "feedback_channel_ids": ["C_GLOBEX_FEEDBACK"], "app_user_id": "U_OPENSPARK_GLOBEX" }
+
+acme_linear:
+  account: acme
+  type: Integration::Linear
+  external_id: org-acme
+  settings: { "team_id": "team-acme" }
+
+acme_github:
+  account: acme
+  type: Integration::Github
+  external_id: acme/acme-analytics
+  settings: { "repository": "acme/acme-analytics" }

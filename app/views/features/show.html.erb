@@ -10,6 +10,39 @@
   <div class="stat"><div class="stat__value"><%= @feature.customer_count %></div><div class="stat__label">customers</div></div>
   <div class="stat"><div class="stat__value"><%= money(@feature.demand_arr_cents) %></div><div class="stat__label">ARR asking</div></div>
 </div>
+<div class="grid grid--tight">
+  <section class="card">
+    <h2 class="section-title section-title--flush">Documents</h2>
+    <% @documents.each do |document| %>
+      <div class="list__item"><%= link_to document.title, document %> <%= status_pill document.status %></div>
+    <% end %>
+    <div class="row">
+      <%= button_to "Write spec", feature_spec_path(@feature), class: "button button--primary" %>
+      <%= button_to "Launch review", feature_launch_review_path(@feature), class: "button", disabled: @feature.status != "released",
+                    title: ("Available once the feature is released" if @feature.status != "released") %>
+    </div>
+  </section>
+  <section class="card">
+    <h2 class="section-title section-title--flush">Linear</h2>
+    <% if @feature.in_linear? %>
+      <p><%= external_link @feature.linear_identifier, @feature.linear_url %> · <%= @feature.linear_state %></p>
+      <p class="muted small">Status syncs both ways: change it here and the issue moves; move the issue and this feature follows.</p>
+      <% if Current.account.linear_integration&.mock? %>
+        <%= form_with url: feature_linear_simulation_path(@feature), class: "inline-form" do |form| %>
+          <%= form.select :state_type, Integration::Linear::STATUS_BY_STATE_TYPE.keys.map { |type| [type.humanize, type] } %>
+          <%= form.submit "Simulate move in Linear", class: "button" %>
+        <% end %>
+      <% end %>
+    <% elsif Current.account.linear_integration %>
+      <p class="muted small">Sends the latest spec (or the description) as an issue.</p>
+      <%= button_to "Send to Linear", feature_linear_issue_path(@feature), class: "button" %>
+    <% else %>
+      <p class="muted small"><%= link_to "Connect Linear", integrations_path %> to hand features to engineering.</p>
+    <% end %>
+    <% if @feature.released_at %><p class="muted small">Released <%= @feature.released_at.to_date.to_fs(:long) %></p><% end %>
+  </section>
+</div>
+
 <h2 class="section-title">What customers said</h2>
 <% @insights.each do |insight| %>
   <div class="card">

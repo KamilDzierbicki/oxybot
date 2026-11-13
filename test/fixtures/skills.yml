@@ -1,0 +1,18 @@
+team_voc:
+  account: acme
+  name: voc
+  description: Voice of customer summary
+  instructions: Group feedback into themes and quote customers.
+
+kamil_voc:
+  account: acme
+  user: kamil
+  name: voc
+  description: My own voice of customer format
+  instructions: Use exactly three bullets.
+
+globex_secret:
+  account: globex
+  name: churn-risk
+  description: Globex only
+  instructions: Globex private instructions.

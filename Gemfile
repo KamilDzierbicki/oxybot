@@ -31,6 +31,8 @@ gem "bootsnap", require: false
 gem "ruby_llm", "~> 2.1"
 # pgvector columns and nearest-neighbor scopes for insights and features
 gem "neighbor", "~> 0.6"
+# MCP server that exposes specs to coding agents (official Model Context Protocol SDK)
+gem "mcp"
 # Markdown for knowledge documents and Spark answers
 gem "redcarpet"
 # Rails 8 authentication generator needs it

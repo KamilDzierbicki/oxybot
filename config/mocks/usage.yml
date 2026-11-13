@@ -1,0 +1,7 @@
+# Mock product analytics for launch reviews (stands in for Amplitude, Pendo or Hex).
+# Keys are feature titles; values are free-form metrics shown to the writer.
+"Shopify connector":
+  accounts_connected_after_30_days: "14 of 120 eligible accounts (12%)"
+  orders_imported_per_day: "38,000 on average"
+  sync_failures: "2.1% of runs, mostly expired Shopify tokens"
+  setup_completion: "61% of accounts that start the setup finish it"

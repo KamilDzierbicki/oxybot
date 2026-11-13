@@ -1,6 +1,6 @@
 # A backlog item of one product. Insights link to it, and its demand (insights, customers, their ARR) ranks it.
 class Feature < ApplicationRecord
-  include Embeddable, HybridSearchable
+  include Embeddable, HybridSearchable, Deliverable
 
   STATUSES = %w[idea planned in_progress released].freeze
 
@@ -8,6 +8,7 @@ class Feature < ApplicationRecord
   belongs_to :product
   has_many :insights, dependent: :nullify
   has_many :suggested_insights, class_name: "Insight", foreign_key: :suggested_feature_id, dependent: :nullify
+  has_many :documents, dependent: :nullify
 
   validates :title, presence: true
   validates :status, inclusion: { in: STATUSES }

@@ -1,0 +1,15 @@
+<%= form_with model: skill, class: "form" do |form| %>
+  <%= render "shared/errors", record: skill %>
+  <div class="form__row">
+    <label>Name (typed as /name)<%= form.text_field :name, required: true, placeholder: "churn-risk" %></label>
+    <label>Description<%= form.text_field :description, required: true, placeholder: "Needs that could cost us big customers" %></label>
+  </div>
+  <label>Instructions for the assistant<%= form.text_area :instructions, rows: 8, required: true %></label>
+  <label class="checkbox"><%= form.check_box :personal, checked: skill.user_id.present? %> Only for me</label>
+  <div class="row">
+    <%= form.submit "Save", class: "button button--primary" %>
+  </div>
+<% end %>
+<% if skill.persisted? %>
+  <%= button_to "Delete", skill_path(skill), method: :delete, class: "button button--quiet", form: { data: { turbo_confirm: "Delete /#{skill.name}?" } } %>
+<% end %>

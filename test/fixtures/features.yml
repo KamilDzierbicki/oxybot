@@ -25,3 +25,11 @@ invoice_pdf:
   title: PDF export of invoices
   description: Download invoices as a PDF file.
   status: released
+
+shopify:
+  account: acme
+  product: mobile
+  title: Shopify connector
+  description: Import orders and products from Shopify stores.
+  status: released
+  released_at: <%= 21.days.ago.to_fs(:db) %>

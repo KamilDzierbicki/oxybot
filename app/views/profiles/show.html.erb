@@ -1,0 +1,24 @@
+<% content_for :title, "Profile" %>
+<h1>Profile</h1>
+<%= form_with model: @user, url: profile_path, method: :patch, class: "form" do |form| %>
+  <div class="form__row">
+    <label>Name<%= form.text_field :name, required: true %></label>
+    <label>Slack member id<%= form.text_field :slack_user_id, placeholder: "U012ABCDEF" %>
+      <small class="muted">Lets you ask the assistant in Slack.</small></label>
+  </div>
+  <label>Personal instructions for the agent<%= form.text_area :custom_instructions, rows: 4, placeholder: "Answer in Polish. I own the mobile app, so start with mobile findings." %></label>
+  <%= form.submit "Save", class: "button button--primary" %>
+<% end %>
+
+<h2 class="section-title">Coding agents (MCP)</h2>
+<div class="card">
+  <p class="small">Claude Code, Codex and Cursor can read your product specs and customer evidence through the MCP server. Create a token, then add the server:</p>
+  <% if flash[:mcp_token] %>
+    <div class="flash">Copy this token now; it is not shown again.</div>
+    <pre class="mono-block">claude mcp add --transport http openspark <%= request.base_url %>/mcp --header "Authorization: Bearer <%= flash[:mcp_token] %>"</pre>
+  <% else %>
+    <pre class="mono-block">claude mcp add --transport http openspark <%= request.base_url %>/mcp --header "Authorization: Bearer &lt;token&gt;"</pre>
+  <% end %>
+  <%= button_to @user.mcp_token_digest ? "Replace token" : "Create token", profile_mcp_token_path, class: "button",
+                form: (@user.mcp_token_digest ? { data: { turbo_confirm: "The current token stops working. Continue?" } } : {}) %>
+</div>

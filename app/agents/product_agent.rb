@@ -5,7 +5,7 @@ class ProductAgent < RubyLLM::Agent
   inputs :turn
   instructions do
     RubyLLM.render_prompt("product_agent/instructions",
-                          account: turn.account, user: turn.user, revenue_visible: turn.revenue_visible?)
+                          account: turn.account, user: turn.user, revenue_visible: turn.revenue_visible?, skill: turn.skill)
   end
   tools { [ SearchFeedbackTool.new(turn), FeatureDemandTool.new(turn), ListFeaturesTool.new(turn) ] }
   tool_options rounds: Conversation::Turn::MAX_TOOL_ROUNDS

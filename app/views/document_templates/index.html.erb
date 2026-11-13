@@ -1,0 +1,12 @@
+<% content_for :title, "Templates" %>
+<div class="page-header">
+  <h1>Document templates</h1>
+  <%= link_to "Add template", new_document_template_path, class: "button button--primary" %>
+</div>
+<p class="muted">The agent keeps a template's headings and replaces its guidance. Encode your team's best practice here.</p>
+<% @templates.each do |template| %>
+  <div class="card">
+    <div class="insight__head"><strong><%= template.name %></strong> <span class="muted"><%= Document::KINDS[template.kind] %></span> <%= link_to "Edit", edit_document_template_path(template) %></div>
+    <pre class="template-preview"><%= template.body.truncate(320) %></pre>
+  </div>
+<% end %>

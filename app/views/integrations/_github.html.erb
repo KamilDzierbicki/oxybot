@@ -1,0 +1,12 @@
+<div class="card">
+  <p>Repository: <code><%= integration.repository.presence || "not set" %></code></p>
+  <% if integration.mock? %>
+    <p class="muted small">Mock mode reads the sample repository in <code>config/mocks/github</code>.</p>
+  <% end %>
+</div>
+<h2 class="section-title">Settings</h2>
+<%= form_with model: integration, scope: :integration, url: integration_path(integration), method: :patch, class: "form" do |form| %>
+  <label>Repository (owner/name)<%= form.text_field :repository %></label>
+  <label>Fine-grained token with read access to contents<%= form.password_field :access_token, value: nil, placeholder: integration.mock? ? "Not set (mock mode)" : "Stored, leave empty to keep" %></label>
+  <%= form.submit "Save", class: "button" %>
+<% end %>

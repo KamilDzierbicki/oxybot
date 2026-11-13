@@ -1,0 +1,9 @@
+<%= form_with model: template, class: "form form--wide" do |form| %>
+  <%= render "shared/errors", record: template %>
+  <div class="form__row">
+    <label>Name<%= form.text_field :name, required: true %></label>
+    <label>Used for<%= form.select :kind, Document::KINDS.invert %></label>
+  </div>
+  <label>Template (Markdown headings with guidance)<%= form.text_area :body, rows: 18, required: true, class: "mono" %></label>
+  <%= form.submit "Save", class: "button button--primary" %>
+<% end %>

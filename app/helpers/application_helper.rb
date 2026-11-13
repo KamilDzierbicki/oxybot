@@ -25,6 +25,14 @@ module ApplicationHelper
     simple_format(html, {}, sanitize: false)
   end
 
+  # Links to URLs that came from another system (Linear) only when they are plain https, never javascript: or data:
+  def external_link(text, url)
+    uri = URI.parse(url.to_s)
+    uri.is_a?(URI::HTTPS) ? link_to(text, uri.to_s, target: "_blank", rel: "noopener noreferrer") : text
+  rescue URI::InvalidURIError
+    text
+  end
+
   def money(cents)
     number_to_currency(cents.to_i / 100, precision: 0)
   end

@@ -1,0 +1,16 @@
+<% content_for :title, "Skills" %>
+<div class="page-header">
+  <h1>Skills</h1>
+  <%= link_to "Add skill", new_skill_path, class: "button button--primary" %>
+</div>
+<p class="muted">Saved workflows for the assistant. Type <code>/name</code> at the start of a question, in the app or in Slack. Team skills are shared with everyone; a personal skill with the same name wins for you.</p>
+<% @skills.each do |skill| %>
+  <div class="card">
+    <div class="insight__head">
+      <span><code>/<%= skill.name %></code> <strong><%= skill.description %></strong></span>
+      <span class="row"><%= status_pill(skill.team? ? "team" : "personal") %> <%= link_to "Edit", edit_skill_path(skill) %></span>
+    </div>
+    <p class="muted small"><%= skill.instructions.truncate(220) %></p>
+  </div>
+<% end %>
+<%= tag.p("No skills yet.", class: "empty") if @skills.empty? %>

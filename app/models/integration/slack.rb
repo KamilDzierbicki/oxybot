@@ -4,7 +4,7 @@
 class Integration::Slack < Integration
   has_many :slack_messages, foreign_key: :integration_id, dependent: :destroy
 
-  store_accessor :settings, :feedback_channel_ids, :app_user_id
+  store_accessor :settings, :feedback_channel_ids, :app_user_id, :report_channel_id
 
   # Takes the "event" part of an Events API callback. Duplicate deliveries hit the unique index and stop here.
   def receive(event)
@@ -35,6 +35,14 @@ class Integration::Slack < Integration
     post_message(channel_id: conversation.slack_channel_id, thread_ts: conversation.slack_thread_ts, text: slack_text(message.content))
   end
 
+  # Posts a finished document (the weekly opportunity report) to the report channel, shortened, with a link
+  def post_document(document)
+    return if report_channel_id.blank?
+
+    link = Rails.application.routes.url_helpers.document_url(document, **Rails.application.config.x.url_options)
+    post_message(channel_id: report_channel_id, text: slack_text("**#{document.title}**\n\n#{document.body.truncate(2_500)}\n\n<#{link}|Open in OpenSpark>"))
+  end
+
   def post_message(channel_id:, text:, thread_ts: nil)
     ts = mock? ? format("%.6f", Time.current.to_f) : client.post_message(channel: channel_id, text: text, thread_ts: thread_ts)
     slack_messages.create!(direction: "outbound", channel_id: channel_id, ts: ts, thread_ts: thread_ts,
@@ -55,9 +63,9 @@ class Integration::Slack < Integration
     Integration::Slack::Client.new(access_token)
   end
 
-  # Slack's mrkdwn: bold is *text*, and citations become links to the insight in OpenSpark
+  # Slack's mrkdwn: bold is *text*, headings become bold lines, citations become links to the insight in OpenSpark
   def slack_text(content)
-    content.to_s.gsub(/\*\*(.+?)\*\*/, '*\1*').gsub(Message::CITATION) do
+    content.to_s.gsub(/^#+\s*(.+)$/, '**\1**').gsub(/\*\*(.+?)\*\*/, '*\1*').gsub(Message::CITATION) do
       "<#{Rails.application.routes.url_helpers.insight_url($1, **Rails.application.config.x.url_options)}|##{$1}>"
     end
   end

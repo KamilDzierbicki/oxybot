@@ -22,18 +22,20 @@
           </div>
           <%= nav_link "Assistant", conversations_path, active: controller_name.in?(%w[conversations messages]) %>
           <%= nav_link "Inbox", insights_path, count: Current.account.insights.pending.count, active: controller_name == "insights" %>
-          <%= nav_link "Features", features_path, active: controller_name.in?(%w[features products]) %>
+          <%= nav_link "Features", features_path, active: controller_name.in?(%w[features products specs launch_reviews linear_issues linear_simulations]) %>
+          <%= nav_link "Documents", documents_path, active: controller_name.in?(%w[documents document_templates suggestions versions acceptances rejections regenerations]) %>
           <%= nav_link "Feedback", feedback_notes_path, active: controller_name == "feedback_notes" %>
           <%= nav_link "Customers", customers_path, active: controller_name == "customers" %>
           <%= nav_link "Knowledge", knowledge_documents_path, active: controller_name == "knowledge_documents" %>
+          <%= nav_link "Skills", skills_path, active: controller_name == "skills" %>
           <%= nav_link "Integrations", integrations_path, active: controller_name.in?(%w[integrations simulated_messages syncs]) %>
           <div class="sidebar__footer">
-            <%= Current.user.name %>
+            <%= link_to Current.user.name, profile_path %>
             <%= button_to "Sign out", session_path, method: :delete, class: "link-button" %>
           </div>
         </nav>
         <main class="main">
-          <% flash.each do |type, text| %>
+          <% flash.to_hash.slice("notice", "alert").each do |type, text| %>
             <div class="flash flash--<%= type %>"><%= text %></div>
           <% end %>
           <%= yield %>
