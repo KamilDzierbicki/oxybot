@@ -9,6 +9,9 @@
   <% when "slack" %>
     <label>Feedback channel ids (comma separated)<%= form.text_field :feedback_channel_ids, value: "" %></label>
     <label>Bot token (xoxb-…)<%= form.password_field :access_token %></label>
+  <% when "mattermost" %>
+    <label>Server address<%= form.text_field :server_url, required: true, placeholder: "https://chat.example.com" %></label>
+    <label>Bot access token<%= form.password_field :access_token %></label>
   <% when "hubspot" %>
     <label>Company property with ARR<%= form.text_field :arr_property, value: "arr" %></label>
     <label>Private app access token<%= form.password_field :access_token %></label>

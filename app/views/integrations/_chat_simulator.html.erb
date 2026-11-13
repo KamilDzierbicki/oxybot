@@ -1,0 +1,38 @@
+<div class="split">
+  <section>
+    <h2 class="section-title"><%= integration.display_name %> simulator</h2>
+    <% if integration.mock? %>
+      <p class="muted small">Hands a message to OxyBot the way <%= integration.display_name %> would. Pick a feedback channel to record feedback, mention OxyBot in a shared channel, or use a direct message for a private answer.</p>
+      <%= form_with scope: :simulated_message, url: integration_simulated_messages_path(integration), class: "form" do |form| %>
+        <div class="form__row">
+          <label>Channel
+            <%= form.select :channel_id, Array(integration.feedback_channel_ids).map { |id| [ "##{id} (feedback)", id ] } +
+                                         [ [ "#general (shared channel)", "GENERAL" ], [ "Direct message / private command", "DIRECT" ] ] %>
+          </label>
+          <% column = integration.user_identity_column %>
+          <label>As user<%= form.select :user_id, Current.account.users.where.not(column => nil).map { |user| [ user.name, user.public_send(column) ] } + [ [ "Unknown user", "UNKNOWN" ] ] %></label>
+        </div>
+        <label>Message<%= form.text_area :text, rows: 3, required: true, placeholder: "Customer call with Contoso: they need PDF export of reports for audits." %></label>
+        <label class="checkbox"><%= form.check_box :mention %> Address OxyBot (mention)</label>
+        <%= form.submit "Send to OxyBot", class: "button button--primary" %>
+      <% end %>
+    <% else %>
+      <p class="muted small">Live: messages arrive from <%= integration.display_name %> itself.</p>
+    <% end %>
+  </section>
+  <section>
+    <h2 class="section-title">Messages</h2>
+    <div class="slack-log">
+      <% @chat_messages.each do |message| %>
+        <div class="slack-message slack-message--<%= message.direction %>">
+          <div class="muted small">
+            <%= message.private_chat? ? "private" : "##{message.channel_id}" %> · <%= message.inbound? ? message.external_user_id : "OxyBot" %><%= " · in thread" if message.thread_id %>
+          </div>
+          <div><%= integration.kind == "slack" ? slack_text(message.text) : markdown(message.text) %></div>
+        </div>
+      <% end %>
+      <%= tag.p("No messages yet.", class: "empty") if @chat_messages.empty? %>
+    </div>
+    <%= link_to "Refresh", integration_path(integration), class: "button button--quiet" %>
+  </section>
+</div>

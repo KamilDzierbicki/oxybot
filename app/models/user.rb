@@ -6,7 +6,7 @@ class User < ApplicationRecord
   has_many :skills, dependent: :destroy
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
-  normalizes :slack_user_id, with: ->(id) { id.strip.presence }
+  normalizes :slack_user_id, :mattermost_user_id, with: ->(id) { id.strip.presence }
 
   ROLES = %w[admin member].freeze
 

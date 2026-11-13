@@ -28,14 +28,14 @@ class Slack::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { accounts(:acme).feedback_notes.where(source: "slack").count }, 1 do
       2.times { post_signed(event) }
-      perform_enqueued_jobs(only: ProcessSlackMessageJob)
+      perform_enqueued_jobs(only: ProcessChatMessageJob)
     end
   end
 
   test "a message in another channel is ignored" do
     assert_no_difference -> { FeedbackNote.count } do
       post_signed(message_event(channel: "C_RANDOM", text: "Lunch at noon?"))
-      perform_enqueued_jobs(only: ProcessSlackMessageJob)
+      perform_enqueued_jobs(only: ProcessChatMessageJob)
     end
   end
 
@@ -46,20 +46,20 @@ class Slack::EventsControllerTest < ActionDispatch::IntegrationTest
     insight.embed
 
     post_signed(message_event(channel: "C_GENERAL", text: "<@U_OXYBOT> what do customers say about PDF export?", type: "app_mention", ts: "1700000000.000100"))
-    perform_enqueued_jobs(only: ProcessSlackMessageJob)
+    perform_enqueued_jobs(only: ProcessChatMessageJob)
     perform_enqueued_jobs(only: GenerateReplyJob) # enqueued by the first job
 
-    reply = integrations(:acme_slack).slack_messages.find_by!(direction: "outbound")
-    assert_equal "1700000000.000100", reply.thread_ts
+    reply = integrations(:acme_slack).chat_messages.find_by!(direction: "outbound")
+    assert_equal "1700000000.000100", reply.thread_id
     assert_includes reply.text, "/insights/#{insight.id}|##{insight.id}>"
     assert_not_includes reply.text, "$", "a shared channel never sees revenue"
   end
 
   test "a Slack user without a OxyBot account gets no data" do
     post_signed(message_event(channel: "D_STRANGER", text: "what do customers want?", user: "U_STRANGER"))
-    perform_enqueued_jobs(only: ProcessSlackMessageJob)
+    perform_enqueued_jobs(only: ProcessChatMessageJob)
 
-    reply = integrations(:acme_slack).slack_messages.find_by!(direction: "outbound")
+    reply = integrations(:acme_slack).chat_messages.find_by!(direction: "outbound")
     assert_match "I don't know you yet", reply.text
     assert_equal 0, Conversation.count
   end
@@ -67,7 +67,7 @@ class Slack::EventsControllerTest < ActionDispatch::IntegrationTest
   test "an event from another workspace never reaches this tenant" do
     post_signed(message_event(channel: "C_FEEDBACK", text: "Customers keep asking for PDF export.", team: "T_UNKNOWN"))
 
-    assert_equal 0, SlackMessage.count
+    assert_equal 0, ChatMessage.count
   end
 
   private

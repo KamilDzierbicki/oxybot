@@ -11,7 +11,7 @@ class Integration < ApplicationRecord
   # Every kind shares the integrations routes and params (integration_path, params[:integration])
   def self.model_name = ActiveModel::Name.new(self, nil, "Integration")
 
-  KINDS = { "slack" => "Integration::Slack", "hubspot" => "Integration::Hubspot",
+  KINDS = { "slack" => "Integration::Slack", "mattermost" => "Integration::Mattermost", "hubspot" => "Integration::Hubspot",
             "linear" => "Integration::Linear", "github" => "Integration::Github" }.freeze
 
   store_accessor :settings, :last_check_ok, :last_check_message, :last_checked_at
@@ -37,5 +37,7 @@ class Integration < ApplicationRecord
 
   def kind = type.demodulize.downcase
 
-  def display_name = { "slack" => "Slack", "hubspot" => "HubSpot", "linear" => "Linear", "github" => "GitHub" }.fetch(kind)
+  def display_name = { "slack" => "Slack", "mattermost" => "Mattermost", "hubspot" => "HubSpot", "linear" => "Linear", "github" => "GitHub" }.fetch(kind)
+
+  def chat? = is_a?(Integration::Chat)
 end

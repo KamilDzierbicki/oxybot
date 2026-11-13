@@ -2,7 +2,7 @@
 class FeedbackNote < ApplicationRecord
   include Extractable
 
-  SOURCES = %w[manual slack hubspot email].freeze
+  SOURCES = %w[manual slack mattermost hubspot email].freeze
 
   belongs_to :account
   belongs_to :customer, optional: true

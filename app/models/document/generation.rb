@@ -19,7 +19,7 @@ class Document::Generation
       document.update!(body: body, status: "ready", cited_insight_ids: cited)
       document.versions.create!(body: body, summary: "Drafted by the agent")
     end
-    account.slack_integration&.post_document(document) if document.kind == "opportunity_report"
+    account.integrations.select(&:chat?).each { |chat| chat.post_document(document) } if document.kind == "opportunity_report"
   rescue RubyLLM::Error, RubyLLM::ToolRoundLimitError, Faraday::Error => e
     Rails.error.report(e, context: { document_id: document.id })
     document.update!(status: "failed", body: "The agent could not draft this document (#{e.class.name.demodulize}). Try again.")

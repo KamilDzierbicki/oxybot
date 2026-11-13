@@ -4,10 +4,10 @@
   <h1><%= @conversation.title %></h1>
   <%= link_to "New conversation", conversations_path, class: "button" %>
 </div>
-<% if @conversation.slack? %>
-  <p class="muted">This conversation is a Slack thread. Replies are posted there<%= " without revenue figures (shared channel)" unless @conversation.revenue_visible? %>.</p>
+<% if @conversation.chat? %>
+  <p class="muted">This conversation happens in <%= @conversation.integration.display_name %>. Replies are posted there<%= " without revenue figures (shared channel)" unless @conversation.revenue_visible? %>.</p>
 <% end %>
 <div id="messages" class="messages" data-controller="scroll-to-latest">
   <%= render @conversation.messages %>
 </div>
-<%= render "messages/form", conversation: @conversation unless @conversation.slack? %>
+<%= render "messages/form", conversation: @conversation unless @conversation.chat? %>

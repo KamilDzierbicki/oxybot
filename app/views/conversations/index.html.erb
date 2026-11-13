@@ -21,7 +21,7 @@
     <% @conversations.each do |conversation| %>
       <li class="list__item">
         <%= link_to conversation.title.presence || "Untitled", conversation %>
-        <span class="muted"><%= conversation.channel == "slack" ? "Slack" : "Web" %> · <%= time_ago_in_words(conversation.updated_at) %> ago</span>
+        <span class="muted"><%= conversation.channel.humanize %> · <%= time_ago_in_words(conversation.updated_at) %> ago</span>
       </li>
     <% end %>
   </ul>

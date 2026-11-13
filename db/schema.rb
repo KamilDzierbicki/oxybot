@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -22,6 +22,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
     t.text "custom_instructions"
     t.jsonb "ai_settings", default: {}, null: false
     t.string "time_zone", default: "UTC", null: false
+  end
+
+  create_table "chat_messages", force: :cascade do |t|
+    t.bigint "integration_id", null: false
+    t.string "direction", null: false
+    t.string "channel_id", null: false
+    t.string "message_id", null: false
+    t.string "thread_id"
+    t.string "external_user_id"
+    t.string "channel_type"
+    t.boolean "mentions_app", default: false, null: false
+    t.text "text", null: false
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "response_url"
+    t.index ["integration_id", "channel_id", "message_id"], name: "idx_on_integration_id_channel_id_message_id_fbb491aab7", unique: true
+    t.index ["integration_id"], name: "index_chat_messages_on_integration_id"
   end
 
   create_table "contacts", force: :cascade do |t|
@@ -42,12 +60,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
     t.bigint "user_id", null: false
     t.string "channel", default: "web", null: false
     t.string "title"
-    t.string "slack_channel_id"
-    t.string "slack_thread_ts"
+    t.string "chat_channel_id"
+    t.string "chat_thread_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "slack_channel_id", "slack_thread_ts"], name: "index_conversations_on_slack_thread", unique: true, where: "(slack_thread_ts IS NOT NULL)"
+    t.bigint "integration_id"
+    t.boolean "private_chat", default: false, null: false
+    t.text "reply_url"
+    t.index ["account_id", "chat_channel_id", "chat_thread_id"], name: "index_conversations_on_slack_thread", unique: true, where: "(chat_thread_id IS NOT NULL)"
     t.index ["account_id"], name: "index_conversations_on_account_id"
+    t.index ["integration_id"], name: "index_conversations_on_integration_id"
     t.index ["user_id"], name: "index_conversations_on_user_id"
   end
 
@@ -199,6 +221,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "webhook_secret"
+    t.text "command_token"
     t.index ["account_id", "type"], name: "index_integrations_on_account_id_and_type", unique: true
     t.index ["account_id"], name: "index_integrations_on_account_id"
     t.index ["type", "external_id"], name: "index_integrations_on_type_and_external_id", unique: true
@@ -276,23 +299,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
     t.index ["user_id"], name: "index_skills_on_user_id"
   end
 
-  create_table "slack_messages", force: :cascade do |t|
-    t.bigint "integration_id", null: false
-    t.string "direction", null: false
-    t.string "channel_id", null: false
-    t.string "ts", null: false
-    t.string "thread_ts"
-    t.string "slack_user_id"
-    t.string "channel_type"
-    t.boolean "mentions_app", default: false, null: false
-    t.text "text", null: false
-    t.datetime "processed_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["integration_id", "channel_id", "ts"], name: "index_slack_messages_on_integration_id_and_channel_id_and_ts", unique: true
-    t.index ["integration_id"], name: "index_slack_messages_on_integration_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "name", null: false
@@ -304,15 +310,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
     t.text "custom_instructions"
     t.string "mcp_token_digest"
     t.string "role", default: "member", null: false
+    t.string "mattermost_user_id"
+    t.index ["account_id", "mattermost_user_id"], name: "index_users_on_account_id_and_mattermost_user_id", unique: true, where: "(mattermost_user_id IS NOT NULL)"
     t.index ["account_id", "slack_user_id"], name: "index_users_on_account_id_and_slack_user_id", unique: true, where: "(slack_user_id IS NOT NULL)"
     t.index ["account_id"], name: "index_users_on_account_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["mcp_token_digest"], name: "index_users_on_mcp_token_digest", unique: true
   end
 
+  add_foreign_key "chat_messages", "integrations"
   add_foreign_key "contacts", "accounts"
   add_foreign_key "contacts", "customers"
   add_foreign_key "conversations", "accounts"
+  add_foreign_key "conversations", "integrations"
   add_foreign_key "conversations", "users"
   add_foreign_key "customers", "accounts"
   add_foreign_key "document_suggestions", "document_versions", column: "base_version_id"
@@ -344,6 +354,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_210000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "skills", "accounts"
   add_foreign_key "skills", "users"
-  add_foreign_key "slack_messages", "integrations"
   add_foreign_key "users", "accounts"
 end

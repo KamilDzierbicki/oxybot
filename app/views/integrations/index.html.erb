@@ -2,6 +2,7 @@
 <h1>Integrations</h1>
 <div class="grid">
   <% { "slack" => "Feedback channels become feedback notes; DM the app or mention it to ask the agent. The weekly opportunity report is posted to a channel.",
+       "mattermost" => "Self-hosted chat: feedback channels through outgoing webhooks, questions with @oxybot in channels or privately with /oxybot.",
        "hubspot" => "Companies with ARR and contacts sync every hour, so feedback is weighted by revenue.",
        "linear" => "Send features with their spec as issues; status syncs both ways through Linear's webhook.",
        "github" => "The spec writer searches your repository for technical context. Read-only." }.each do |kind, text| %>
