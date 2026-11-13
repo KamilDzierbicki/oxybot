@@ -55,6 +55,8 @@ class MockLlm
     when "oxybot-extract" then { role: "assistant", content: extract(body["messages"]).to_json }
     when "oxybot-judge" then { role: "assistant", content: judge(body["messages"]).to_json }
     when "oxybot-assistant" then assistant(body["messages"], Array(body["tools"]))
+    when "oxybot-writer"
+      body["response_format"] ? { role: "assistant", content: revise(body["messages"]).to_json } : { role: "assistant", content: write(body["messages"]) }
     else { role: "assistant", content: "Mock model has no behavior for #{body["model"]}." }
     end
 
@@ -114,6 +116,60 @@ class MockLlm
 
     { role: "assistant", content: nil,
       tool_calls: [ { id: "call_#{SecureRandom.hex(4)}", type: "function", function: { name: name, arguments: arguments.to_json } } ] }
+  end
+
+  # The brief holds the template's "## " headings, evidence lines with [insight:id] and fact lines.
+  # Each heading gets the lines whose topic matches it; a real model writes prose instead.
+  def write(messages)
+    brief = content_text(messages.reverse.find { |message| message["role"] == "user" })
+    title = brief[/titled "([^"]+)"/, 1] || "Document"
+    headings = brief[%r{<template>(.*?)</template>}m, 1].to_s.lines.map(&:strip).grep(/\A## /)
+    brief = brief.sub(%r{<template>.*?</template>}m, "")
+    evidence = brief.lines.map(&:strip).grep(/\A- \[insight:\d+\]/).map { |line| line.sub(/ Quote: .*/, "").sub(/\A- (\[insight:\d+\]) (.*)\z/, '- \2 \1') }
+    facts = brief.lines.map(&:strip).reject { |line| line.empty? || line.start_with?("#", "- [insight:", "Template", "Write the") }
+
+    sections = headings.map do |heading|
+      "#{heading}\n\n#{section_for(heading, evidence, facts)}"
+    end
+    "# #{title}\n\n_Drafted by the mock model from the brief; connect a real model for prose._\n\n#{sections.join("\n\n")}"
+  end
+
+  def section_for(heading, evidence, facts)
+    pick = ->(pattern) { facts.grep(pattern).map { |line| line.start_with?("- ") ? line : "- #{line}" } }
+    lines = case heading
+    when /notify|contact|announce/i then pick.(/notify|contacts|@/i) + evidence.first(6)
+    when /problem|evidence|customer|voice|theme|feedback|asked|insight/i then evidence.first(6)
+    when /metric|success|goal|measure|outcome|usage/i then pick.(/usage|adoption|active|metric|%|users/i).presence || [ "- Open question: which adoption metric proves this worked?" ]
+    when /technical|code|implementation|engineering/i then pick.(/\.(rb|js|ts|py|sql|erb)\b/i).presence || [ "- Open question: no matching code found." ]
+    when /scope/i then [ "- Out of scope: anything the evidence above does not ask for.", "- Open question: confirm the scope with engineering." ]
+    when /growth|growing|trend/i then pick.(/this week|growing|vs /i)
+    when /segment|plan/i then pick.(/customers, \$|enterprise|growth|starter/i)
+    when /roadmap|recommend|next|follow/i then pick.(/idea|planned|roadmap|demand/i)
+    when /summary|overview|context|background|what|release|highlight/i then pick.(/\A(Feature|Demand|New insights|Released|Period|Theme)/)
+    end
+    Array(lines).presence&.join("\n") || "- Open question: nothing in the brief covers this."
+  end
+
+  # The current document is in the instructions after "Current version:", the request in the user message
+  def revise(messages)
+    instructions = messages.select { |message| message["role"].in?(%w[system developer]) }.map { |message| content_text(message) }.join("\n")
+    current = instructions.split(/^Current version:\s*$/).last.to_s.strip
+    request = content_text(messages.reverse.find { |message| message["role"] == "user" }).delete_prefix("Request:").strip
+
+    if request.match?(/short|concise|trim|brief|skr[oó]|kr[oó]t/i)
+      kept = []
+      bullets = 0
+      current.lines.each do |line|
+        bullets = 0 if line.start_with?("#")
+        next if line.start_with?("- ") && (bullets += 1) > 2
+
+        kept << line
+      end
+      { body: kept.join.strip, rationale: "Kept the first two bullets of every section." }
+    else
+      { body: "#{current}\n\n## Requested change\n\n- #{request}\n- Open question: the mock model cannot rewrite text; connect a real model.",
+        rationale: "The mock model recorded the request as a new section." }
+    end
   end
 
   def pick_tool(question, names)

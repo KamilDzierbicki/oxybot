@@ -1,16 +1,17 @@
 # One assistant turn: replays the conversation to the product agent, lets it call its tools, then stores the
 # answer. Tools report every insight they returned, so the answer may only cite insights the model really saw.
 class Conversation::Turn
+  include CitationTracking
+
   MAX_TOOL_ROUNDS = 6
 
-  attr_reader :reply, :conversation, :seen_insight_ids
+  attr_reader :reply, :conversation
 
   delegate :account, :user, :revenue_visible?, to: :conversation
 
   def initialize(reply)
     @reply = reply
     @conversation = reply.conversation
-    @seen_insight_ids = Set.new
     @tool_calls = []
   end
 
@@ -19,7 +20,7 @@ class Conversation::Turn
     history.each { |message| agent.add_message(role: message.role.to_sym, content: message.content) }
     agent.before_tool_call { |call| @tool_calls << { name: call.name, arguments: call.arguments } }
 
-    response = agent.ask(question.content)
+    response = agent.ask(question_text)
     content, cited = checked_citations(response.content.to_s)
     reply.update!(status: "done", content: content.presence || "(no answer)", tool_calls: @tool_calls,
                   cited_insight_ids: cited, input_tokens: response.tokens&.input, output_tokens: response.tokens&.output)
@@ -31,17 +32,30 @@ class Conversation::Turn
     deliver_to_slack
   end
 
-  def remember_insights(ids)
-    seen_insight_ids.merge(ids)
-  end
-
   # Grouped in Langfuse by conversation (session) and tagged with the tenant
   def trace_metadata
     { session_id: "conversation-#{conversation.id}", trace_user_id: "user-#{user.id}",
       tags: [ "account-#{account.id}", "channel-#{conversation.channel}" ], generation_name: "product-agent" }
   end
 
+  # "/voc reporting" runs the voc skill with "reporting" as the request
+  def skill
+    invocation&.first
+  end
+
   private
+
+  def invocation
+    return @invocation if defined?(@invocation)
+
+    @invocation = Skill.invoked_in(question.content, user)
+  end
+
+  def question_text
+    return question.content unless invocation
+
+    invocation.last.presence || "Run the #{skill.name} skill."
+  end
 
   def question
     @question ||= conversation.messages.where(role: "user").where(id: ...reply.id).last
@@ -49,19 +63,6 @@ class Conversation::Turn
 
   def history
     conversation.messages.where(status: "done").where(id: ...question.id)
-  end
-
-  # A citation of an insight no tool returned in this turn is invented (or from another tenant): drop it
-  def checked_citations(content)
-    cited = []
-    checked = content.gsub(Message::CITATION) do
-      id = $1.to_i
-      next "" unless seen_insight_ids.include?(id)
-
-      cited << id
-      "[insight:#{id}]"
-    end
-    [ checked.gsub(/ +\n/, "\n").strip, cited.uniq ]
   end
 
   def deliver_to_slack

@@ -2,8 +2,7 @@ class IntegrationsController < ApplicationController
   before_action :set_integration, only: %i[show update]
 
   def index
-    @slack = Current.account.slack_integration
-    @hubspot = Current.account.hubspot_integration
+    @integrations = Current.account.integrations.index_by(&:kind)
   end
 
   def show
@@ -22,9 +21,12 @@ class IntegrationsController < ApplicationController
   end
 
   def integration_params
-    attributes = params.expect(integration: %i[access_token feedback_channel_ids app_user_id arr_property plan_property])
+    attributes = params.expect(integration: %i[access_token webhook_secret feedback_channel_ids app_user_id report_channel_id
+                                              arr_property plan_property team_id repository])
     attributes[:feedback_channel_ids] = attributes[:feedback_channel_ids].to_s.split(/[\s,]+/).compact_blank if attributes.key?(:feedback_channel_ids)
-    attributes.delete(:access_token) if attributes[:access_token].blank? # an empty field keeps the stored token
+    # An empty secret field keeps the stored value
+    attributes.delete(:access_token) if attributes[:access_token].blank?
+    attributes.delete(:webhook_secret) if attributes[:webhook_secret].blank?
     attributes
   end
 end

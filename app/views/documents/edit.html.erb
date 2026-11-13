@@ -1,0 +1,11 @@
+<% content_for :title, "Edit #{@document.title}" %>
+<h1>Edit document</h1>
+<%= form_with model: @document, class: "form form--wide" do |form| %>
+  <label>Title<%= form.text_field :title, required: true %></label>
+  <label>Content (Markdown, cite insights as [insight:123])<%= form.text_area :body, rows: 26, class: "mono" %></label>
+  <label>What changed<%= text_field_tag :summary, nil, placeholder: "Tightened the scope after the engineering review" %></label>
+  <div class="row">
+    <%= form.submit "Save as new version", class: "button button--primary" %>
+    <%= link_to "Cancel", @document, class: "button button--quiet" %>
+  </div>
+<% end %>

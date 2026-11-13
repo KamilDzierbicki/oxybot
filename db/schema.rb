@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -19,6 +19,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
     t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "custom_instructions"
   end
 
   create_table "contacts", force: :cascade do |t|
@@ -63,6 +64,63 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
     t.index ["account_id"], name: "index_customers_on_account_id"
   end
 
+  create_table "document_suggestions", force: :cascade do |t|
+    t.bigint "document_id", null: false
+    t.bigint "user_id"
+    t.bigint "base_version_id"
+    t.text "instruction", null: false
+    t.text "body"
+    t.text "rationale"
+    t.string "status", default: "thinking", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["base_version_id"], name: "index_document_suggestions_on_base_version_id"
+    t.index ["document_id"], name: "index_document_suggestions_on_document_id"
+    t.index ["user_id"], name: "index_document_suggestions_on_user_id"
+  end
+
+  create_table "document_templates", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "kind", null: false
+    t.string "name", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "kind"], name: "index_document_templates_on_account_id_and_kind"
+    t.index ["account_id"], name: "index_document_templates_on_account_id"
+  end
+
+  create_table "document_versions", force: :cascade do |t|
+    t.bigint "document_id", null: false
+    t.bigint "user_id"
+    t.text "body", null: false
+    t.string "summary"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_id"], name: "index_document_versions_on_document_id"
+    t.index ["user_id"], name: "index_document_versions_on_user_id"
+  end
+
+  create_table "documents", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "feature_id"
+    t.bigint "creator_id"
+    t.bigint "document_template_id"
+    t.string "kind", null: false
+    t.string "title", null: false
+    t.text "body", default: "", null: false
+    t.string "status", default: "drafting", null: false
+    t.boolean "auto_accept", default: false, null: false
+    t.bigint "cited_insight_ids", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "kind"], name: "index_documents_on_account_id_and_kind"
+    t.index ["account_id"], name: "index_documents_on_account_id"
+    t.index ["creator_id"], name: "index_documents_on_creator_id"
+    t.index ["document_template_id"], name: "index_documents_on_document_template_id"
+    t.index ["feature_id"], name: "index_documents_on_feature_id"
+  end
+
   create_table "features", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "product_id", null: false
@@ -73,6 +131,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
     t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(title, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", stored: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "released_at"
+    t.string "linear_issue_id"
+    t.string "linear_identifier"
+    t.string "linear_url"
+    t.string "linear_state"
+    t.index ["account_id", "linear_issue_id"], name: "index_features_on_account_id_and_linear_issue_id", unique: true, where: "(linear_issue_id IS NOT NULL)"
     t.index ["account_id"], name: "index_features_on_account_id"
     t.index ["embedding"], name: "index_features_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
     t.index ["product_id"], name: "index_features_on_product_id"
@@ -132,6 +196,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
     t.datetime "synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "webhook_secret"
     t.index ["account_id", "type"], name: "index_integrations_on_account_id_and_type", unique: true
     t.index ["account_id"], name: "index_integrations_on_account_id"
     t.index ["type", "external_id"], name: "index_integrations_on_type_and_external_id", unique: true
@@ -180,6 +245,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "skills", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id"
+    t.string "name", null: false
+    t.string "description", null: false
+    t.text "instructions", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "user_id", "name"], name: "index_skills_on_account_id_and_user_id_and_name", unique: true, nulls_not_distinct: true
+    t.index ["account_id"], name: "index_skills_on_account_id"
+    t.index ["user_id"], name: "index_skills_on_user_id"
+  end
+
   create_table "slack_messages", force: :cascade do |t|
     t.bigint "integration_id", null: false
     t.string "direction", null: false
@@ -205,9 +283,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "custom_instructions"
+    t.string "mcp_token_digest"
     t.index ["account_id", "slack_user_id"], name: "index_users_on_account_id_and_slack_user_id", unique: true, where: "(slack_user_id IS NOT NULL)"
     t.index ["account_id"], name: "index_users_on_account_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["mcp_token_digest"], name: "index_users_on_mcp_token_digest", unique: true
   end
 
   add_foreign_key "contacts", "accounts"
@@ -215,6 +296,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
   add_foreign_key "conversations", "accounts"
   add_foreign_key "conversations", "users"
   add_foreign_key "customers", "accounts"
+  add_foreign_key "document_suggestions", "document_versions", column: "base_version_id"
+  add_foreign_key "document_suggestions", "documents"
+  add_foreign_key "document_suggestions", "users"
+  add_foreign_key "document_templates", "accounts"
+  add_foreign_key "document_versions", "documents"
+  add_foreign_key "document_versions", "users"
+  add_foreign_key "documents", "accounts"
+  add_foreign_key "documents", "document_templates"
+  add_foreign_key "documents", "features"
+  add_foreign_key "documents", "users", column: "creator_id"
   add_foreign_key "features", "accounts"
   add_foreign_key "features", "products"
   add_foreign_key "feedback_notes", "accounts"
@@ -230,6 +321,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
   add_foreign_key "messages", "conversations"
   add_foreign_key "products", "accounts"
   add_foreign_key "sessions", "users"
+  add_foreign_key "skills", "accounts"
+  add_foreign_key "skills", "users"
   add_foreign_key "slack_messages", "integrations"
   add_foreign_key "users", "accounts"
 end

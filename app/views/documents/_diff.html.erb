@@ -1,0 +1,5 @@
+<div class="diff">
+  <% diff.lines.each do |line| %>
+    <div class="diff__line diff__line--<%= line.change %>"><span class="diff__mark"><%= { same: " ", added: "+", removed: "−" }[line.change] %></span><%= line.text.presence || " " %></div>
+  <% end %>
+</div>

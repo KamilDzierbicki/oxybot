@@ -15,5 +15,5 @@ class Integration < ApplicationRecord
 
   def kind = type.demodulize.downcase
 
-  def display_name = { "slack" => "Slack", "hubspot" => "HubSpot" }.fetch(kind)
+  def display_name = { "slack" => "Slack", "hubspot" => "HubSpot", "linear" => "Linear", "github" => "GitHub" }.fetch(kind)
 end

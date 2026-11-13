@@ -183,3 +183,35 @@
     .message { max-width: 100%; }
   }
 }
+
+@layer components {
+  .create-row { margin: 0.75rem 0; }
+  .grid--tight { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin: 1rem 0; }
+  .section-title--flush { margin-top: 0; }
+  .doc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1.25rem; align-items: start; margin-top: 1rem; }
+  .doc { padding: 1.5rem 1.75rem; }
+  .doc .prose h1 { font-size: 1.35rem; }
+  .doc .prose h2 { font-size: 1.1rem; margin: 1.25rem 0 0.4rem; }
+  .doc .prose h3 { font-size: 1rem; margin: 1rem 0 0.3rem; }
+  .doc .prose table { border-collapse: collapse; margin: 0.5rem 0; }
+  .doc .prose td, .doc .prose th { border: 1px solid var(--border); padding: 0.3rem 0.5rem; }
+  .doc-side { display: flex; flex-direction: column; gap: 0.75rem; position: sticky; top: 1rem; }
+  .doc-side .card { margin: 0; }
+  .auto-accept { margin-top: 0.6rem; font-size: 0.85rem; }
+  .auto-accept .checkbox { display: flex; gap: 0.4rem; align-items: center; }
+  .suggestion-card { border-color: var(--accent); }
+  .diff { font: 0.8rem/1.45 ui-monospace, monospace; border: 1px solid var(--border); border-radius: 8px; overflow: auto; max-height: 360px; margin: 0.5rem 0; background: var(--surface); }
+  .diff__line { white-space: pre-wrap; padding: 0 0.5rem; }
+  .diff__line--added { background: oklch(from var(--ok) l c h / 0.16); }
+  .diff__line--removed { background: oklch(from var(--danger) l c h / 0.14); text-decoration: line-through; color: var(--muted); }
+  .diff__mark { display: inline-block; width: 1.1rem; color: var(--muted); user-select: none; }
+  .form--wide { max-width: 980px; }
+  .mono, .mono-block, .template-preview { font: 0.85rem/1.5 ui-monospace, monospace; }
+  .mono-block, .template-preview { background: var(--sidebar); padding: 0.6rem 0.75rem; border-radius: 8px; white-space: pre-wrap; word-break: break-all; margin: 0.5rem 0; }
+  .pill--ready, .pill--team, .pill--accepted { color: var(--ok); border-color: currentColor; }
+  .pill--drafting { color: var(--warn); border-color: currentColor; }
+  @media (max-width: 800px) {
+    .doc-layout { grid-template-columns: 1fr; }
+    .doc-side { position: static; }
+  }
+}

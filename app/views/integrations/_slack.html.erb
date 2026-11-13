@@ -38,6 +38,7 @@
     <label>Feedback channel ids<%= form.text_field :feedback_channel_ids, value: Array(integration.feedback_channel_ids).join(", ") %></label>
     <label>App member id<%= form.text_field :app_user_id %></label>
   </div>
+  <label>Channel id for the weekly opportunity report<%= form.text_field :report_channel_id, placeholder: "C_PRODUCT" %></label>
   <label>Bot token<%= form.password_field :access_token, value: nil, placeholder: integration.mock? ? "Not set (mock mode)" : "Stored, leave empty to keep" %></label>
   <%= form.submit "Save", class: "button" %>
 <% end %>

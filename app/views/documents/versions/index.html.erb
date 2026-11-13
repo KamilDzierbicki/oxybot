@@ -1,0 +1,12 @@
+<% content_for :title, "History · #{@document.title}" %>
+<div class="page-header"><h1>History</h1><%= link_to "Back to document", @document, class: "button" %></div>
+<p class="muted"><%= @document.title %></p>
+<ul class="list">
+  <% @versions.each do |version| %>
+    <li class="list__item">
+      <span><%= link_to version.summary.presence || "Version #{version.id}", document_version_path(@document, version) %>
+        <span class="muted">· <%= version.author_name %></span></span>
+      <span class="muted"><%= version.created_at.to_fs(:short) %></span>
+    </li>
+  <% end %>
+</ul>

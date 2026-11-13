@@ -32,6 +32,17 @@ model_list:
         - location: message
           role: system
 
+  # Writes and revises documents (specs, reports, release notes, launch reviews)
+  - model_name: oxybot-writer
+    litellm_params:
+      model: anthropic/claude-sonnet-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 5
+      budget_duration: 1d
+      cache_control_injection_points:
+        - location: message
+          role: system
+
   # 1536 dimensions, matching insights.embedding and features.embedding. Multilingual, so Polish feedback works.
   - model_name: oxybot-embed
     litellm_params:

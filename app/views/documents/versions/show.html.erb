@@ -1,0 +1,7 @@
+<% content_for :title, "Version · #{@document.title}" %>
+<div class="page-header">
+  <h1><%= @version.summary.presence || "Version #{@version.id}" %></h1>
+  <%= link_to "All versions", document_versions_path(@document), class: "button" %>
+</div>
+<p class="muted"><%= @version.author_name %> · <%= @version.created_at.to_fs(:long) %> · changes against the previous version (+<%= @diff.added_count %> / −<%= @diff.removed_count %>)</p>
+<%= render "documents/diff", diff: @diff %>

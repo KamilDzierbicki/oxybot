@@ -3,7 +3,13 @@
   <h1>Knowledge</h1>
   <%= link_to "Add document", new_knowledge_document_path, class: "button button--primary" %>
 </div>
-<p class="muted">Company context the assistant always reads: strategy, personas, pricing, competitors. Keep each document short.</p>
+<p class="muted">Company context the agent always reads: strategy, personas, pricing, competitors. Keep each document short.</p>
+<div class="card">
+  <%= form_with model: Current.account, url: team_instructions_path, method: :patch, class: "form" do |form| %>
+    <label>Team instructions for the agent<%= form.text_area :custom_instructions, rows: 3, placeholder: "Write specs in English. Always name the customer segment. Mark guesses as open questions." %></label>
+    <%= form.submit "Save instructions", class: "button" %>
+  <% end %>
+</div>
 <% @documents.each do |document| %>
   <div class="card">
     <div class="insight__head"><strong><%= document.title %></strong> <%= link_to "Edit", edit_knowledge_document_path(document) %></div>

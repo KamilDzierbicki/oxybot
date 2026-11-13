@@ -4,6 +4,10 @@ default: &default
     class: SyncHubspotJob
     queue: default
     schedule: every hour at minute 17
+  opportunity_discovery:
+    class: OpportunityDiscoveryJob
+    queue: default
+    schedule: every monday at 7:43am
 
 development:
   <<: *default

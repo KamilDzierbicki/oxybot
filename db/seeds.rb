@@ -55,6 +55,23 @@ end
 Integration::Slack.find_or_create_by!(account: account, external_id: "T_DEMO") do |slack|
   slack.feedback_channel_ids = [ "C_FEEDBACK" ]
   slack.app_user_id = "U_OXYBOT"
+  slack.report_channel_id = "C_PRODUCT"
+end
+Integration::Linear.find_or_create_by!(account: account, external_id: "org-demo") { |linear| linear.team_id = "team-demo" }
+Integration::Github.find_or_create_by!(account: account, external_id: "acme/acme-analytics") { |github| github.repository = "acme/acme-analytics" }
+
+DocumentTemplate.install_defaults(account)
+account.update!(custom_instructions: "Write in English for a B2B audience. Always name the customer segment (plan) behind a need.") if account.custom_instructions.blank?
+
+{
+  "voc" => [ "Voice of customer summary", "Search recent feedback broadly, group it into themes, and for each theme give the count, the segments and two cited quotes. End with one recommendation." ],
+  "churn-risk" => [ "Needs that could cost us big customers", "Look for high-urgency needs from customers with the highest ARR. For each, say which customer, what blocks them, and whether a feature is planned. Most at-risk revenue first." ],
+  "prd-check" => [ "Is a feature ready for a spec?", "For the feature the user names, list the evidence for it, who asked, the open questions, and say whether there is enough evidence to write a spec." ]
+}.each do |name, (description, instructions)|
+  account.skills.find_or_create_by!(name: name, user: nil) do |skill|
+    skill.description = description
+    skill.instructions = instructions
+  end
 end
 
 hubspot = Integration::Hubspot.find_or_create_by!(account: account, external_id: "424242") do |integration|
@@ -86,6 +103,14 @@ hubspot.sync # mock mode: reads config/mocks/hubspot.yml, no HTTP
     note.author = author
     note.author_email = email
   end
+end
+
+# A feature that shipped three weeks ago, with feedback after the release, for the launch review
+shopify = account.features.find_by!(title: "Shopify connector")
+shopify.update_columns(released_at: 21.days.ago) if shopify.released_at.nil?
+account.feedback_notes.find_or_create_by!(source: "manual", body: "The Shopify connector stops syncing every few weeks and we have to reconnect it. Orders from the last two days were missing in our sales dashboard.") do |note|
+  note.author = "Mark Lee"
+  note.author_email = "mark@contoso.example"
 end
 
 puts "Seeded #{account.name}: #{account.products.count} products, #{account.features.count} features, " \

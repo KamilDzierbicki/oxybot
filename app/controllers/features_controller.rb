@@ -10,6 +10,7 @@ class FeaturesController < ApplicationController
 
   def show
     @insights = @feature.insights.includes(:customer, :feedback_note).latest_first
+    @documents = @feature.documents.latest_first
   end
 
   def new

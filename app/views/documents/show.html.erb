@@ -1,0 +1,71 @@
+<% content_for :title, @document.title %>
+<% content_for :head do %><meta name="turbo-refresh-method" content="morph"><meta name="turbo-refresh-scroll" content="preserve"><% end %>
+<%= turbo_stream_from @document %>
+<div class="page-header">
+  <div>
+    <div class="muted small"><%= @document.kind_name %><%= " · " if @document.feature %><%= link_to @document.feature.title, @document.feature if @document.feature %></div>
+    <h1><%= @document.title %></h1>
+  </div>
+  <div class="row">
+    <%= status_pill @document.status %>
+    <%= link_to "Edit", edit_document_path(@document), class: "button" %>
+    <%= link_to "History (#{@document.versions.size})", document_versions_path(@document), class: "button" %>
+    <%= button_to "Redraft", document_regeneration_path(@document), class: "button button--quiet", form: { data: { turbo_confirm: "Draft the document again from the latest data?" } } %>
+  </div>
+</div>
+
+<div class="doc-layout">
+  <article class="card doc">
+    <% if @document.drafting? %>
+      <p class="message__thinking"><span class="dots"><i></i><i></i><i></i></span> The agent is drafting this document from your feedback<%= ", backlog and code" if @document.kind == "prd" %>…</p>
+    <% else %>
+      <div class="prose"><%= markdown(@document.body) %></div>
+    <% end %>
+  </article>
+
+  <aside class="doc-side">
+    <section class="card">
+      <h2 class="section-title section-title--flush">Ask the agent</h2>
+      <%= form_with url: document_suggestions_path(@document), class: "form" do |form| %>
+        <%= form.text_area :instruction, rows: 3, required: true, placeholder: "Make the problem section shorter and add an out-of-scope list" %>
+        <%= form.submit "Suggest a change", class: "button button--primary", disabled: @document.drafting? %>
+      <% end %>
+      <%= form_with model: @document, class: "auto-accept", data: { controller: "auto-submit" } do |form| %>
+        <label class="checkbox"><%= form.check_box :auto_accept, data: { action: "change->auto-submit#submit" } %> Apply agent changes without review</label>
+      <% end %>
+    </section>
+
+    <% @suggestions.each do |suggestion| %>
+      <section class="card suggestion-card" id="<%= dom_id(suggestion) %>">
+        <div class="muted small"><%= suggestion.user&.name || "Someone" %> asked: “<%= suggestion.instruction %>”</div>
+        <% if suggestion.thinking? %>
+          <p class="message__thinking"><span class="dots"><i></i><i></i><i></i></span> Writing a suggestion…</p>
+        <% elsif suggestion.pending? %>
+          <p class="small"><%= suggestion.rationale %></p>
+          <% diff = suggestion.diff %>
+          <div class="muted small">+<%= diff.added_count %> / −<%= diff.removed_count %> lines<%= " · the document changed since" if suggestion.stale? %></div>
+          <details open><summary class="small">Changes</summary><%= render "documents/diff", diff: diff %></details>
+          <div class="row">
+            <%= button_to "Accept", document_suggestion_acceptance_path(@document, suggestion), params: { confirm_stale: suggestion.stale? ? "1" : nil }.compact,
+                          class: "button button--primary", form: (suggestion.stale? ? { data: { turbo_confirm: "The document changed after the agent read it. Replace those edits?" } } : {}) %>
+            <%= button_to "Reject", document_suggestion_rejection_path(@document, suggestion), class: "button button--quiet" %>
+          </div>
+        <% else %>
+          <p class="small flash--alert"><%= suggestion.rationale %></p>
+        <% end %>
+      </section>
+    <% end %>
+
+    <% if @document.feature && @document.kind == "prd" %>
+      <section class="card">
+        <h2 class="section-title section-title--flush">Delivery</h2>
+        <% if @document.feature.in_linear? %>
+          <p class="small">In Linear as <%= external_link @document.feature.linear_identifier, @document.feature.linear_url %> (<%= @document.feature.linear_state %>).</p>
+        <% elsif Current.account.linear_integration %>
+          <%= button_to "Send to Linear", feature_linear_issue_path(@document.feature), class: "button", disabled: !@document.ready? %>
+        <% end %>
+        <p class="muted small">Coding agents read this spec through the MCP server (<%= link_to "set up", profile_path %>).</p>
+      </section>
+    <% end %>
+  </aside>
+</div>
