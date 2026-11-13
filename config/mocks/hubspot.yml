@@ -1,0 +1,14 @@
+# Sample HubSpot portal for mock mode (Integration::Hubspot without an access token).
+# "arr" and "plan" are custom company properties here; real portals name them differently (settings["arr_property"]).
+companies:
+  - { id: 9001, name: Northwind Logistics, domain: northwind.example, arr: 120000, plan: Enterprise }
+  - { id: 9002, name: Contoso Retail, domain: contoso.example, arr: 48000, plan: Growth }
+  - { id: 9003, name: Fabrikam Health, domain: fabrikam.example, arr: 210000, plan: Enterprise }
+  - { id: 9004, name: Tailspin Studios, domain: tailspin.example, arr: 9600, plan: Starter }
+  - { id: 9005, name: Litware Finance, domain: litware.example, arr: 75000, plan: Growth }
+contacts:
+  - { id: 501, email: anna@northwind.example, firstname: Anna, lastname: Kowalska, company_id: 9001 }
+  - { id: 502, email: mark@contoso.example, firstname: Mark, lastname: Lee, company_id: 9002 }
+  - { id: 503, email: priya@fabrikam.example, firstname: Priya, lastname: Shah, company_id: 9003 }
+  - { id: 504, email: tom@tailspin.example, firstname: Tom, lastname: Berg, company_id: 9004 }
+  - { id: 505, email: ola@litware.example, firstname: Ola, lastname: Nowak, company_id: 9005 }

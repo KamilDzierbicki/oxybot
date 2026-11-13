@@ -1,0 +1,27 @@
+pdf_export:
+  account: acme
+  product: reports
+  title: PDF export of reports
+  description: Export any report or dashboard to a PDF file.
+  status: planned
+
+scheduled_reports:
+  account: acme
+  product: reports
+  title: Scheduled email reports
+  description: Send a report by email every week or month.
+  status: idea
+
+offline_mode:
+  account: acme
+  product: mobile
+  title: Offline mode
+  description: Open dashboards on the phone without internet connection.
+  status: idea
+
+invoice_pdf:
+  account: globex
+  product: billing
+  title: PDF export of invoices
+  description: Download invoices as a PDF file.
+  status: released

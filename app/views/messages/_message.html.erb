@@ -1,0 +1,15 @@
+<div id="<%= dom_id(message) %>" class="message message--<%= message.role %> <%= "message--failed" if message.failed? %>">
+  <% if message.thinking? %>
+    <div class="message__body message__thinking"><span class="dots"><i></i><i></i><i></i></span> Looking through your feedback…</div>
+  <% elsif message.assistant? %>
+    <div class="message__body prose"><%= markdown(message.content) %></div>
+    <% if message.tool_calls.any? %>
+      <div class="message__meta">
+        Used <%= message.tool_calls.map { |call| tag.code(call["name"]) }.to_sentence.html_safe %>
+        <% if message.input_tokens %> · <%= message.input_tokens + message.output_tokens.to_i %> tokens<% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="message__body"><%= simple_format(message.content) %></div>
+  <% end %>
+</div>

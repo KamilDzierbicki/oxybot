@@ -1,0 +1,235 @@
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
+#
+# It's strongly recommended that you check this file into your version control system.
+
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_151700) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+  enable_extension "vector"
+
+  create_table "accounts", force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "contacts", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "customer_id"
+    t.string "email", null: false
+    t.string "name"
+    t.string "hubspot_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "email"], name: "index_contacts_on_account_id_and_email", unique: true
+    t.index ["account_id"], name: "index_contacts_on_account_id"
+    t.index ["customer_id"], name: "index_contacts_on_customer_id"
+  end
+
+  create_table "conversations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id", null: false
+    t.string "channel", default: "web", null: false
+    t.string "title"
+    t.string "slack_channel_id"
+    t.string "slack_thread_ts"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "slack_channel_id", "slack_thread_ts"], name: "index_conversations_on_slack_thread", unique: true, where: "(slack_thread_ts IS NOT NULL)"
+    t.index ["account_id"], name: "index_conversations_on_account_id"
+    t.index ["user_id"], name: "index_conversations_on_user_id"
+  end
+
+  create_table "customers", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "domain"
+    t.string "hubspot_id"
+    t.bigint "arr_cents", default: 0, null: false
+    t.string "plan"
+    t.datetime "synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "domain"], name: "index_customers_on_account_id_and_domain", unique: true, where: "(domain IS NOT NULL)"
+    t.index ["account_id", "hubspot_id"], name: "index_customers_on_account_id_and_hubspot_id", unique: true, where: "(hubspot_id IS NOT NULL)"
+    t.index ["account_id"], name: "index_customers_on_account_id"
+  end
+
+  create_table "features", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "product_id", null: false
+    t.string "title", null: false
+    t.text "description", default: "", null: false
+    t.string "status", default: "idea", null: false
+    t.vector "embedding", limit: 1536
+    t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(title, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", stored: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_features_on_account_id"
+    t.index ["embedding"], name: "index_features_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["product_id"], name: "index_features_on_product_id"
+    t.index ["search_vector"], name: "index_features_on_search_vector", using: :gin
+  end
+
+  create_table "feedback_notes", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "customer_id"
+    t.string "source", null: false
+    t.string "external_id"
+    t.string "author"
+    t.string "author_email"
+    t.text "body", null: false
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "source", "external_id"], name: "index_feedback_notes_on_account_id_and_source_and_external_id", unique: true, where: "(external_id IS NOT NULL)"
+    t.index ["account_id"], name: "index_feedback_notes_on_account_id"
+    t.index ["customer_id"], name: "index_feedback_notes_on_customer_id"
+  end
+
+  create_table "insights", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "feedback_note_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "customer_id"
+    t.bigint "suggested_feature_id"
+    t.bigint "feature_id"
+    t.text "quote", null: false
+    t.string "summary", null: false
+    t.string "urgency", default: "medium", null: false
+    t.string "triage_state", default: "pending", null: false
+    t.float "match_confidence"
+    t.string "match_reason"
+    t.vector "embedding", limit: 1536
+    t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(summary, ''::character varying))::text || ' '::text) || COALESCE(quote, ''::text)))", stored: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "triage_state"], name: "index_insights_on_account_id_and_triage_state"
+    t.index ["account_id"], name: "index_insights_on_account_id"
+    t.index ["customer_id"], name: "index_insights_on_customer_id"
+    t.index ["embedding"], name: "index_insights_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["feature_id"], name: "index_insights_on_feature_id"
+    t.index ["feedback_note_id"], name: "index_insights_on_feedback_note_id"
+    t.index ["product_id"], name: "index_insights_on_product_id"
+    t.index ["search_vector"], name: "index_insights_on_search_vector", using: :gin
+    t.index ["suggested_feature_id"], name: "index_insights_on_suggested_feature_id"
+  end
+
+  create_table "integrations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "type", null: false
+    t.string "external_id", null: false
+    t.text "access_token"
+    t.jsonb "settings", default: {}, null: false
+    t.datetime "synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "type"], name: "index_integrations_on_account_id_and_type", unique: true
+    t.index ["account_id"], name: "index_integrations_on_account_id"
+    t.index ["type", "external_id"], name: "index_integrations_on_type_and_external_id", unique: true
+  end
+
+  create_table "knowledge_documents", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "title", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_knowledge_documents_on_account_id"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.string "role", null: false
+    t.text "content"
+    t.string "status", default: "done", null: false
+    t.jsonb "tool_calls", default: [], null: false
+    t.bigint "cited_insight_ids", default: [], null: false, array: true
+    t.integer "input_tokens"
+    t.integer "output_tokens"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+  end
+
+  create_table "products", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "slug"], name: "index_products_on_account_id_and_slug", unique: true
+    t.index ["account_id"], name: "index_products_on_account_id"
+  end
+
+  create_table "sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "slack_messages", force: :cascade do |t|
+    t.bigint "integration_id", null: false
+    t.string "direction", null: false
+    t.string "channel_id", null: false
+    t.string "ts", null: false
+    t.string "thread_ts"
+    t.string "slack_user_id"
+    t.string "channel_type"
+    t.boolean "mentions_app", default: false, null: false
+    t.text "text", null: false
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["integration_id", "channel_id", "ts"], name: "index_slack_messages_on_integration_id_and_channel_id_and_ts", unique: true
+    t.index ["integration_id"], name: "index_slack_messages_on_integration_id"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "email_address", null: false
+    t.string "slack_user_id"
+    t.string "password_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "slack_user_id"], name: "index_users_on_account_id_and_slack_user_id", unique: true, where: "(slack_user_id IS NOT NULL)"
+    t.index ["account_id"], name: "index_users_on_account_id"
+    t.index ["email_address"], name: "index_users_on_email_address", unique: true
+  end
+
+  add_foreign_key "contacts", "accounts"
+  add_foreign_key "contacts", "customers"
+  add_foreign_key "conversations", "accounts"
+  add_foreign_key "conversations", "users"
+  add_foreign_key "customers", "accounts"
+  add_foreign_key "features", "accounts"
+  add_foreign_key "features", "products"
+  add_foreign_key "feedback_notes", "accounts"
+  add_foreign_key "feedback_notes", "customers"
+  add_foreign_key "insights", "accounts"
+  add_foreign_key "insights", "customers"
+  add_foreign_key "insights", "features"
+  add_foreign_key "insights", "features", column: "suggested_feature_id"
+  add_foreign_key "insights", "feedback_notes"
+  add_foreign_key "insights", "products"
+  add_foreign_key "integrations", "accounts"
+  add_foreign_key "knowledge_documents", "accounts"
+  add_foreign_key "messages", "conversations"
+  add_foreign_key "products", "accounts"
+  add_foreign_key "sessions", "users"
+  add_foreign_key "slack_messages", "integrations"
+  add_foreign_key "users", "accounts"
+end
