@@ -17,6 +17,7 @@ class Account < ApplicationRecord
   has_many :skills, dependent: :destroy
   has_many :invitations, dependent: :destroy
   has_one :slack_integration, class_name: "Integration::Slack"
+  has_one :mattermost_integration, class_name: "Integration::Mattermost"
   has_one :hubspot_integration, class_name: "Integration::Hubspot"
   has_one :linear_integration, class_name: "Integration::Linear"
   has_one :github_integration, class_name: "Integration::Github"

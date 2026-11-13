@@ -4,7 +4,11 @@
   <%= status_pill(@integration.mock? ? "mock" : "live") %>
 </div>
 <% if @integration.mock? %>
-  <p class="muted">Mock mode: no access token is set. <%= @integration.is_a?(Integration::Slack) ? "Replies are recorded below instead of being posted to Slack." : "Sync reads config/mocks/hubspot.yml instead of the HubSpot API." %></p>
+  <p class="muted">Mock mode: no access token is set. <%= { "slack" => "Replies are recorded below instead of being posted to Slack.",
+                                                            "mattermost" => "Replies are recorded below instead of being posted to Mattermost.",
+                                                            "hubspot" => "Sync reads config/mocks/hubspot.yml instead of the HubSpot API.",
+                                                            "linear" => "Issues are kept inside OxyBot instead of Linear.",
+                                                            "github" => "The spec writer reads the sample repository in config/mocks/github." }[@integration.kind] %></p>
 <% end %>
 
 <div class="card row check-row">
@@ -21,4 +25,4 @@
 </div>
 
 <%= render @integration.kind, integration: @integration %>
-<%= render "integrations/slack_setup" if @integration.kind == "slack" %>
+<%= render "integrations/#{@integration.kind}_setup" if lookup_context.exists?("integrations/_#{@integration.kind}_setup") %>

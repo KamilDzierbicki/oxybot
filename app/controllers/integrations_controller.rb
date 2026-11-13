@@ -7,7 +7,7 @@ class IntegrationsController < ApplicationController
   end
 
   def show
-    @slack_messages = @integration.slack_messages.chronologically.last(60) if @integration.is_a?(Integration::Slack)
+    @chat_messages = @integration.chat_messages.chronologically.last(60) if @integration.chat?
   end
 
   def new
@@ -41,12 +41,13 @@ class IntegrationsController < ApplicationController
   end
 
   def integration_params
-    attributes = params.expect(integration: %i[external_id access_token webhook_secret feedback_channel_ids app_user_id report_channel_id
-                                              arr_property plan_property team_id repository])
+    attributes = params.expect(integration: %i[external_id access_token webhook_secret command_token feedback_channel_ids app_user_id report_channel_id
+                                              arr_property plan_property team_id repository server_url trigger_word])
     attributes[:feedback_channel_ids] = attributes[:feedback_channel_ids].to_s.split(/[\s,]+/).compact_blank if attributes.key?(:feedback_channel_ids)
     # An empty secret field keeps the stored value
     attributes.delete(:access_token) if attributes[:access_token].blank?
     attributes.delete(:webhook_secret) if attributes[:webhook_secret].blank?
+    attributes.delete(:command_token) if attributes[:command_token].blank?
     attributes
   end
 end

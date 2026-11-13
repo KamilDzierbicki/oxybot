@@ -1,9 +1,10 @@
 # A chat with the product assistant, in the web app or in a Slack thread. Chats are private to their user.
 class Conversation < ApplicationRecord
-  CHANNELS = %w[web slack].freeze
+  CHANNELS = %w[web slack mattermost].freeze
 
   belongs_to :account
   belongs_to :user
+  belongs_to :integration, optional: true
   has_many :messages, -> { order(:id) }, dependent: :destroy
 
   validates :channel, inclusion: { in: CHANNELS }
@@ -21,11 +22,11 @@ class Conversation < ApplicationRecord
     reply
   end
 
-  def slack? = channel == "slack"
+  def chat? = integration_id.present?
 
-  # In a Slack channel every member reads the answer, so customer revenue stays out of it.
-  # Direct messages (channel ids starting with D) and the web app are private to the user.
+  # In a chat channel every member reads the answer, so customer revenue stays out of it.
+  # Direct messages, slash command answers (only the asker sees them) and the web app are private.
   def revenue_visible?
-    !slack? || slack_channel_id.to_s.start_with?("D")
+    !chat? || private_chat?
   end
 end

@@ -47,7 +47,7 @@ class ConversationTest < ActiveSupport::TestCase
   end
 
   test "a shared Slack channel never gets revenue" do
-    conversation = accounts(:acme).conversations.create!(user: users(:kamil), channel: "slack", slack_channel_id: "C_GENERAL", slack_thread_ts: "1.0")
+    conversation = accounts(:acme).conversations.create!(user: users(:kamil), channel: "slack", integration: integrations(:acme_slack), chat_channel_id: "C_GENERAL", chat_thread_id: "1.0")
 
     conversation.ask("Which features have the most demand?")
     perform_enqueued_jobs(only: GenerateReplyJob)
@@ -59,7 +59,7 @@ class ConversationTest < ActiveSupport::TestCase
   end
 
   test "a direct message to the app may show revenue" do
-    conversation = accounts(:acme).conversations.create!(user: users(:kamil), channel: "slack", slack_channel_id: "D_KAMIL", slack_thread_ts: "1.0")
+    conversation = accounts(:acme).conversations.create!(user: users(:kamil), channel: "slack", integration: integrations(:acme_slack), chat_channel_id: "D_KAMIL", private_chat: true)
 
     assert conversation.revenue_visible?
   end

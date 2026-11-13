@@ -22,12 +22,12 @@ class Conversation::Turn
     content, cited = checked_citations(response.content.to_s)
     reply.update!(status: "done", content: content.presence || "(no answer)", tool_calls: @tool_calls,
                   cited_insight_ids: cited, input_tokens: response.tokens&.input, output_tokens: response.tokens&.output)
-    deliver_to_slack
+    deliver_to_chat
   rescue RubyLLM::Error, RubyLLM::ToolRoundLimitError, Faraday::Error => e
     Rails.error.report(e, context: { message_id: reply.id })
     reply.update!(status: "failed", content: "Sorry, I could not answer this time (#{e.class.name.demodulize}). Try again in a moment.",
                   tool_calls: @tool_calls)
-    deliver_to_slack
+    deliver_to_chat
   end
 
   # Grouped in Langfuse by conversation (session) and tagged with the tenant
@@ -70,9 +70,7 @@ class Conversation::Turn
     conversation.messages.where(status: "done").where(id: ...question.id)
   end
 
-  def deliver_to_slack
-    return unless conversation.slack?
-
-    account.slack_integration&.post_reply(conversation, reply)
+  def deliver_to_chat
+    conversation.integration&.post_reply(conversation, reply)
   end
 end

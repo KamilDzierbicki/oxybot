@@ -1,37 +1,4 @@
-<div class="split">
-  <section>
-    <h2 class="section-title">Slack simulator</h2>
-    <p class="muted small">Sends the same event Slack would send. Pick a feedback channel to record feedback, or mention the app / use a DM channel (id starting with D) to ask the assistant.</p>
-    <%= form_with scope: :simulated_message, url: integration_simulated_messages_path(integration), class: "form" do |form| %>
-      <div class="form__row">
-        <label>Channel
-          <%= form.select :channel_id, (Array(integration.feedback_channel_ids).map { |id| ["##{id} (feedback)", id] } +
-                                       [["#C_GENERAL (shared channel)", "C_GENERAL"], ["Direct message", "D_#{Current.user.slack_user_id}"]]) %>
-        </label>
-        <label>As user<%= form.select :slack_user_id, Current.account.users.where.not(slack_user_id: nil).map { |user| [user.name, user.slack_user_id] } + [["Unknown Slack user", "U_UNKNOWN"]] %></label>
-      </div>
-      <label>Message<%= form.text_area :text, rows: 3, required: true, placeholder: "Customer call with Contoso: they need PDF export of reports for audits." %></label>
-      <label class="checkbox"><%= form.check_box :mention %> Mention @OxyBot</label>
-      <%= form.hidden_field :thread_ts %>
-      <%= form.submit "Send to OxyBot", class: "button button--primary" %>
-    <% end %>
-  </section>
-  <section>
-    <h2 class="section-title">Messages</h2>
-    <div class="slack-log">
-      <% @slack_messages.each do |message| %>
-        <div class="slack-message slack-message--<%= message.direction %>">
-          <div class="muted small">
-            #<%= message.channel_id %> · <%= message.inbound? ? message.slack_user_id : "OxyBot" %><%= " · in thread" if message.thread_ts %>
-          </div>
-          <div><%= slack_text(message.text) %></div>
-        </div>
-      <% end %>
-      <%= tag.p("No messages yet.", class: "empty") if @slack_messages.empty? %>
-    </div>
-    <%= link_to "Refresh", integration_path(integration), class: "button button--quiet" %>
-  </section>
-</div>
+<%= render "integrations/chat_simulator", integration: integration %>
 <% if Current.user.admin? %>
 <h2 class="section-title">Settings</h2>
 <%= form_with model: integration, scope: :integration, url: integration_path(integration), method: :patch, class: "form" do |form| %>

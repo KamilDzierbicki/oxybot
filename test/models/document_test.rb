@@ -95,7 +95,7 @@ class DocumentTest < ActiveSupport::TestCase
 
     report = draft("opportunity_report")
 
-    post = integrations(:acme_slack).slack_messages.find_by!(channel_id: "C_PRODUCT")
+    post = integrations(:acme_slack).chat_messages.find_by!(channel_id: "C_PRODUCT")
     assert_includes post.text, report.title
     assert_includes post.text, "/documents/#{report.id}|Open in OxyBot>"
   end

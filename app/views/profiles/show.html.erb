@@ -6,6 +6,8 @@
     <label>Slack member id<%= form.text_field :slack_user_id, placeholder: "U012ABCDEF" %>
       <small class="muted">Lets you ask the assistant in Slack.</small></label>
   </div>
+  <label>Mattermost user id<%= form.text_field :mattermost_user_id, placeholder: "26 characters, from Profile, Security or /api/v4/users/me" %>
+    <small class="muted">Lets you ask OxyBot in Mattermost.</small></label>
   <label>Personal instructions for the agent<%= form.text_area :custom_instructions, rows: 4, placeholder: "Answer in Polish. I own the mobile app, so start with mobile findings." %></label>
   <%= form.submit "Save", class: "button button--primary" %>
 <% end %>

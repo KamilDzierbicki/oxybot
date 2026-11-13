@@ -58,6 +58,11 @@ Integration::Slack.find_or_create_by!(account: account, external_id: "T_DEMO") d
   slack.app_user_id = "U_OXYBOT"
   slack.report_channel_id = "C_PRODUCT"
 end
+Integration::Mattermost.find_or_create_by!(account: account, external_id: "mm-team-demo") do |mattermost|
+  mattermost.server_url = "https://chat.example.com"
+  mattermost.feedback_channel_ids = [ "mm-feedback" ]
+end
+account.users.find_by(email_address: "demo@oxybot.local")&.update!(mattermost_user_id: "mmdemouser") if account.users.where(mattermost_user_id: nil).exists?(email_address: "demo@oxybot.local")
 Integration::Linear.find_or_create_by!(account: account, external_id: "org-demo") { |linear| linear.team_id = "team-demo" }
 Integration::Github.find_or_create_by!(account: account, external_id: "acme/acme-analytics") { |github| github.repository = "acme/acme-analytics" }
 

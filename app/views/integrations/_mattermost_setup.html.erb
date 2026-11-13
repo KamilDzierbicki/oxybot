@@ -1,0 +1,12 @@
+<details class="card setup">
+  <summary><strong>How to connect your Mattermost server</strong></summary>
+  <ol class="small">
+    <li><strong>Bot account</strong> (System Console, Integrations, Bot Accounts): create <code>oxybot</code>, copy its access token here. Add the bot to the channels where it should answer and to the report channel.</li>
+    <li><strong>Feedback channels</strong>: Integrations, Outgoing Webhooks, add one for each feedback channel with no trigger words, content type <code>application/json</code>, callback URL <code><%= mattermost_webhooks_url %></code>. Paste its token here.</li>
+    <li><strong>Questions in channels</strong>: one more outgoing webhook with the trigger word <code>@oxybot</code> (first word starts with it), no channel, same callback URL. Paste its token too (tokens comma separated).</li>
+    <li><strong>Private questions, also in direct messages</strong>: Integrations, Slash Commands, trigger word <code>oxybot</code>, request URL <code><%= mattermost_commands_url %></code>, method POST. Paste its token in the slash command field.</li>
+    <li>If OxyBot runs on a private address, allow it in Mattermost (System Console, Developer, Allow untrusted internal connections).</li>
+    <li>Each person adds their Mattermost user id on their OxyBot profile (Profile, Security in Mattermost, or <code>/api/v4/users/me</code>).</li>
+  </ol>
+  <p class="muted small">Outgoing webhooks only work in public channels, so feedback channels must be public. Slash command answers are visible only to the asker and may show ARR; answers in channels never do.</p>
+</details>

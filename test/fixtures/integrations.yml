@@ -27,3 +27,9 @@ acme_github:
   type: Integration::Github
   external_id: acme/acme-analytics
   settings: { "repository": "acme/acme-analytics" }
+
+acme_mattermost:
+  account: acme
+  type: Integration::Mattermost
+  external_id: mm-team-acme
+  settings: { "server_url": "https://chat.acme.example", "feedback_channel_ids": ["mm-feedback"], "app_user_id": "mm-bot" }

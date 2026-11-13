@@ -69,6 +69,10 @@ Rails.application.routes.draw do
   namespace :linear do
     resources :webhooks, only: :create
   end
+  namespace :mattermost do
+    resources :webhooks, only: :create
+    resources :commands, only: :create
+  end
 
   # MCP server for coding agents (bearer token from the profile page)
   match "mcp" => "mcp#handle", via: %i[get post delete]
