@@ -27,7 +27,7 @@ module HybridSearchable
       words = text.to_s.downcase.scan(/[[:alnum:]]{3,}/).uniq.first(12)
       return [] if words.empty?
 
-      tsquery = sanitize_sql_array(["to_tsquery('simple', ?)", words.map { |word| "#{word}:*" }.join(" | ")])
+      tsquery = sanitize_sql_array([ "to_tsquery('simple', ?)", words.map { |word| "#{word}:*" }.join(" | ") ])
       all.where("#{table_name}.search_vector @@ #{tsquery}")
          .order(Arel.sql("ts_rank_cd(#{table_name}.search_vector, #{tsquery}) DESC")).limit(CANDIDATES).to_a
     end
@@ -41,7 +41,7 @@ module HybridSearchable
           records[record.id] ||= record
         end
       end
-      scores.sort_by { |id, score| [-score, id] }.map { |id, _score| records.fetch(id) }
+      scores.sort_by { |id, score| [ -score, id ] }.map { |id, _score| records.fetch(id) }
     end
   end
 end

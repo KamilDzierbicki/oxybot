@@ -1,0 +1,47 @@
+# LiteLLM aliases used by Flint (docker compose --profile ai up). Rails never names a provider:
+# to move a task to another model, change it here.
+#
+# Every paid alias has a daily spend cap; past it LiteLLM answers 429 instead of calling the provider,
+# so a retry loop cannot burn the month's budget. Flint also sends the tenant as the end user
+# ("account-42"), so LiteLLM shows spend per tenant.
+model_list:
+  # Splits raw feedback into insights: many calls, short output, so a fast model
+  - model_name: flint-extract
+    litellm_params:
+      model: anthropic/claude-haiku-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 3 # USD
+      budget_duration: 1d
+
+  # Picks the matching feature among a few candidates
+  - model_name: flint-judge
+    litellm_params:
+      model: anthropic/claude-haiku-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 2
+      budget_duration: 1d
+
+  # The product assistant (tool use, longer reasoning)
+  - model_name: flint-assistant
+    litellm_params:
+      model: anthropic/claude-sonnet-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 5
+      budget_duration: 1d
+      cache_control_injection_points:
+        - location: message
+          role: system
+
+  # 1536 dimensions, matching insights.embedding and features.embedding. Multilingual, so Polish feedback works.
+  - model_name: flint-embed
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+
+litellm_settings:
+  callbacks: ["langfuse_otel"]
+  num_retries: 2
+  request_timeout: 60
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

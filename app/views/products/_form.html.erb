@@ -1,0 +1,9 @@
+<%= form_with model: product, class: "form" do |form| %>
+  <%= render "shared/errors", record: product %>
+  <div class="form__row">
+    <label>Name<%= form.text_field :name, required: true %></label>
+    <label>Slug<%= form.text_field :slug, required: true, placeholder: "reports" %></label>
+  </div>
+  <label>Description<%= form.text_area :description, rows: 4, required: true, placeholder: "What the product covers, in the words customers use" %></label>
+  <%= form.submit "Save", class: "button button--primary" %>
+<% end %>

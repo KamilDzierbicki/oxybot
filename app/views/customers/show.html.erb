@@ -1,0 +1,9 @@
+<% content_for :title, @customer.name %>
+<div class="page-header"><h1><%= @customer.name %></h1><span class="muted"><%= @customer.plan %></span></div>
+<div class="stats">
+  <div class="stat"><div class="stat__value"><%= money(@customer.arr_cents) %></div><div class="stat__label">ARR</div></div>
+  <div class="stat"><div class="stat__value"><%= @insights.size %></div><div class="stat__label">insights</div></div>
+</div>
+<h2 class="section-title">Needs</h2>
+<%= render partial: "insights/insight_row", collection: @insights, as: :insight %>
+<%= tag.p("No feedback from this customer yet.", class: "empty") if @insights.empty? %>

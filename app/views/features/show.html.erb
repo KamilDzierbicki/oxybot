@@ -1,0 +1,20 @@
+<% content_for :title, @feature.title %>
+<div class="page-header">
+  <h1><%= @feature.title %></h1>
+  <div class="row"><%= status_pill @feature.status %> <%= link_to "Edit", edit_feature_path(@feature), class: "button" %></div>
+</div>
+<p class="muted"><%= @feature.product.name %></p>
+<p><%= @feature.description %></p>
+<div class="stats">
+  <div class="stat"><div class="stat__value"><%= @feature.insight_count %></div><div class="stat__label">insights</div></div>
+  <div class="stat"><div class="stat__value"><%= @feature.customer_count %></div><div class="stat__label">customers</div></div>
+  <div class="stat"><div class="stat__value"><%= money(@feature.demand_arr_cents) %></div><div class="stat__label">ARR asking</div></div>
+</div>
+<h2 class="section-title">What customers said</h2>
+<% @insights.each do |insight| %>
+  <div class="card">
+    <blockquote class="quote quote--small">“<%= insight.quote %>”</blockquote>
+    <div class="muted"><%= insight.customer&.name || "unknown customer" %> · <%= link_to "##{insight.id}", insight %> · <%= time_ago_in_words(insight.created_at) %> ago</div>
+  </div>
+<% end %>
+<%= tag.p("No linked insights yet.", class: "empty") if @insights.empty? %>

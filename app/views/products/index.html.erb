@@ -1,0 +1,12 @@
+<% content_for :title, "Products" %>
+<div class="page-header">
+  <h1>Products</h1>
+  <%= link_to "Add product", new_product_path, class: "button button--primary" %>
+</div>
+<p class="muted">The extractor assigns each insight to one of these products, using their descriptions. Describe what each product covers.</p>
+<% @products.each do |product| %>
+  <div class="card">
+    <div class="insight__head"><strong><%= product.name %></strong> <code><%= product.slug %></code> <%= link_to "Edit", edit_product_path(product) %></div>
+    <p class="muted"><%= product.description %></p>
+  </div>
+<% end %>

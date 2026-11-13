@@ -10,8 +10,8 @@ class CreateIntegrations < ActiveRecord::Migration[8.1]
       t.datetime :synced_at
       t.timestamps
     end
-    add_index :integrations, [:type, :external_id], unique: true
-    add_index :integrations, [:account_id, :type], unique: true
+    add_index :integrations, [ :type, :external_id ], unique: true
+    add_index :integrations, [ :account_id, :type ], unique: true
 
     create_table :slack_messages do |t|
       t.references :integration, null: false, foreign_key: true
@@ -26,6 +26,6 @@ class CreateIntegrations < ActiveRecord::Migration[8.1]
       t.datetime :processed_at
       t.timestamps
     end
-    add_index :slack_messages, [:integration_id, :channel_id, :ts], unique: true
+    add_index :slack_messages, [ :integration_id, :channel_id, :ts ], unique: true
   end
 end

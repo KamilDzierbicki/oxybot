@@ -1,0 +1,17 @@
+<% content_for :title, "Feedback" %>
+<div class="page-header">
+  <h1>Feedback from <%= @feedback_note.author.presence || @feedback_note.customer&.name || "unknown author" %></h1>
+  <%= status_pill @feedback_note.source %>
+</div>
+<p class="muted">
+  <%= link_to @feedback_note.customer.name, @feedback_note.customer if @feedback_note.customer %>
+  <%= @feedback_note.created_at.to_fs(:long) %>
+</p>
+<blockquote class="quote"><%= simple_format(@feedback_note.body) %></blockquote>
+<h2 class="section-title">Insights</h2>
+<% if @feedback_note.processed? %>
+  <%= render partial: "insights/insight_row", collection: @feedback_note.insights.includes(:product, :feature, :suggested_feature), as: :insight %>
+  <%= tag.p("No product needs found in this note.", class: "empty") if @feedback_note.insights.empty? %>
+<% else %>
+  <p class="muted">Extracting insights… refresh in a moment.</p>
+<% end %>

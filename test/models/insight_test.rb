@@ -36,7 +36,7 @@ class InsightTest < ActiveSupport::TestCase
     acme = create_insight("PDF export of reports for finance", product: products(:reports))
     globex_note = accounts(:globex).feedback_notes.create!(source: "manual", body: "placeholder")
     globex = globex_note.insights.create!(account: accounts(:globex), product: products(:billing), quote: "PDF export of invoices", summary: "PDF export of invoices")
-    [acme, globex].each(&:embed)
+    [ acme, globex ].each(&:embed)
 
     results = accounts(:acme).insights.hybrid_search("PDF export")
 

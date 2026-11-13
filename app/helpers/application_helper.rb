@@ -5,8 +5,8 @@ module ApplicationHelper
   )
 
   def nav_link(label, path, active: false, count: nil)
-    link_to path, class: ["nav-link", ("nav-link--active" if active)] do
-      safe_join([label, (tag.span(count, class: "badge") if count&.positive?)].compact, " ")
+    link_to path, class: [ "nav-link", ("nav-link--active" if active) ] do
+      safe_join([ label, (tag.span(count, class: "badge") if count&.positive?) ].compact, " ")
     end
   end
 
@@ -15,6 +15,14 @@ module ApplicationHelper
   def markdown(text)
     html = MARKDOWN.render(text.to_s)
     html.gsub(Message::CITATION) { link_to("##{$1}", insight_path($1), class: "citation", data: { turbo_frame: "_top" }) }.html_safe
+  end
+
+  # Shows a Slack message as Slack would: escaped text, <url|label> links clickable, *bold* bold
+  def slack_text(text)
+    html = ERB::Util.html_escape(text.to_s)
+    html = html.gsub(/&lt;(https?:\/\/[^|&]+)\|([^&]+)&gt;/) { link_to($2.html_safe, $1, class: "citation") } # $2 is already escaped
+    html = html.gsub(/\*([^*\n]+)\*/, '<strong>\1</strong>')
+    simple_format(html, {}, sanitize: false)
   end
 
   def money(cents)

@@ -1,0 +1,17 @@
+<% content_for :title, "Customers" %>
+<div class="page-header"><h1>Customers</h1><%= link_to "HubSpot sync", integrations_path, class: "button" %></div>
+<table class="table">
+  <thead><tr><th>Customer</th><th>Domain</th><th>Plan</th><th class="num">ARR</th><th>Synced</th></tr></thead>
+  <tbody>
+    <% @customers.each do |customer| %>
+      <tr>
+        <td><%= link_to customer.name, customer %></td>
+        <td class="muted"><%= customer.domain %></td>
+        <td><%= customer.plan %></td>
+        <td class="num"><%= money(customer.arr_cents) %></td>
+        <td class="muted"><%= customer.synced_at ? "#{time_ago_in_words(customer.synced_at)} ago" : "manual" %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+<%= tag.p("No customers yet. Sync HubSpot on the Integrations page.", class: "empty") if @customers.empty? %>

@@ -1,0 +1,12 @@
+<% content_for :title, "Add feedback" %>
+<h1>Add feedback</h1>
+<%= form_with model: @feedback_note, class: "form" do |form| %>
+  <%= render "shared/errors", record: @feedback_note %>
+  <label>Feedback<%= form.text_area :body, rows: 8, required: true, placeholder: "Paste an email, call notes or a support ticket" %></label>
+  <div class="form__row">
+    <label>Author<%= form.text_field :author, placeholder: "Anna Kowalska" %></label>
+    <label>Author email<%= form.email_field :author_email, placeholder: "anna@customer.com" %>
+      <small class="muted">The email's domain links the note to a customer.</small></label>
+  </div>
+  <%= form.submit "Save feedback", class: "button button--primary" %>
+<% end %>

@@ -1,0 +1,18 @@
+<% content_for :title, "Insight ##{@insight.id}" %>
+<div class="page-header">
+  <h1><%= @insight.summary %></h1>
+  <%= status_pill @insight.triage_state %>
+</div>
+<blockquote class="quote">“<%= @insight.quote %>”</blockquote>
+<dl class="facts">
+  <dt>Product</dt><dd><%= @insight.product.name %></dd>
+  <dt>Customer</dt><dd><%= @insight.customer ? link_to("#{@insight.customer.name} · #{money(@insight.customer.arr_cents)} ARR", @insight.customer) : "unknown" %></dd>
+  <dt>Urgency</dt><dd><%= @insight.urgency.humanize %></dd>
+  <dt>Feature</dt><dd><%= @insight.feature ? link_to(@insight.feature.title, @insight.feature) : "not linked" %></dd>
+  <dt>Suggested</dt><dd><%= @insight.suggested_feature&.title || "nothing" %> <span class="muted"><%= @insight.match_reason %></span></dd>
+  <dt>Source</dt><dd><%= link_to "#{@insight.feedback_note.source.humanize} note", @insight.feedback_note %></dd>
+</dl>
+<%= form_with url: insight_link_path(@insight), class: "inline-form" do |form| %>
+  <%= form.select :feature_id, @features.map { |feature| [feature.title, feature.id] }, { selected: @insight.feature_id || @insight.suggested_feature_id }, required: true %>
+  <%= form.submit @insight.linked? ? "Relink" : "Link", class: "button button--primary" %>
+<% end %>

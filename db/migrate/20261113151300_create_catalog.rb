@@ -9,7 +9,7 @@ class CreateCatalog < ActiveRecord::Migration[8.1]
       t.text :description, null: false
       t.timestamps
     end
-    add_index :products, [:account_id, :slug], unique: true
+    add_index :products, [ :account_id, :slug ], unique: true
 
     create_table :features do |t|
       t.references :account, null: false, foreign_key: true

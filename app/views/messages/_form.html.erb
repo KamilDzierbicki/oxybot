@@ -1,0 +1,5 @@
+<%= form_with url: conversation_messages_path(conversation), id: "message_form", class: "composer" do |form| %>
+  <%= form.text_area :question, rows: 2, required: true, placeholder: "Ask a follow-up…", class: "composer__input",
+                     data: { controller: "submit-on-enter", action: "keydown->submit-on-enter#submit" } %>
+  <%= form.submit "Send", class: "button button--primary" %>
+<% end %>

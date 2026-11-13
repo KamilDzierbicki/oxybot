@@ -10,8 +10,8 @@ class CreateCustomers < ActiveRecord::Migration[8.1]
       t.datetime :synced_at
       t.timestamps
     end
-    add_index :customers, [:account_id, :domain], unique: true, where: "domain IS NOT NULL"
-    add_index :customers, [:account_id, :hubspot_id], unique: true, where: "hubspot_id IS NOT NULL"
+    add_index :customers, [ :account_id, :domain ], unique: true, where: "domain IS NOT NULL"
+    add_index :customers, [ :account_id, :hubspot_id ], unique: true, where: "hubspot_id IS NOT NULL"
 
     create_table :contacts do |t|
       t.references :account, null: false, foreign_key: true
@@ -21,6 +21,6 @@ class CreateCustomers < ActiveRecord::Migration[8.1]
       t.string :hubspot_id
       t.timestamps
     end
-    add_index :contacts, [:account_id, :email], unique: true
+    add_index :contacts, [ :account_id, :email ], unique: true
   end
 end

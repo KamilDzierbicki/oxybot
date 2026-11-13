@@ -1,0 +1,55 @@
+<% content_for :title, "Inbox" %>
+<div class="page-header">
+  <h1>Inbox</h1>
+  <nav class="tabs">
+    <% InsightsController::STATES.each do |state| %>
+      <%= link_to state.humanize, insights_path(state: state), class: ["tab", ("tab--active" if state == @state)] %>
+    <% end %>
+  </nav>
+</div>
+<p class="muted">Each insight is one customer need. Flint suggests the feature it asks for; you confirm, pick another, create a feature or dismiss.</p>
+
+<div id="insights">
+  <% @insights.each do |insight| %>
+    <div id="<%= dom_id(insight) %>" class="card triage">
+      <div class="triage__main">
+        <div class="insight__head">
+          <%= link_to insight.summary, insight, class: "insight__summary" %>
+          <%= status_pill insight.urgency %>
+        </div>
+        <blockquote class="quote quote--small">“<%= insight.quote %>”</blockquote>
+        <div class="muted">
+          <%= insight.product.name %> ·
+          <%= insight.customer ? "#{insight.customer.name} (#{money(insight.customer.arr_cents)} ARR)" : "unknown customer" %> ·
+          <%= link_to "source", insight.feedback_note %>
+        </div>
+      </div>
+      <% if insight.pending? %>
+        <div class="triage__actions">
+          <% if insight.suggested_feature %>
+            <div class="suggestion">
+              Suggested: <strong><%= insight.suggested_feature.title %></strong>
+              <span class="muted"><%= number_to_percentage(insight.match_confidence.to_f * 100, precision: 0) %></span>
+              <div class="muted small"><%= insight.match_reason %></div>
+            </div>
+            <%= button_to "Link to suggestion", insight_link_path(insight), params: { feature_id: insight.suggested_feature_id }, class: "button button--primary" %>
+          <% elsif insight.match_reason.nil? %>
+            <div class="muted">Matching…</div>
+          <% else %>
+            <div class="muted small"><%= insight.match_reason %></div>
+          <% end %>
+          <%= form_with url: insight_link_path(insight), class: "inline-form" do |form| %>
+            <%= form.select :feature_id, (@features_by_product[insight.product_id] || []).map { |feature| [feature.title, feature.id] },
+                            { prompt: "Other feature…" }, required: true %>
+            <%= form.submit "Link", class: "button" %>
+          <% end %>
+          <div class="triage__row">
+            <%= button_to "New feature", insight_feature_path(insight), class: "button" %>
+            <%= button_to "Dismiss", insight_dismissal_path(insight), class: "button button--quiet" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+<%= tag.p("Nothing here. New feedback lands in this inbox.", class: "empty") if @insights.empty? %>
