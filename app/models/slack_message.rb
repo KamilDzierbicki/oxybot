@@ -1,4 +1,4 @@
-# Every Slack message Flint received or sent. Inbound ones are routed once by #process.
+# Every Slack message OxyBot received or sent. Inbound ones are routed once by #process.
 class SlackMessage < ApplicationRecord
   DIRECTIONS = %w[inbound outbound].freeze
 
@@ -38,7 +38,7 @@ class SlackMessage < ApplicationRecord
     user = integration.user_for(slack_user_id)
     unless user
       return integration.post_message(channel_id: channel_id, thread_ts: thread_ts || ts,
-                                      text: "I don't know you yet. Ask an admin to add your Slack member ID to your Flint profile.")
+                                      text: "I don't know you yet. Ask an admin to add your Slack member ID to your OxyBot profile.")
     end
 
     conversation = account.conversations.create_or_find_by!(slack_channel_id: channel_id, slack_thread_ts: thread_ts || ts) do |record|

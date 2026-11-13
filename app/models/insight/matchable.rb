@@ -1,5 +1,5 @@
 # Finds the feature an insight asks for: hybrid search narrows the product's backlog to a few candidates,
-# then the flint-judge model picks one or none. The result is only a suggestion; a PM confirms it.
+# then the oxybot-judge model picks one or none. The result is only a suggestion; a PM confirms it.
 module Insight::Matchable
   extend ActiveSupport::Concern
 

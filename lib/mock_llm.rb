@@ -6,10 +6,10 @@
 # http://mock-llm.test host to it through WebMock (test/test_helper.rb).
 #
 # It answers per LiteLLM alias:
-#   flint-extract  splits feedback into sentences and assigns each to the product with the most shared words
-#   flint-judge    picks the candidate feature with the most shared words, or none below two
-#   flint-assistant    calls one tool chosen by keywords, then writes the answer from the tool's JSON
-#   flint-embed    hashed bag of word stems, so texts sharing words are close in cosine distance
+#   oxybot-extract  splits feedback into sentences and assigns each to the product with the most shared words
+#   oxybot-judge    picks the candidate feature with the most shared words, or none below two
+#   oxybot-assistant    calls one tool chosen by keywords, then writes the answer from the tool's JSON
+#   oxybot-embed    hashed bag of word stems, so texts sharing words are close in cosine distance
 class MockLlm
   DIMENSIONS = 1536
   STOP_WORDS = %w[
@@ -52,9 +52,9 @@ class MockLlm
 
   def chat_completion(body)
     message = case body["model"]
-    when "flint-extract" then { role: "assistant", content: extract(body["messages"]).to_json }
-    when "flint-judge" then { role: "assistant", content: judge(body["messages"]).to_json }
-    when "flint-assistant" then assistant(body["messages"], Array(body["tools"]))
+    when "oxybot-extract" then { role: "assistant", content: extract(body["messages"]).to_json }
+    when "oxybot-judge" then { role: "assistant", content: judge(body["messages"]).to_json }
+    when "oxybot-assistant" then assistant(body["messages"], Array(body["tools"]))
     else { role: "assistant", content: "Mock model has no behavior for #{body["model"]}." }
     end
 

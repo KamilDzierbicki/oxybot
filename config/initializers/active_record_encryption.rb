@@ -3,8 +3,8 @@
 # get fixed local keys so the app starts without credentials.
 unless Rails.env.production?
   Rails.application.config.active_record.encryption.tap do |encryption|
-    encryption.primary_key ||= "flint-local-primary-key-not-for-production"
-    encryption.deterministic_key ||= "flint-local-deterministic-key-not-for-production"
-    encryption.key_derivation_salt ||= "flint-local-key-derivation-salt"
+    encryption.primary_key ||= "oxybot-local-primary-key-not-for-production"
+    encryption.deterministic_key ||= "oxybot-local-deterministic-key-not-for-production"
+    encryption.key_derivation_salt ||= "oxybot-local-key-derivation-salt"
   end
 end

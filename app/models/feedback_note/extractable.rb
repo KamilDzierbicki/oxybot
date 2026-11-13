@@ -1,4 +1,4 @@
-# Splits a note into atomic insights, each assigned to one product, with the flint-extract model.
+# Splits a note into atomic insights, each assigned to one product, with the oxybot-extract model.
 module FeedbackNote::Extractable
   extend ActiveSupport::Concern
 

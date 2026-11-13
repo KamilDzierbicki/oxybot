@@ -1,9 +1,9 @@
-# Local infrastructure for Flint.
+# Local infrastructure for OxyBot.
 #
 #   docker compose up -d db              # enough for the app in mock mode (no API keys needed)
 #   docker compose --profile ai up -d    # adds LiteLLM and Langfuse for real model calls and traces
 #
-# Ports avoid the defaults (3000, 3001, 4000, 5432) so Flint runs next to other local stacks:
+# Ports avoid the defaults (3000, 3001, 4000, 5432) so OxyBot runs next to other local stacks:
 # Postgres 5435, Langfuse 3011, LiteLLM 4010. Every value marked CHANGEME is a local demo default.
 services:
   # Postgres 17 with pgvector (insights.embedding, features.embedding). Langfuse keeps its own
@@ -23,8 +23,8 @@ services:
       timeout: 5s
       retries: 30
 
-  # The only place the app calls models from. Rails knows aliases (flint-extract, flint-judge,
-  # flint-assistant, flint-embed), never providers; litellm.yaml maps them and caps the daily spend.
+  # The only place the app calls models from. Rails knows aliases (oxybot-extract, oxybot-judge,
+  # oxybot-assistant, oxybot-embed), never providers; litellm.yaml maps them and caps the daily spend.
   litellm:
     profiles: ["ai"]
     image: ghcr.io/berriai/litellm:v1.90.2
@@ -32,14 +32,14 @@ services:
     volumes:
       - ./litellm.yaml:/app/config.yaml:ro
     environment:
-      LITELLM_MASTER_KEY: ${LITELLM_API_KEY:-sk-flint-local} # CHANGEME
+      LITELLM_MASTER_KEY: ${LITELLM_API_KEY:-sk-oxybot-local} # CHANGEME
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       LITELLM_OTEL_V2: "true"
       OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: span_only
       LANGFUSE_OTEL_HOST: http://langfuse-web:3000
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-flint-local}
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-flint-local}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-oxybot-local}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-oxybot-local}
     ports:
       - "127.0.0.1:4010:4000"
     depends_on:
@@ -54,8 +54,8 @@ services:
     environment: &langfuse-env
       DATABASE_URL: postgresql://postgres:postgres@db:5432/langfuse
       NEXTAUTH_URL: http://localhost:3011
-      NEXTAUTH_SECRET: flint-local-nextauth-secret # CHANGEME
-      SALT: flint-local-salt # CHANGEME
+      NEXTAUTH_SECRET: oxybot-local-nextauth-secret # CHANGEME
+      SALT: oxybot-local-salt # CHANGEME
       ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000" # CHANGEME: openssl rand -hex 32
       TELEMETRY_ENABLED: "false"
       CLICKHOUSE_URL: http://clickhouse:8123
@@ -65,7 +65,7 @@ services:
       CLICKHOUSE_CLUSTER_ENABLED: "false"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      REDIS_AUTH: flint-local-redis # CHANGEME
+      REDIS_AUTH: oxybot-local-redis # CHANGEME
       LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
       LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
       LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
@@ -73,17 +73,17 @@ services:
       LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
       LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
       LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
-      # Headless setup: the first start creates the organization, the "flint" project with these
+      # Headless setup: the first start creates the organization, the "oxybot" project with these
       # API keys and an admin login, so LiteLLM and Rails can send traces right away.
-      LANGFUSE_INIT_ORG_ID: flint-org
-      LANGFUSE_INIT_ORG_NAME: Flint
-      LANGFUSE_INIT_PROJECT_ID: flint
-      LANGFUSE_INIT_PROJECT_NAME: flint
-      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-flint-local}
-      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-flint-local} # CHANGEME
-      LANGFUSE_INIT_USER_EMAIL: admin@flint.local
+      LANGFUSE_INIT_ORG_ID: oxybot-org
+      LANGFUSE_INIT_ORG_NAME: OxyBot
+      LANGFUSE_INIT_PROJECT_ID: oxybot
+      LANGFUSE_INIT_PROJECT_NAME: oxybot
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-oxybot-local}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-oxybot-local} # CHANGEME
+      LANGFUSE_INIT_USER_EMAIL: admin@oxybot.local
       LANGFUSE_INIT_USER_NAME: Admin
-      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_ADMIN_PASSWORD:-flint-local} # CHANGEME
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_ADMIN_PASSWORD:-oxybot-local} # CHANGEME
     ports:
       - "127.0.0.1:3011:3000"
     depends_on: &langfuse-deps
@@ -127,9 +127,9 @@ services:
   redis:
     profiles: ["ai"]
     image: redis:7.4.12
-    command: ["--requirepass", "flint-local-redis", "--maxmemory-policy", "noeviction"] # CHANGEME
+    command: ["--requirepass", "oxybot-local-redis", "--maxmemory-policy", "noeviction"] # CHANGEME
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "flint-local-redis", "ping"]
+      test: ["CMD", "redis-cli", "-a", "oxybot-local-redis", "ping"]
       interval: 3s
       timeout: 5s
       retries: 20

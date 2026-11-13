@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "flint",
+      "name": "oxybot",
       "runtimeExecutable": "bin/dev",
       "runtimeArgs": [],
       "port": 3120

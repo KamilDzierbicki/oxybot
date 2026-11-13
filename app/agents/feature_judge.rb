@@ -10,7 +10,7 @@ class FeatureJudge < RubyLLM::Agent
     additionalProperties: false
   }.freeze
 
-  model "flint-judge", provider: :openai, protocol: :chat_completions, assume_model_exists: true
+  model "oxybot-judge", provider: :openai, protocol: :chat_completions, assume_model_exists: true
   inputs :insight, :candidates
   instructions { RubyLLM.render_prompt("feature_judge/instructions", insight: insight, candidates: candidates) }
   schema SCHEMA

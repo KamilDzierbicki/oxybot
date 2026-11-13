@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Slack::EventsControllerTest < ActionDispatch::IntegrationTest
-  SECRET = "flint-local-signing-secret"
+  SECRET = "oxybot-local-signing-secret"
 
   test "answers Slack's URL verification" do
     post_signed({ type: "url_verification", challenge: "abc123" })
@@ -45,7 +45,7 @@ class Slack::EventsControllerTest < ActionDispatch::IntegrationTest
                                     quote: "PDF export of reports please", summary: "PDF export of reports")
     insight.embed
 
-    post_signed(message_event(channel: "C_GENERAL", text: "<@U_FLINT> what do customers say about PDF export?", type: "app_mention", ts: "1700000000.000100"))
+    post_signed(message_event(channel: "C_GENERAL", text: "<@U_OXYBOT> what do customers say about PDF export?", type: "app_mention", ts: "1700000000.000100"))
     perform_enqueued_jobs(only: ProcessSlackMessageJob)
     perform_enqueued_jobs(only: GenerateReplyJob) # enqueued by the first job
 
@@ -55,7 +55,7 @@ class Slack::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes reply.text, "$", "a shared channel never sees revenue"
   end
 
-  test "a Slack user without a Flint account gets no data" do
+  test "a Slack user without a OxyBot account gets no data" do
     post_signed(message_event(channel: "D_STRANGER", text: "what do customers want?", user: "U_STRANGER"))
     perform_enqueued_jobs(only: ProcessSlackMessageJob)
 

@@ -22,7 +22,7 @@ class InsightExtractor < RubyLLM::Agent
     additionalProperties: false
   }.freeze
 
-  model "flint-extract", provider: :openai, protocol: :chat_completions, assume_model_exists: true
+  model "oxybot-extract", provider: :openai, protocol: :chat_completions, assume_model_exists: true
   inputs :note
   instructions { RubyLLM.render_prompt("insight_extractor/instructions", products: note.account.products.alphabetically) }
   schema SCHEMA
