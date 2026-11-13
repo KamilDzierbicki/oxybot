@@ -175,7 +175,7 @@
   .pill--mock, .pill--drafting { color: var(--warn); border-color: currentColor; }
 
   /* Tables scroll inside their own box, never the page */
-  .table-wrap { overflow-x: auto; margin-top: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .table-wrap { position: relative; overflow-x: auto; margin-top: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
   .table { width: 100%; border-collapse: collapse; background: var(--surface); }
   .table-wrap > .table { margin: 0; }
   .table th, .table td { text-align: left; padding: var(--space-3); border-bottom: 1px solid var(--border); vertical-align: top; }
