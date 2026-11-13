@@ -8,7 +8,7 @@ questions in the web app, in Slack or in Mattermost, and coding agents read its 
 It is a self-hosted alternative to AI product-management agents such as Productboard Spark, built with Ruby on Rails,
 Postgres with pgvector, LiteLLM and Langfuse.
 
-![The assistant answers with cited customer evidence](docs/screenshots/assistant.png)
+![The assistant answers with cited customer evidence](docs/screenshots/assistant.jpg)
 
 ## Features
 
@@ -39,9 +39,9 @@ Postgres with pgvector, LiteLLM and Langfuse.
 
 | Inbox | Spec with evidence and code context |
 |---|---|
-| ![Inbox](docs/screenshots/inbox.png) | ![Spec](docs/screenshots/spec.png) |
+| ![Inbox](docs/screenshots/inbox.jpg) | ![Spec](docs/screenshots/spec.jpg) |
 | **Features by demand** | **AI settings** |
-| ![Features](docs/screenshots/features.png) | ![AI settings](docs/screenshots/ai-settings.png) |
+| ![Features](docs/screenshots/features.jpg) | ![AI settings](docs/screenshots/ai-settings.jpg) |
 
 ## How it works
 
@@ -111,6 +111,13 @@ alias that runs every task on Claude Haiku.
 | `SLACK_SIGNING_SECRET` | Verifies Slack events | local default in development |
 | `APP_HOST`, `APP_PROTOCOL` | Links in chat messages and Linear issues | `localhost:3120`, `http` |
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | Postgres with pgvector | compose database on 5435 |
+| `AI_ENABLED` | `false` stops every model call (answers, drafts, extraction) without a deploy | `true` |
+| `SENTRY_DSN` | Error and job failure reports to Sentry or a self-hosted GlitchTip | off |
+| `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAILER_FROM` | Outgoing mail (invitations, password resets) | none: links are shown in the app |
+| `FORCE_SSL` | HTTPS, HSTS and secure cookies in production | `true` |
+| `ALLOW_PRIVATE_INTEGRATION_HOSTS` | Allow a self-hosted Mattermost on a private network address | `false` in production |
+| `PRIVACY_POLICY_URL`, `TERMS_URL` | Links shown on sign-in, sign-up and invitation pages | none |
+| `CHAT_RETENTION_DAYS` | How long routed chat messages are kept | `90` |
 
 Everything else is set in the dashboard:
 
@@ -150,6 +157,18 @@ Every integration starts in mock mode until you save its token, and has a **Test
   Tools: `list_specs`, `get_spec`, `search_feedback`.
 
 ## Security model
+
+- **Limits:** sign-in and password resets are limited per address and per email; model-backed actions (questions,
+  drafts, change requests, feedback) are limited per user per minute; MCP per token. The values are defaults in the
+  controllers; LiteLLM's daily budgets cap the total spend.
+- **Sessions** end after 14 days without use or 30 days after sign-in; a password reset ends all sessions and revokes
+  the MCP token.
+- **Chat identities** (Slack and Mattermost ids) are set by admins, and Slack events reach a workspace only after
+  "Test connection" confirmed its team id, so nobody can claim someone else's messages or workspace.
+- **Outbound calls** have timeouts; integration URLs that point to private or local addresses are refused in
+  production (server-side request forgery).
+- **Privacy:** workspace export (JSON) and deletion, deletion of feedback and customers, daily purge of ended
+  sessions and old chat messages, no contact emails sent to the model, and LiteLLM traces without message text.
 
 - **Tenancy:** every table carries `account_id`; controllers start from `Current.account`, jobs and webhooks from the
   record's account, and agent tools are built per request for one account.

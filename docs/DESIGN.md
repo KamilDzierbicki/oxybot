@@ -30,12 +30,19 @@ typography:
   h1:
     fontFamily: "{typography.body.fontFamily}"
     fontSize: "1.5rem"
-    fontWeight: 700
+    fontWeight: 600
     lineHeight: 1.25
     letterSpacing: "-0.01em"
   hero:
     fontSize: "2rem"
-    fontWeight: 700
+    fontWeight: 600
+  h2:
+    fontSize: "1.125rem"
+    fontWeight: 600
+  caption:
+    fontSize: "0.8125rem"
+  small:
+    fontSize: "0.875rem"
   label:
     fontSize: "0.72rem"
     fontWeight: 600
@@ -43,6 +50,9 @@ typography:
   mono:
     fontFamily: "ui-monospace, monospace"
     fontSize: "0.85rem"
+weights:
+  regular: 400
+  strong: 600
 rounded:
   sm: "4px"
   md: "8px"
@@ -50,11 +60,12 @@ rounded:
   xl: "14px"
   pill: "999px"
 spacing:
-  xs: "0.25rem"
-  sm: "0.5rem"
-  md: "0.75rem"
-  lg: "1rem"
-  xl: "2rem"
+  "1": "0.25rem"
+  "2": "0.5rem"
+  "3": "0.75rem"
+  "4": "1rem"
+  "6": "1.5rem"
+  "8": "2rem"
 components:
   button:
     backgroundColor: "{colors.surface}"
@@ -92,14 +103,15 @@ as large fills. Dark mode swaps the neutral tokens and keeps the accent.
 
 ## Typography
 
-System UI font everywhere, 15px body, tight headings. Small uppercase labels (pills, table headers, nav groups) use
+System UI font everywhere, 15px body, two weights only (400 and 600), sizes from the scale above. Small uppercase labels (pills, table headers, nav groups) use
 the `label` style. Code, templates and diffs use the system monospace.
 
 ## Layout
 
 Two columns on desktop: a 220px sticky sidebar and a main column capped at 1100px. Documents use a reading column
-with a 340px side panel for the agent. Below 800px the sidebar becomes a wrapped top bar and every grid collapses to
-one column.
+with a 340px side panel for the agent. Below 800px the sidebar becomes a compact top bar with a Menu button that opens
+the navigation, every grid collapses to one column, tables scroll inside their own box, and every control is at
+least 44px tall. Spacing uses the 4px scale; the tokens live on `:root` in application.css.
 
 ## Elevation & Depth
 
@@ -122,3 +134,4 @@ diff lines (added in a green tint, removed struck through in a red tint).
 - Do show where a number comes from (citations, "Used feature_demand").
 - Don't add new colors for decoration; use the existing tokens.
 - Don't use gradients, glassmorphism or large status-colored fills.
+- Do use `--link` (not `--accent`) for text links: it passes WCAG AA on every surface in both themes.
