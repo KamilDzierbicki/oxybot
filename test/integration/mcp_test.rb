@@ -8,7 +8,7 @@ class McpTest < ActionDispatch::IntegrationTest
   end
 
   test "refuses requests without a valid token" do
-    rpc("tools/list", token: "osp_wrong")
+    rpc("tools/list", token: "oxy_wrong")
 
     assert_response :unauthorized
   end

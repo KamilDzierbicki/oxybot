@@ -12,7 +12,7 @@ class User < ApplicationRecord
 
   # A personal token for coding agents (MCP). Only its digest is stored; the token is shown once.
   def generate_mcp_token
-    token = "osp_#{SecureRandom.base58(32)}"
+    token = "oxy_#{SecureRandom.base58(32)}"
     update!(mcp_token_digest: self.class.digest_mcp_token(token))
     token
   end

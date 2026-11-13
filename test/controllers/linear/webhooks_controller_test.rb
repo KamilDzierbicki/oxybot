@@ -6,7 +6,7 @@ class Linear::WebhooksControllerTest < ActionDispatch::IntegrationTest
   setup do
     integrations(:acme_linear).update!(webhook_secret: SECRET)
     @feature = features(:pdf_export)
-    @feature.update_columns(linear_issue_id: "issue-1", linear_identifier: "OSP-1")
+    @feature.update_columns(linear_issue_id: "issue-1", linear_identifier: "OXY-1")
   end
 
   test "a signed issue update moves the feature" do
@@ -40,7 +40,7 @@ class Linear::WebhooksControllerTest < ActionDispatch::IntegrationTest
 
   def payload(state_type:, sent_at: Time.current)
     { type: "Issue", action: "update", organizationId: "org-acme", webhookTimestamp: (sent_at.to_f * 1000).to_i,
-      data: { id: "issue-1", identifier: "OSP-1", state: { type: state_type, name: state_type.humanize } } }
+      data: { id: "issue-1", identifier: "OXY-1", state: { type: state_type, name: state_type.humanize } } }
   end
 
   def post_webhook(payload, signature: nil)
