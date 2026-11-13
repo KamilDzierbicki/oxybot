@@ -1,6 +1,6 @@
-# Flint
+# OpenSpark
 
-Flint turns scattered customer feedback into product decisions. Feedback arrives from Slack channels and a form,
+OpenSpark turns scattered customer feedback into product decisions. Feedback arrives from Slack channels and a form,
 a model splits it into atomic insights, each insight gets a suggested backlog feature, and a product manager
 confirms it in an inbox. Features are then ranked by how many customers ask for them and how much ARR those
 customers bring (synced from HubSpot). An assistant answers questions about all of it, in the app and in Slack,
@@ -41,11 +41,11 @@ sends the model calls, so one assistant turn is one trace, grouped by conversati
 |---|---|
 | Feedback arrives (form, Slack feedback channel) | `FeedbackNote`, `SlackMessage#process` |
 | Customer resolved from the author's email or domain | `FeedbackNote#resolve_customer` |
-| Split into insights, one product each (`flint-extract`) | `FeedbackNote::Extractable`, `InsightExtractor` |
-| Hybrid search for candidate features, then a judge (`flint-judge`) | `HybridSearchable`, `Insight::Matchable`, `FeatureJudge` |
+| Split into insights, one product each (`openspark-extract`) | `FeedbackNote::Extractable`, `InsightExtractor` |
+| Hybrid search for candidate features, then a judge (`openspark-judge`) | `HybridSearchable`, `Insight::Matchable`, `FeatureJudge` |
 | PM links, relinks, creates a feature or dismisses | Inbox (`InsightsController`, `Insights::*`) |
 | Demand: insights, distinct customers, their ARR | `Feature.by_demand` |
-| Assistant with read-only tools and checked citations (`flint-spark`) | `ProductAgent`, `Conversation::Turn`, `app/tools` |
+| Assistant with read-only tools and checked citations (`openspark-spark`) | `ProductAgent`, `Conversation::Turn`, `app/tools` |
 
 Design rules worth keeping:
 

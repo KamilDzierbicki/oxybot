@@ -1,7 +1,7 @@
 # The product assistant. It answers from the tenant's feedback through read-only tools; it has no tool that
 # changes data or reaches outside the app, because feedback text is written by outsiders.
 class ProductAgent < RubyLLM::Agent
-  model "flint-spark", provider: :openai, protocol: :chat_completions, assume_model_exists: true
+  model "openspark-spark", provider: :openai, protocol: :chat_completions, assume_model_exists: true
   inputs :turn
   instructions do
     RubyLLM.render_prompt("product_agent/instructions",

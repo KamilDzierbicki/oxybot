@@ -1,4 +1,4 @@
-# The few Slack Web API calls Flint needs, over plain HTTPS.
+# The few Slack Web API calls OpenSpark needs, over plain HTTPS.
 class Integration::Slack::Client
   BASE_URL = "https://slack.com/api"
 

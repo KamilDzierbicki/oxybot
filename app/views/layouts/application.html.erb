@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) ? "#{content_for(:title)} · Flint" : "Flint" %></title>
+    <title><%= content_for(:title) ? "#{content_for(:title)} · OpenSpark" : "OpenSpark" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="application-name" content="Flint">
+    <meta name="application-name" content="OpenSpark">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= yield :head %>
@@ -17,7 +17,7 @@
       <div class="shell">
         <nav class="sidebar">
           <div class="sidebar__brand">
-            <span class="sidebar__logo">◆</span> Flint
+            <span class="sidebar__logo">◆</span> OpenSpark
             <div class="sidebar__account"><%= Current.account.name %></div>
           </div>
           <%= nav_link "Assistant", conversations_path, active: controller_name.in?(%w[conversations messages]) %>

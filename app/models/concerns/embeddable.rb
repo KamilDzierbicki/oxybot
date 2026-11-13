@@ -1,8 +1,8 @@
-# A record with a pgvector embedding of #embedding_text, made by the flint-embed alias in LiteLLM.
+# A record with a pgvector embedding of #embedding_text, made by the openspark-embed alias in LiteLLM.
 module Embeddable
   extend ActiveSupport::Concern
 
-  MODEL = "flint-embed"
+  MODEL = "openspark-embed"
 
   included do
     has_neighbors :embedding

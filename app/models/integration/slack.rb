@@ -55,7 +55,7 @@ class Integration::Slack < Integration
     Integration::Slack::Client.new(access_token)
   end
 
-  # Slack's mrkdwn: bold is *text*, and citations become links to the insight in Flint
+  # Slack's mrkdwn: bold is *text*, and citations become links to the insight in OpenSpark
   def slack_text(content)
     content.to_s.gsub(/\*\*(.+?)\*\*/, '*\1*').gsub(Message::CITATION) do
       "<#{Rails.application.routes.url_helpers.insight_url($1, **Rails.application.config.x.url_options)}|##{$1}>"

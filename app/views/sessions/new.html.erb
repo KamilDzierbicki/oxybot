@@ -1,6 +1,6 @@
 <% content_for :title, "Sign in" %>
 <div class="card auth">
-  <h1><span class="sidebar__logo">◆</span> Flint</h1>
+  <h1><span class="sidebar__logo">◆</span> OpenSpark</h1>
   <p class="muted">Customer feedback, turned into product decisions.</p>
   <% flash.each do |type, text| %><div class="flash flash--<%= type %>"><%= text %></div><% end %>
   <%= form_with url: session_path, class: "form" do |form| %>

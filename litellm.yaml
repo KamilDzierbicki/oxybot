@@ -1,12 +1,12 @@
-# LiteLLM aliases used by Flint (docker compose --profile ai up). Rails never names a provider:
+# LiteLLM aliases used by OpenSpark (docker compose --profile ai up). Rails never names a provider:
 # to move a task to another model, change it here.
 #
 # Every paid alias has a daily spend cap; past it LiteLLM answers 429 instead of calling the provider,
-# so a retry loop cannot burn the month's budget. Flint also sends the tenant as the end user
+# so a retry loop cannot burn the month's budget. OpenSpark also sends the tenant as the end user
 # ("account-42"), so LiteLLM shows spend per tenant.
 model_list:
   # Splits raw feedback into insights: many calls, short output, so a fast model
-  - model_name: flint-extract
+  - model_name: openspark-extract
     litellm_params:
       model: anthropic/claude-haiku-5-5
       api_key: os.environ/ANTHROPIC_API_KEY
@@ -14,7 +14,7 @@ model_list:
       budget_duration: 1d
 
   # Picks the matching feature among a few candidates
-  - model_name: flint-judge
+  - model_name: openspark-judge
     litellm_params:
       model: anthropic/claude-haiku-5-5
       api_key: os.environ/ANTHROPIC_API_KEY
@@ -22,7 +22,7 @@ model_list:
       budget_duration: 1d
 
   # The product assistant (tool use, longer reasoning)
-  - model_name: flint-spark
+  - model_name: openspark-spark
     litellm_params:
       model: anthropic/claude-sonnet-5-5
       api_key: os.environ/ANTHROPIC_API_KEY
@@ -33,7 +33,7 @@ model_list:
           role: system
 
   # 1536 dimensions, matching insights.embedding and features.embedding. Multilingual, so Polish feedback works.
-  - model_name: flint-embed
+  - model_name: openspark-embed
     litellm_params:
       model: openai/text-embedding-3-small
       api_key: os.environ/OPENAI_API_KEY

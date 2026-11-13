@@ -1,4 +1,4 @@
-# A tenant: one company using Flint. Every other record belongs to exactly one account.
+# A tenant: one company using OpenSpark. Every other record belongs to exactly one account.
 class Account < ApplicationRecord
   has_many :users, dependent: :destroy
   has_many :products, dependent: :destroy
