@@ -27,6 +27,23 @@ class FeedbackNoteTest < ActiveSupport::TestCase
     assert_equal 1, note.insights.count
   end
 
+  test "a second run that starts while the first is still working does nothing" do
+    note = @account.feedback_notes.create!(source: "manual", body: "Please add PDF export of reports for our finance team.")
+    FeedbackNote.where(id: note.id).update_all(processed_at: Time.current) # another worker claimed it
+
+    assert_no_difference -> { note.insights.count } do
+      FeedbackNote.find(note.id).extract_insights
+    end
+  end
+
+  test "a failed model call releases the note for the retry" do
+    note = @account.feedback_notes.create!(source: "manual", body: "Please add PDF export of reports for our finance team.")
+    stub_request(:post, "http://mock-llm.test/v1/chat/completions").to_return(status: 500, body: { error: { message: "down" } }.to_json)
+
+    assert_raises(RubyLLM::Error) { note.extract_insights }
+    assert_nil note.reload.processed_at
+  end
+
   test "an unknown email domain leaves the note without a customer" do
     note = @account.feedback_notes.create!(source: "manual", author_email: "someone@unknown.example", body: "Reports are slow to load today again.")
 
