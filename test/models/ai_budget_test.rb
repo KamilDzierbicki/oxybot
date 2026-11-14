@@ -54,7 +54,7 @@ class AiBudgetTest < ActiveSupport::TestCase
   end
 
   test "saving other settings does not touch LiteLLM" do
-    assert_no_enqueued_jobs(only: SyncAiBudgetJob) { @account.update_ai_settings("match_candidates" => "7") }
+    assert_no_enqueued_jobs(only: SyncAiBudgetJob) { @account.update_ai_settings("agent_max_rounds" => "7") }
   end
 
   test "an assistant answer over budget says so instead of asking to retry" do

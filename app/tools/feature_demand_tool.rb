@@ -1,5 +1,4 @@
 class FeatureDemandTool < ApplicationTool
-  description "Ranks backlog features by customer demand: linked insights, distinct customers and their combined ARR."
   parameter :product, description: "Optional product slug", required: false
 
   def execute(product: nil)

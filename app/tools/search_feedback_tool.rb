@@ -1,11 +1,11 @@
 class SearchFeedbackTool < ApplicationTool
-  description "Searches customer feedback insights by meaning and keywords. Returns quotes, customers and linked features."
   parameter :query, description: "What to look for, in a few words"
   parameter :product, description: "Optional product slug to search within", required: false
 
   def execute(query:, product: nil)
-    insights = product_scope(account.insights, product).where.not(triage_state: "dismissed")
-                                                     .includes(:customer, :product, :feature).hybrid_search(query, limit: 10)
+    retrieval = Prompt.retrieval("product-agent")
+    insights = product_scope(account.insights, product).where.not(triage_state: "dismissed").includes(:customer, :product, :feature)
+                                                     .hybrid_search(query, limit: retrieval.fetch("limit", 10), tuning: retrieval)
     turn.remember_insights(insights.map(&:id))
 
     { insights: insights.map { |insight| row(insight) } }

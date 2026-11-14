@@ -35,10 +35,8 @@
   </div>
 
   <details class="advanced">
-    <summary>Advanced: matching and limits</summary>
+    <summary>Advanced: themes and limits</summary>
     <div class="form__row">
-      <label>Features compared per insight<%= form.number_field :match_candidates, value: @account.ai_setting("match_candidates"), min: 1, max: 20 %>
-        <small class="muted">The closest backlog features the model reads before it suggests one. More is slower and costs more.</small></label>
       <label>Theme grouping distance<%= form.number_field :theme_distance, value: @account.ai_setting("theme_distance"), min: 0.05, max: 0.9, step: 0.05 %>
         <small class="muted">For the weekly report. 0.05 groups only near-identical needs into a theme; 0.9 groups loosely related ones.</small></label>
       <label>Steps per answer<%= form.number_field :agent_max_rounds, value: @account.ai_setting("agent_max_rounds"), min: 1, max: 12 %>

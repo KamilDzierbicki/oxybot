@@ -1,0 +1,8 @@
+# Versioned with the feature-judge prompt (Langfuse prompt config): how the backlog is narrowed to the candidates the
+# judge reads. Edit in Langfuse for a new version, or here and run bin/rails langfuse:push_prompts.
+retrieval:
+  limit: 5 # features the judge compares per insight; more is slower and costs more
+  candidates: 20
+  rrf_k: 60
+  vector_weight: 1.0
+  text_weight: 1.0

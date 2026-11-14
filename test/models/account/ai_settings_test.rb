@@ -5,19 +5,19 @@ class Account::AiSettingsTest < ActiveSupport::TestCase
 
   test "unset settings use the defaults" do
     assert_equal "oxybot-assistant", @account.ai_model("assistant")
-    assert_equal 5, @account.ai_setting("match_candidates")
+    assert_equal 6, @account.ai_setting("agent_max_rounds")
   end
 
   test "form strings are cast and saved" do
-    assert @account.update_ai_settings("match_candidates" => "3", "theme_distance" => "0.2", "weekly_report_enabled" => "0")
+    assert @account.update_ai_settings("agent_max_rounds" => "3", "theme_distance" => "0.2", "weekly_report_enabled" => "0")
 
-    assert_equal 3, @account.reload.ai_setting("match_candidates")
+    assert_equal 3, @account.reload.ai_setting("agent_max_rounds")
     assert_in_delta 0.2, @account.ai_setting("theme_distance")
     assert_equal false, @account.ai_setting("weekly_report_enabled")
   end
 
   test "values outside the safe range are refused" do
-    assert_not @account.update_ai_settings("match_candidates" => "0")
+    assert_not @account.update_ai_settings("theme_distance" => "0")
     assert_not @account.update_ai_settings("agent_max_rounds" => "500")
   end
 

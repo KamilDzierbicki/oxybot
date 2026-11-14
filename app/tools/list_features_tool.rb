@@ -1,5 +1,4 @@
 class ListFeaturesTool < ApplicationTool
-  description "Lists backlog features with their status, description and RICE priority (null when not scored), highest priority first."
   parameter :product, description: "Optional product slug", required: false
   parameter :status, description: "Optional status: idea, planned, in_progress or released", required: false
 

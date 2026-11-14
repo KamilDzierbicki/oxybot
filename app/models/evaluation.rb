@@ -1,7 +1,8 @@
 # Measures OxyBot's AI steps on the datasets in config/evals with a chosen model, calling the same code as production:
 #
 # - extraction: FeedbackNote#ask_extractor finds the expected products in the expected number (correct)
-# - matching: Insight#judge picks the expected feature or none (correct)
+# - matching: the production path, hybrid search for candidates then Insight#judge, picks the expected feature or
+#   none (correct); candidates_hit says whether search offered the expected feature at all
 # - retrieval: hybrid search on a fixed corpus, with MRR and recall@5 for vector, full-text and fused search
 # - documents: a drafted document against a reference, with BLEU-4 and ROUGE-1/2/L
 #
@@ -9,8 +10,14 @@
 # documents run inside a transaction that is rolled back. With Langfuse configured the run is a Langfuse experiment:
 # dataset items, one trace per item with input, output and expected output, and every score on its root.
 # The datasets are demo data written for this, so their text may be sent to Langfuse; customer data never is.
+#
+# A run measures one variant: the model, the version of the task's prompt (a label or number, Prompt.using) and
+# retrieval overrides. The variant is the experiment's metadata, so variants sit side by side in Langfuse.
 class Evaluation
   TASKS = %w[extraction matching retrieval documents].freeze
+  BOOLEAN_SCORES = %w[correct candidates_hit].freeze
+  # The prompt each task runs; its config holds the retrieval parameters the task uses
+  PROMPTS = { "extraction" => "insight-extractor", "matching" => "feature-judge", "retrieval" => "product-agent", "documents" => "document-writer" }.freeze
   SEARCH_MODES = %i[vector text hybrid].freeze
 
   # scores: name => value between 0 and 1; "correct" is 0 or 1
@@ -20,17 +27,24 @@ class Evaluation
     end
   end
 
-  attr_reader :task, :model, :run_name
+  attr_reader :task, :model, :run_name, :variant
 
-  def initialize(task:, model:, account:)
+  # prompt: label or version of the task's prompt (default production); retrieval: overrides such as {"rrf_k" => 30}
+  def initialize(task:, model:, account:, prompt: nil, retrieval: {})
     raise ArgumentError, "task must be one of #{TASKS.join(", ")}" unless TASKS.include?(task)
 
     @task = task
     @model = model
+    @versions = prompt ? { PROMPTS.fetch(task) => prompt } : {}
+    @retrieval = retrieval.to_h.stringify_keys
     @account = Account.find(account.id).tap do |copy|
       copy.ai_settings = copy.ai_settings.merge("model_extract" => model, "model_judge" => model, "model_writer" => model)
     end
-    @run_name = "#{task} #{model} #{Time.current.utc.strftime("%Y-%m-%d %H:%M:%S")}"
+    @variant = within_variant do
+      { "model" => model, "prompt" => Prompt.version_tag(PROMPTS.fetch(task)), "retrieval" => Prompt.retrieval(PROMPTS.fetch(task)).presence }.compact
+    end
+    label = [ model, variant["prompt"], *@retrieval.map { |key, value| "#{key}=#{value}" } ].join(" ")
+    @run_name = "#{task} #{label} #{Time.current.utc.strftime("%Y-%m-%d %H:%M:%S")}"
   end
 
   def items
@@ -47,14 +61,16 @@ class Evaluation
 
   def run
     dataset_id = sync_dataset if Langfuse.configured?
-    return items.map { |item| experiment_item(item, dataset_id) { evaluate(item) } } if %w[extraction matching].include?(task)
+    within_variant do
+      next items.map { |item| experiment_item(item, dataset_id) { evaluate(item) } } if %w[extraction matching].include?(task)
 
-    results = nil
-    ActiveRecord::Base.transaction do
-      results = items.map { |item| experiment_item(item, dataset_id) { evaluate(item) } }
-      raise ActiveRecord::Rollback # retrieval's corpus and documents' drafts are never kept
+      results = nil
+      ActiveRecord::Base.transaction do
+        results = items.map { |item| experiment_item(item, dataset_id) { evaluate(item) } }
+        raise ActiveRecord::Rollback # retrieval's corpus and documents' drafts are never kept
+      end
+      results
     end
-    results
   end
 
   def self.accuracy(results) = results.empty? ? 0.0 : results.count(&:correct).fdiv(results.size)
@@ -69,6 +85,8 @@ class Evaluation
 
   private
 
+  def within_variant(&) = Prompt.using(@versions, retrieval: @retrieval, &)
+
   def evaluate(item) = send(:"evaluate_#{task}", item)
 
   # Right when the insights fall into exactly the expected products, in the expected number
@@ -80,15 +98,18 @@ class Evaluation
     Result.new(id: item["id"], correct: correct, expected: expected, actual: { "products" => products.sort })
   end
 
-  # Right when the judge picks the expected feature among all of the product's features, or none when none fits
+  # Right when the judge picks the expected feature among the candidates search offers, or none when none fits
   def evaluate_matching(item)
     product = @account.products.find_by!(slug: item["product"])
-    candidates = product.features.order(:id).to_a
     insight = @account.insights.new(product: product, summary: item["input"], quote: item["input"])
+    candidates = insight.match_candidates
     verdict = insight.judge(candidates)
     picked = candidates.find { |feature| feature.id == verdict["feature_id"] }
-    Result.new(id: item["id"], correct: picked&.title == item.dig("expected", "feature"), expected: item["expected"],
-               actual: { "feature" => picked&.title })
+    expected = item.dig("expected", "feature")
+    correct = picked&.title == expected
+    hit = expected.nil? || candidates.any? { |feature| feature.title == expected }
+    Result.new(id: item["id"], correct: correct, expected: item["expected"], actual: { "feature" => picked&.title, "candidates" => candidates.map(&:title) },
+               scores: { "correct" => correct ? 1 : 0, "candidates_hit" => hit ? 1 : 0 })
   end
 
   # Ranks the corpus for the query in each search mode; the hybrid ranking is what the assistant gets
@@ -98,7 +119,8 @@ class Evaluation
     vector = vectors.first
     relevant = item["relevant"]
     rankings = SEARCH_MODES.to_h do |mode|
-      [ mode, corpus[:account].insights.ranked(item["query"], mode: mode, vector: vector, space: space).map { |insight| corpus[:keys][insight.id] }.first(10) ]
+      ranking = corpus[:account].insights.ranked(item["query"], mode: mode, vector: vector, space: space, tuning: Prompt.retrieval("product-agent"))
+      [ mode, ranking.map { |insight| corpus[:keys][insight.id] }.first(10) ]
     end
     scores = SEARCH_MODES.each_with_object({}) do |mode, all|
       all["mrr_#{mode}"] = RetrievalMetrics.reciprocal_rank(rankings[mode], relevant).round(4)
@@ -157,15 +179,15 @@ class Evaluation
   # One trace per item, marked as part of this experiment (Langfuse's OpenTelemetry experiment attributes)
   def experiment_item(item, dataset_id)
     tracer = OpenTelemetry.tracer_provider.tracer("oxybot")
-    run = { "langfuse.experiment.id" => run_name, "langfuse.experiment.name" => run_name,
-            "langfuse.experiment.dataset.id" => dataset_id, "langfuse.experiment.metadata.model" => model,
+    run = { "langfuse.experiment.id" => run_name, "langfuse.experiment.name" => run_name, "langfuse.experiment.dataset.id" => dataset_id,
             "langfuse.environment" => Langfuse.environment }.compact
+    variant.each { |key, value| run["langfuse.experiment.metadata.#{key}"] = value.is_a?(Hash) ? value.to_json : value }
     context = OpenTelemetry::Baggage.build { |baggage| run.each { |key, value| baggage.set_value(key, value.to_s) } }
 
     root = tracer.start_span("experiment-item", with_parent: context, attributes: {
       "langfuse.observation.input" => item_input(item).to_json,
       "langfuse.experiment.item.expected_output" => expected_output(item).to_json,
-      "langfuse.experiment.description" => "#{task} with #{model} on config/evals/#{task}.yml"
+      "langfuse.experiment.description" => "#{task} with #{variant.values_at("model", "prompt").join(", ")} on config/evals/#{task}.yml"
     })
     root_id = root.context.hex_span_id
     item_context = OpenTelemetry::Baggage.build(context: context) do |baggage|
@@ -193,7 +215,7 @@ class Evaluation
   def score(root, result)
     result.scores.each do |name, value|
       Langfuse.post("/api/public/scores", { traceId: root.context.hex_trace_id, observationId: root.context.hex_span_id, name: name, value: value,
-                                            dataType: name == "correct" ? "BOOLEAN" : "NUMERIC", environment: Langfuse.environment })
+                                            dataType: BOOLEAN_SCORES.include?(name) ? "BOOLEAN" : "NUMERIC", environment: Langfuse.environment })
     end
   end
 end

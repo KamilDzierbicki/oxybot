@@ -16,8 +16,7 @@ module Insight::Matchable
     return unless Rails.configuration.x.ai_enabled
 
     Langfuse.traced("match-insight", insight_id: id, oxybot_url: Langfuse.url(self)) do |trace|
-      embed unless embedding_current?
-      candidates = product.features.hybrid_search(summary, vector: embedding, space: embedding_space, limit: account.ai_setting("match_candidates"))
+      candidates = match_candidates
       next update!(suggested_feature: nil, match_confidence: nil, match_reason: "No features in #{product.name} yet.") if candidates.empty?
 
       verdict = judge(candidates)
@@ -27,6 +26,17 @@ module Insight::Matchable
               match_reason: readable_reason(verdict["reason"], candidates), match_trace_id: trace.id,
               match_observation_id: trace.generation_id)
     end
+  end
+
+  # The backlog features the judge reads: hybrid search with the feature-judge prompt's retrieval config. Also used by
+  # Evaluation. An unsaved insight (an evaluation item) gets its vector without storing it.
+  def match_candidates
+    retrieval = Prompt.retrieval("feature-judge")
+    if persisted?
+      embed unless embedding_current?
+      vector, space = embedding, embedding_space
+    end
+    product.features.hybrid_search(summary, vector: vector, space: space, limit: retrieval.fetch("limit", 5), tuning: retrieval)
   end
 
   # The judge's verdict on these candidates: {"feature_id", "confidence", "reason"}. Also used by Evaluation.

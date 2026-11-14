@@ -1,4 +1,4 @@
-# Per-account AI settings from the dashboard: which LiteLLM alias runs each task, matching and theme thresholds,
+# Per-account AI settings from the dashboard: which LiteLLM alias runs each task, the theme threshold,
 # the agent's step limit and when the weekly opportunity report runs. Missing keys use DEFAULTS.
 module Account::AiSettings
   extend ActiveSupport::Concern
@@ -13,14 +13,14 @@ module Account::AiSettings
   DEFAULTS = {
     "model_extract" => "oxybot-extract", "model_judge" => "oxybot-judge",
     "model_assistant" => "oxybot-assistant", "model_writer" => "oxybot-writer",
-    "match_candidates" => 5, "theme_distance" => 0.35, "agent_max_rounds" => 6,
+    "theme_distance" => 0.35, "agent_max_rounds" => 6,
     "weekly_report_enabled" => true, "weekly_report_day" => 1, "weekly_report_hour" => 8,
     "daily_budget_usd" => 0.0
   }.freeze
 
   # Valid range per numeric setting; values outside are refused, so a typo cannot disable matching
   LIMITS = {
-    "match_candidates" => 1..20, "theme_distance" => 0.05..0.9, "agent_max_rounds" => 1..12, "daily_budget_usd" => 0..100_000,
+    "theme_distance" => 0.05..0.9, "agent_max_rounds" => 1..12, "daily_budget_usd" => 0..100_000,
     "weekly_report_day" => 0..6, "weekly_report_hour" => 0..23
   }.freeze
 
@@ -46,7 +46,7 @@ module Account::AiSettings
   included do
     validate :ai_settings_in_range
 
-    # Readers for forms (account.match_candidates)
+    # Readers for forms (account.theme_distance)
     DEFAULTS.each_key { |key| define_method(key) { ai_setting(key) } }
   end
 

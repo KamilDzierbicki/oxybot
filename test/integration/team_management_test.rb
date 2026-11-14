@@ -8,7 +8,7 @@ class TeamManagementTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
     get users_path
     assert_response :forbidden
-    patch ai_settings_path, params: { account: { match_candidates: "2" } }
+    patch ai_settings_path, params: { account: { agent_max_rounds: "2" } }
     assert_response :forbidden
     patch team_instructions_path, params: { account: { custom_instructions: "x" } }
     assert_response :forbidden

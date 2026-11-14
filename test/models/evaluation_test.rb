@@ -69,10 +69,14 @@ class EvaluationTest < ActiveSupport::TestCase
 
     model_call = finished_spans.find { |span| span.hex_trace_id == root.hex_trace_id && span.attributes["gen_ai.operation.name"] == "chat" }
     assert_equal evaluation.run_name, model_call.attributes["langfuse.experiment.id"], "the experiment context reaches every span of the item"
+    assert_equal [ "oxybot-haiku", "feature-judge@file" ], root.attributes.values_at("langfuse.experiment.metadata.model", "langfuse.experiment.metadata.prompt"),
+                 "the variant is the experiment's metadata, so variants can be compared side by side"
+    assert_equal 5, JSON.parse(root.attributes["langfuse.experiment.metadata.retrieval"])["limit"]
 
-    assert_requested score
-    sent = JSON.parse(WebMock::RequestRegistry.instance.requested_signatures.hash.keys.find { |request| request.uri.path.end_with?("/scores") }.body)
-    assert_equal [ root.hex_trace_id, root.hex_span_id, "correct", 1 ], sent.values_at("traceId", "observationId", "name", "value")
+    assert_requested score, times: 2
+    sent = WebMock::RequestRegistry.instance.requested_signatures.hash.keys.select { |request| request.uri.path.end_with?("/scores") }.map { |request| JSON.parse(request.body) }
+    assert_equal [ [ root.hex_trace_id, root.hex_span_id, "candidates_hit", 1, "BOOLEAN" ], [ root.hex_trace_id, root.hex_span_id, "correct", 1, "BOOLEAN" ] ],
+                 sent.map { |body| body.values_at("traceId", "observationId", "name", "value", "dataType") }.sort
   ensure
     stop_tracing
   end
@@ -116,6 +120,7 @@ class EvaluationTest < ActiveSupport::TestCase
     stub_request(:get, %r{langfuse\.test/api/public/v2/datasets/oxybot-retrieval}).to_return(body: { id: "ds-r" }.to_json)
     stub_request(:post, "http://langfuse.test/api/public/dataset-items").to_return(body: "{}")
     scores = stub_request(:post, "http://langfuse.test/api/public/scores").to_return(body: "{}")
+    stub_request(:get, %r{langfuse\.test/api/public/v2/prompts}).to_return(status: 404, body: "{}") # prompts fall back to files
     evaluation = Evaluation.new(task: "retrieval", model: "oxybot-haiku", account: accounts(:acme))
     evaluation.instance_variable_set(:@dataset, { "corpus" => [ { "key" => "pdf", "product" => "reports", "text" => "PDF export please" } ],
                                                   "queries" => [ { "id" => "q", "query" => "PDF export", "relevant" => [ "pdf" ] } ] })

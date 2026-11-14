@@ -1,0 +1,12 @@
+# Versioned with the product-agent prompt (Langfuse prompt config): what the model reads about each tool, and how
+# search_feedback retrieves. Edit in Langfuse for a new version, or here and run bin/rails langfuse:push_prompts.
+tools:
+  search_feedback: Searches customer feedback insights by meaning and keywords. Returns quotes, customers and linked features.
+  feature_demand: "Ranks backlog features by customer demand: linked insights, distinct customers and their combined ARR."
+  list_features: Lists backlog features with their status, description and RICE priority (null when not scored), highest priority first.
+retrieval:
+  limit: 10 # insights returned to the model
+  candidates: 20 # per list (vector, full text) before fusion
+  rrf_k: 60 # reciprocal rank fusion constant: higher flattens the difference between ranks
+  vector_weight: 1.0
+  text_weight: 1.0

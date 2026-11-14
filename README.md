@@ -190,7 +190,7 @@ OxyBot, LiteLLM and Langfuse work as one system:
 | Corrections per week, split by prompt version and by model, and a queue for the weekly error review | Langfuse dashboard "OxyBot corrections", Human annotation (see below) |
 | Skills run in the assistant (`/churn-risk`), with use counts per skill | Langfuse Skills |
 | Corrections become evaluation cases: when someone links another feature than the suggested one, the case waits for review and, once approved, joins the matching experiments | AI settings, Evaluation cases |
-| Experiments on `config/evals` with any model: extraction and matching accuracy, retrieval MRR and recall@5 (vector, full text, hybrid), BLEU and ROUGE of drafted documents against a reference | `bin/rails evals:run MODEL=oxybot-haiku [TASK=retrieval]`, Langfuse Datasets |
+| Experiments on `config/evals` with any variant (model, prompt version, retrieval parameters): extraction and matching accuracy, whether search offered the right feature, retrieval MRR and recall@5 (vector, full text, hybrid), BLEU and ROUGE of drafted documents against a reference | `bin/rails evals:run`, Langfuse Datasets (see Prompts) |
 | LLM-as-judge evaluators: is an answer supported by the quotes it cites, are extracted insights faithful | Langfuse Evaluators (see below) |
 | A daily AI budget per workspace, enforced by LiteLLM, with today's spend | AI settings, LiteLLM Customers |
 | Prompt caching: the stable part of a prompt is read from Anthropic's cache at a tenth of the input price | `input_cached_tokens` on generations |
@@ -275,6 +275,22 @@ Model budgets and which provider an alias calls stay in LiteLLM (`litellm.yaml` 
 With Langfuse configured, `bin/rails langfuse:push_prompts` uploads `config/prompts/*.txt` as versions labeled
 `production`. Edit them in Langfuse; OxyBot uses the new version within 5 minutes ("Reload prompts now" in AI settings
 skips the wait) and tags every trace with the prompt version. Without Langfuse, or when it is down, the files are used.
+
+Each version also carries a config (`config/prompts/<name>.yml`, Langfuse's prompt config): the assistant's tool
+descriptions in `product-agent`, and the retrieval parameters in `product-agent` (for `search_feedback`) and
+`feature-judge` (the features compared per insight). Retrieval parameters are `limit`, `candidates` per list,
+`rrf_k` and the `vector_weight` and `text_weight` of the fusion; a value out of range falls back to the file.
+
+Compare a change before it goes live:
+
+```bash
+bin/rails evals:run TASK=retrieval RAG=text_weight=0.3        # retrieval parameters
+bin/rails evals:run TASK=matching PROMPT=candidate             # the version labeled candidate (or a number)
+bin/rails evals:run TASK=matching MODEL=oxybot-judge RAG=limit=8
+```
+
+Each run is a Langfuse experiment named after its variant, with the model, prompt version and retrieval parameters
+in its metadata, so the runs of one dataset sit side by side.
 
 ## Integrations
 

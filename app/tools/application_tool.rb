@@ -11,6 +11,12 @@ class ApplicationTool < RubyLLM::Tool
     @turn = turn
   end
 
+  # The assistant's tools are described in the product-agent prompt's config, versioned with the prompt; the others
+  # (code search for documents) keep their description in the class
+  def description
+    Prompt.config("product-agent").dig("tools", name).presence || super
+  end
+
   private
 
   attr_reader :turn
