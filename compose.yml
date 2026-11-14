@@ -33,6 +33,9 @@ services:
       - ./litellm.yaml:/app/config.yaml:ro
     environment:
       LITELLM_MASTER_KEY: ${LITELLM_API_KEY:-sk-oxybot-local} # CHANGEME
+      # Spend logs, keys and the admin UI (http://localhost:4010/ui, user "admin", password = the master key)
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/litellm
+      STORE_MODEL_IN_DB: "False"
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434}
@@ -45,6 +48,8 @@ services:
       - "127.0.0.1:4010:4000"
     # Langfuse is optional: without it LiteLLM still serves models, only traces are lost
     depends_on:
+      db:
+        condition: service_healthy
       langfuse-web:
         condition: service_healthy
         required: false

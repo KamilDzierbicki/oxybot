@@ -21,10 +21,12 @@ module ApplicationHelper
   # Markdown from the model is untrusted: raw HTML is filtered out before it renders,
   # then [insight:123] citations become links to the insight.
   # heading_offset demotes headings, so a document's own "# Title" does not compete with the page h1.
-  def markdown(text, heading_offset: 0)
+  # account: whose insights citations may show. Pass it where there is no request (a reply rendered by a job
+  # and broadcast), since Current.account is only set inside a request.
+  def markdown(text, heading_offset: 0, account: Current.account)
     html = MARKDOWN.render(loosen_lists(text.to_s))
     html = html.gsub(%r{<(/?)h([1-6])>}) { "<#{$1}h#{[ $2.to_i + heading_offset, 6 ].min}>" } if heading_offset.positive?
-    preload_citations(text.to_s.scan(Message::CITATION).flatten.map(&:to_i))
+    preload_citations(text.to_s.scan(Message::CITATION).flatten.map(&:to_i), account)
     html.gsub(Message::CITATION) { citation_link($1.to_i) }.html_safe
   end
 
@@ -67,11 +69,11 @@ module ApplicationHelper
   end
 
   # One query for all citations on the page; insights of other workspaces are never loaded
-  def preload_citations(ids)
+  def preload_citations(ids, account)
     missing = ids.uniq - cited_insights.keys
-    return if missing.empty? || Current.account.nil?
+    return if missing.empty? || account.nil?
 
-    found = Current.account.insights.includes(:customer).where(id: missing).index_by(&:id)
+    found = account.insights.includes(:customer).where(id: missing).index_by(&:id)
     missing.each { |id| cited_insights[id] = found[id] }
   end
 

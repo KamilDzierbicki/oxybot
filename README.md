@@ -120,6 +120,13 @@ or switching from the mock to Ollama, is noticed on the first call: search and m
 the new model, and each workspace is embedded again in the background, in batches, resuming where it stopped. Check
 progress with `bin/rails oxybot:embeddings`; `bin/rails oxybot:reembed` queues any stale workspace by hand.
 
+Two local dashboards come with the `ai` profile:
+
+| Dashboard | URL | Sign in | What you see |
+|---|---|---|---|
+| LiteLLM | http://localhost:4010/ui | `admin`, password = `LITELLM_API_KEY` (`sk-oxybot-local`) | every model call, its cost, budgets per alias |
+| Langfuse | http://localhost:3011 | `admin@oxybot.local` / `oxybot-local` | traces from LiteLLM and Rails, prompt versions |
+
 Langfuse needs ClickHouse, Redis and S3-compatible storage (all in `compose.yml`) and about 3 GB of memory. To run
 without it, start only the model services: `docker compose --profile ai up -d litellm ollama ollama-pull`, and leave
 the `LANGFUSE_*` variables empty.

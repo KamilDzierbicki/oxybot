@@ -2,7 +2,7 @@
   <% if message.thinking? %>
     <div class="message__body message__thinking" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Looking through your feedback…</div>
   <% elsif message.assistant? %>
-    <div class="message__body prose"><%= markdown(message.content) %></div>
+    <div class="message__body prose"><%= markdown(message.content, account: message.conversation.account) %></div>
     <div class="message__meta">
       AI-generated<%= " from #{message.tool_calls.map { |call| tool_label(call["name"]) }.uniq.to_sentence}" if message.tool_calls.any? %>. Check the cited insights.
     </div>
