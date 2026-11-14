@@ -1,0 +1,63 @@
+<% content_for :title, "Roadmap" %>
+<div class="page-header">
+  <h1>Roadmap</h1>
+  <%= link_to "Features", features_path(sort: "priority"), class: "button" %>
+</div>
+<p class="muted page-intro">Now, Next and Later, each ordered by RICE priority and then by the ARR of the customers asking. “On portal” marks what customers see on the customer portal.</p>
+
+<div class="roadmap">
+  <% @lanes.each do |lane, features| %>
+    <section class="roadmap__lane" aria-labelledby="lane-<%= lane %>">
+      <h2 class="roadmap__title" id="lane-<%= lane %>"><%= Feature::LANES[lane] %> <span class="muted"><%= features.size %></span></h2>
+      <% features.each do |feature| %>
+        <article class="card roadmap__card">
+          <div class="roadmap__head">
+            <%= link_to feature.title, feature, class: "roadmap__feature" %>
+            <% if feature.on_portal %><span class="pill" title="Visible on the customer portal">On portal</span><% end %>
+          </div>
+          <div class="muted small"><%= feature.product.name %> · <%= status_pill feature.status %></div>
+          <div class="roadmap__numbers small">
+            <span class="arr"><%= money(feature.demand_arr_cents) %> ARR</span>
+            <span><%= pluralize(feature.reach, "customer") %></span>
+            <span>RICE <%= feature.rice_score || "not scored" %></span>
+          </div>
+          <div class="row roadmap__moves">
+            <% if (left = feature.neighbour_lane(-1)) %>
+              <%= button_to "← #{Feature::LANES[left]}", feature_roadmap_placement_path(feature), method: :patch, params: { roadmap_lane: left }, class: "button button--quiet", aria: { label: "Move #{feature.title} to #{Feature::LANES[left]}" } %>
+            <% end %>
+            <% if (right = feature.neighbour_lane(1)) %>
+              <%= button_to "#{Feature::LANES[right]} →", feature_roadmap_placement_path(feature), method: :patch, params: { roadmap_lane: right }, class: "button button--quiet", aria: { label: "Move #{feature.title} to #{Feature::LANES[right]}" } %>
+            <% end %>
+            <%= button_to "Remove", feature_roadmap_placement_path(feature), method: :patch, params: { roadmap_lane: "" }, class: "button button--quiet", aria: { label: "Take #{feature.title} off the roadmap" } %>
+          </div>
+        </article>
+      <% end %>
+      <%= tag.p("Nothing here yet.", class: "muted small") if features.empty? %>
+    </section>
+  <% end %>
+</div>
+
+<% if @candidates.any? %>
+  <h2 class="section-title">Not on the roadmap yet</h2>
+  <ul class="list">
+    <% @candidates.each do |feature| %>
+      <li class="list__item">
+        <span><%= link_to feature.title, feature %> <span class="muted small">· <%= money(feature.demand_arr_cents) %> ARR · RICE <%= feature.rice_score || "not scored" %></span></span>
+        <span class="row">
+          <% Feature::LANES.each do |lane, name| %>
+            <%= button_to name, feature_roadmap_placement_path(feature), method: :patch, params: { roadmap_lane: lane }, class: "button button--quiet", aria: { label: "Add #{feature.title} to #{name}" } %>
+          <% end %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @released.any? %>
+  <h2 class="section-title">Released in the last 90 days</h2>
+  <ul class="list">
+    <% @released.each do |feature| %>
+      <li class="list__item"><%= link_to feature.title, feature %><span class="muted small"><%= feature.released_at.to_date.to_fs(:long) %></span></li>
+    <% end %>
+  </ul>
+<% end %>

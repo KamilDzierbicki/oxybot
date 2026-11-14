@@ -15,6 +15,7 @@ Rails.application.routes.draw do
 
   root "conversations#index"
   resource :search, only: :show
+  resource :roadmap, only: :show
 
   resources :conversations, only: %i[index show create] do
     resources :messages, only: :create
@@ -40,6 +41,7 @@ Rails.application.routes.draw do
       resource :launch_review, only: :create
       resource :linear_issue, only: :create
       resource :linear_simulation, only: :create
+      resource :roadmap_placement, only: :update
     end
   end
 

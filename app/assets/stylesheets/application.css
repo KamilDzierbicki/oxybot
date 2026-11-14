@@ -275,7 +275,7 @@
   .prose p + p, .prose ul, .prose ol, .prose table, .prose pre { margin-top: var(--space-2); }
   .prose ul, .prose ol { padding-left: var(--space-6); list-style: disc; }
   .prose ol { list-style: decimal; }
-  .prose a, .quote a, .facts a, p a, .muted a { text-decoration: underline; text-underline-offset: 2px; }
+  .prose a, .quote a, .facts a, p a, .muted a, .list__item span a { text-decoration: underline; text-underline-offset: 2px; }
   .prose pre { overflow-x: auto; }
   .citation { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; min-height: 1.5rem; font-family: inherit; font-size: var(--text-caption); font-weight: 600; line-height: 1.5; background: var(--accent-soft); color: var(--link); padding: 0 var(--space-1); border: 0; border-radius: var(--radius-sm); text-decoration: none !important; cursor: pointer; vertical-align: baseline; }
   .citation:hover { background: var(--accent); color: var(--accent-text); }
@@ -370,7 +370,8 @@
   .nav-link { min-height: 2.75rem; }
   .link-button, .sidebar__footer a { min-height: 2.75rem; display: inline-flex; align-items: center; }
   .main { padding: var(--space-4) var(--space-4) var(--space-8); }
-  .triage, .split, .form__row, .form__row--3, .doc-layout { grid-template-columns: minmax(0, 1fr); }
+  .triage, .split, .form__row, .form__row--3, .doc-layout, .roadmap { grid-template-columns: minmax(0, 1fr); }
+  .roadmap__moves .button { min-height: 2.75rem; }
   .triage__actions { border-left: 0; padding-left: 0; }
   .message { max-width: 100%; }
   .doc { padding: var(--space-4); }
@@ -431,4 +432,13 @@
   .fieldset legend { font-weight: 600; font-size: var(--text-small); padding: 0 var(--space-1); }
   .form__row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .rice-formula { margin-top: calc(-1 * var(--space-2)); }
+
+  .roadmap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+  .roadmap__lane { background: var(--sidebar); border-radius: var(--radius-lg); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+  .roadmap__title { font-size: var(--text-body); font-weight: 600; margin: 0 0 var(--space-1); }
+  .roadmap__card { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .roadmap__head { display: flex; justify-content: space-between; gap: var(--space-2); align-items: flex-start; }
+  .roadmap__feature { color: var(--text); font-weight: 600; }
+  .roadmap__numbers { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+  .roadmap__moves .button { min-height: 2rem; padding: var(--space-1) var(--space-2); font-size: var(--text-caption); }
 }

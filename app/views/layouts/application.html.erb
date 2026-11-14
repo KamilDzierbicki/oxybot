@@ -35,7 +35,8 @@
             <% end %>
             <%= nav_link "Assistant", conversations_path, active: controller_name.in?(%w[conversations messages]) %>
             <%= nav_link "Insights", insights_path, count: Current.account.insights.pending.count, active: controller_name.in?(%w[insights restorations]) && controller_path.start_with?("insights") %>
-            <%= nav_link "Features", features_path, active: controller_name.in?(%w[features specs launch_reviews linear_issues linear_simulations]) %>
+            <%= nav_link "Features", features_path, active: controller_name.in?(%w[features specs launch_reviews linear_issues linear_simulations roadmap_placements]) %>
+            <%= nav_link "Roadmap", roadmap_path, active: controller_name == "roadmaps" %>
             <%= nav_link "Documents", documents_path, active: controller_name.in?(%w[documents document_templates suggestions versions acceptances rejections regenerations]) || controller_path == "documents/restorations" %>
             <div class="nav-group">Sources</div>
             <%= nav_link "Feedback", feedback_notes_path, active: controller_name.in?(%w[feedback_notes extractions]) %>

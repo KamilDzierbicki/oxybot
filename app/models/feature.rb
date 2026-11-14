@@ -1,6 +1,6 @@
 # A backlog item of one product. Insights link to it, and its demand (insights, customers, their ARR) ranks it.
 class Feature < ApplicationRecord
-  include Embeddable, HybridSearchable, Deliverable, Prioritizable
+  include Embeddable, HybridSearchable, Deliverable, Prioritizable, Roadmapped
 
   STATUSES = %w[idea planned in_progress released].freeze
 

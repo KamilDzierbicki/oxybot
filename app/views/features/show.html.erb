@@ -42,6 +42,18 @@
     </div>
   </section>
   <section class="card">
+    <h2 class="section-title section-title--flush">Roadmap</h2>
+    <%= form_with url: feature_roadmap_placement_path(@feature), method: :patch, class: "inline-form" do |form| %>
+      <%= form.label :roadmap_lane, "Lane", class: "visually-hidden" %>
+      <%= form.select :roadmap_lane, Feature::LANES.map { |lane, name| [ name, lane ] }, { include_blank: "Not on the roadmap", selected: @feature.roadmap_lane } %>
+      <%= form.submit "Save", class: "button", name: nil %>
+    <% end %>
+    <%= form_with url: feature_roadmap_placement_path(@feature), method: :patch, data: { controller: "auto-submit" } do |form| %>
+      <label class="checkbox"><%= form.check_box :on_portal, { checked: @feature.on_portal, data: { action: "change->auto-submit#submit" } }, "1", "0" %> Show on the customer portal</label>
+    <% end %>
+    <p class="muted small">Customers see the title, description and status, never the evidence or revenue.</p>
+  </section>
+  <section class="card">
     <h2 class="section-title section-title--flush">Linear</h2>
     <% if @feature.in_linear? %>
       <p><%= external_link @feature.linear_identifier, @feature.linear_url %> · <%= @feature.linear_state %></p>
