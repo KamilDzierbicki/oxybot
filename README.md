@@ -171,6 +171,33 @@ working setup. `config/deploy.yml` is a starting point for deploying with Kamal.
 Keep the encryption keys safe: integration tokens are encrypted with them, and losing them means connecting every
 integration again.
 
+## Observability and evaluation
+
+OxyBot, LiteLLM and Langfuse work as one system:
+
+| What | Where it shows |
+|---|---|
+| Every model call, with its cost, linked to the prompt version it was built from | Langfuse traces, LiteLLM logs |
+| People's decisions as scores on the call they judge: `feature_match` (linked the suggested feature), `insight_kept` (kept or dismissed an insight), `suggestion_accepted` (took the agent's edit) | Langfuse scores |
+| Skills run in the assistant (`/churn-risk`), with use counts per skill | Langfuse Skills |
+| Experiments: the demo dataset in `config/evals` run on any model, with accuracy | `bin/rails evals:run MODEL=oxybot-haiku`, Langfuse Datasets |
+| LLM-as-judge evaluators: is an answer supported by the quotes it cites, are extracted insights faithful | Langfuse Evaluators (see below) |
+| A daily AI budget per workspace, enforced by LiteLLM, with today's spend | AI settings, LiteLLM Customers |
+| Environments (development, production) kept apart | every trace and score |
+
+Set it up once Langfuse runs:
+
+```bash
+bin/rails langfuse:push_prompts   # prompts become versions in Langfuse
+bin/rails langfuse:push_skills    # skills appear in Langfuse's Skills view
+bin/rails langfuse:setup          # Langfuse calls models through LiteLLM; evaluators and their rules
+bin/rails evals:run               # a first experiment on the demo dataset
+```
+
+Scores carry only a name and 0 or 1, never text. Prompts and answers enter traces only with
+`OXYBOT_TRACE_CONTENT=true`, which evaluators need; turn it on for local work or a demo workspace, not for real
+customer data, and run `bin/rails langfuse:setup` again to switch the evaluator rules on.
+
 ## Configuration
 
 | Variable | Purpose | Default |
@@ -192,6 +219,9 @@ integration again.
 | `ALLOW_PRIVATE_INTEGRATION_HOSTS` | Allow a self-hosted Mattermost on a private network address | `false` in production |
 | `PRIVACY_POLICY_URL`, `TERMS_URL` | Links shown on sign-in, sign-up and invitation pages | none |
 | `CHAT_RETENTION_DAYS` | How long routed chat messages are kept | `90` |
+| `OXYBOT_TRACE_CONTENT` | `true` puts prompts and answers into Langfuse traces, for evaluators. Customer text: local or demo data only | off |
+| `LANGFUSE_ENVIRONMENT` | Environment name on traces and scores | the Rails environment |
+| `LITELLM_URL_FOR_LANGFUSE` | Where Langfuse reaches LiteLLM for evaluators | `http://litellm:4000/v1` |
 
 Everything else is set in the dashboard:
 
