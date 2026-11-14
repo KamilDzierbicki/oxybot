@@ -1,6 +1,6 @@
 # A tenant: one company using OxyBot. Every other record belongs to exactly one account.
 class Account < ApplicationRecord
-  include AiSettings
+  include AiSettings, AiBudget
 
   has_many :users, dependent: :destroy
   has_many :products, dependent: :destroy

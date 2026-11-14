@@ -33,8 +33,8 @@ class Conversation::Turn
     deliver_to_chat
   rescue RubyLLM::Error, RubyLLM::ToolRoundLimitError, Faraday::Error => e
     Rails.error.report(e, context: { message_id: reply.id })
-    reply.update!(status: "failed", content: "Sorry, I could not answer this time (#{e.class.name.demodulize}). Try again in a moment.",
-                  tool_calls: @tool_calls)
+    message = LiteLlm.budget_exceeded?(e) ? LiteLlm::BUDGET_MESSAGE : "Sorry, I could not answer this time (#{e.class.name.demodulize}). Try again in a moment."
+    reply.update!(status: "failed", content: message, tool_calls: @tool_calls)
     deliver_to_chat
   end
 

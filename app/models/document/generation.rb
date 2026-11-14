@@ -25,7 +25,7 @@ class Document::Generation
     account.integrations.select(&:chat?).each { |chat| chat.post_document(document) } if document.kind == "opportunity_report"
   rescue RubyLLM::Error, RubyLLM::ToolRoundLimitError, Faraday::Error => e
     Rails.error.report(e, context: { document_id: document.id })
-    document.update!(status: "failed", body: "The agent could not draft this document (#{e.class.name.demodulize}). Try again.")
+    document.update!(status: "failed", body: LiteLlm.budget_exceeded?(e) ? LiteLlm::BUDGET_MESSAGE : "The agent could not draft this document (#{e.class.name.demodulize}). Try again.")
   end
 
   # Documents are internal, so revenue may appear in them

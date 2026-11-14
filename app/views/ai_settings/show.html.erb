@@ -13,6 +13,18 @@
     <% end %>
   </div>
 
+  <h2 class="section-title">Daily budget</h2>
+  <div class="form__row">
+    <label>Daily AI budget for this workspace (USD)
+      <%= form.number_field :daily_budget_usd, value: @account.ai_setting("daily_budget_usd"), min: 0, step: 0.5 %>
+      <small class="muted">LiteLLM stops this workspace's model calls once the day's spend reaches it. 0 means no workspace limit; the per-model limits in LiteLLM still apply. Changes take effect within about a minute.</small></label>
+    <div>
+      <div class="stat__label">Spent today</div>
+      <div class="stat__value"><%= @ai_spend_today ? number_to_currency(@ai_spend_today, precision: 2) : "Not available" %></div>
+      <% unless LiteLlm.available? %><small class="muted">Runs on the built-in mock model, which costs nothing.</small><% end %>
+    </div>
+  </div>
+
   <h2 class="section-title">Weekly opportunity report</h2>
   <label class="checkbox"><%= form.check_box :weekly_report_enabled, checked: @account.ai_setting("weekly_report_enabled") %> Draft it every week<%= " and post it to your chat report channel" if @account.integrations.any?(&:chat?) %></label>
   <% unless @account.integrations.any?(&:chat?) %><p class="muted small">No Slack or Mattermost is connected, so the report is saved in Documents only.</p><% end %>

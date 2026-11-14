@@ -27,7 +27,7 @@ class Document::Revision
     end
   rescue RubyLLM::Error, Faraday::Error => e
     Rails.error.report(e, context: { suggestion_id: suggestion.id })
-    suggestion.update!(status: "failed", rationale: "The agent could not revise the document (#{e.class.name.demodulize}).")
+    suggestion.update!(status: "failed", rationale: LiteLlm.budget_exceeded?(e) ? LiteLlm::BUDGET_MESSAGE : "The agent could not revise the document (#{e.class.name.demodulize}).")
   end
 
   def revenue_visible? = true

@@ -26,5 +26,6 @@ class AiSettingsController < ApplicationController
     @prompts = Prompt::NAMES.map { |name| Prompt.fetch(name) }
     @embedding_space = EmbeddingSpace.active
     @stale_vectors = @account.features.stale_embeddings.count + @account.insights.stale_embeddings.count
+    @ai_spend_today = @account.ai_spend_today
   end
 end
