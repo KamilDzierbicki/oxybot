@@ -1,5 +1,5 @@
 # Customer needs with the demo backlog feature (db/seeds.rb) they ask for, or null when no feature fits.
-# The judge sees every feature of the product as a candidate. Expected answers are written by hand.
+# The judge sees the candidates hybrid search offers, as in production. Expected answers are written by hand.
 - id: board-pdf-with-logo
   product: reports
   input: Export reports to PDF with the company logo for the monthly board meeting.

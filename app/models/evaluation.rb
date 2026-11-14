@@ -5,22 +5,27 @@
 #   none (correct); candidates_hit says whether search offered the expected feature at all
 # - retrieval: hybrid search on a fixed corpus, with MRR and recall@5 for vector, full-text and fused search
 # - documents: a drafted document against a reference, with BLEU-4 and ROUGE-1/2/L
+# - tools and injection: assistant turns, scored on their tool calls and on resisting hidden instructions
+#   (Evaluation::AssistantCases)
 #
-# Nothing is kept in the database: the model is switched on an unsaved copy of the account, and retrieval and
-# documents run inside a transaction that is rolled back. With Langfuse configured the run is a Langfuse experiment:
+# Nothing is kept in the database: the model is switched on an unsaved copy of the account, and every task but
+# extraction and matching runs inside a transaction that is rolled back. With Langfuse configured the run is a Langfuse experiment:
 # dataset items, one trace per item with input, output and expected output, and every score on its root.
 # The datasets are demo data written for this, so their text may be sent to Langfuse; customer data never is.
 #
 # A run measures one variant: the model, the version of the task's prompt (a label or number, Prompt.using) and
 # retrieval overrides. The variant is the experiment's metadata, so variants sit side by side in Langfuse.
 class Evaluation
-  TASKS = %w[extraction matching retrieval documents].freeze
-  BOOLEAN_SCORES = %w[correct candidates_hit].freeze
+  include AssistantCases
+
+  TASKS = %w[extraction matching retrieval documents tools injection].freeze
+  BOOLEAN_SCORES = %w[correct candidates_hit tool_choice within_steps resisted].freeze
   # The prompt each task runs; its config holds the retrieval parameters the task uses
-  PROMPTS = { "extraction" => "insight-extractor", "matching" => "feature-judge", "retrieval" => "product-agent", "documents" => "document-writer" }.freeze
+  PROMPTS = { "extraction" => "insight-extractor", "matching" => "feature-judge", "retrieval" => "product-agent", "documents" => "document-writer",
+              "tools" => "product-agent", "injection" => "product-agent" }.freeze
   SEARCH_MODES = %i[vector text hybrid].freeze
 
-  # scores: name => value between 0 and 1; "correct" is 0 or 1
+  # scores: name => value, mostly between 0 and 1; BOOLEAN_SCORES are 0 or 1
   Result = Data.define(:id, :correct, :expected, :actual, :scores) do
     def initialize(id:, correct:, expected:, actual:, scores: nil)
       super(id:, correct:, expected:, actual:, scores: scores || { "correct" => correct ? 1 : 0 })
@@ -38,7 +43,7 @@ class Evaluation
     @versions = prompt ? { PROMPTS.fetch(task) => prompt } : {}
     @retrieval = retrieval.to_h.stringify_keys
     @account = Account.find(account.id).tap do |copy|
-      copy.ai_settings = copy.ai_settings.merge("model_extract" => model, "model_judge" => model, "model_writer" => model)
+      copy.ai_settings = copy.ai_settings.merge("model_extract" => model, "model_judge" => model, "model_writer" => model, "model_assistant" => model)
     end
     @variant = within_variant do
       { "model" => model, "prompt" => Prompt.version_tag(PROMPTS.fetch(task)), "retrieval" => Prompt.retrieval(PROMPTS.fetch(task)).presence }.compact
@@ -67,7 +72,7 @@ class Evaluation
       results = nil
       ActiveRecord::Base.transaction do
         results = items.map { |item| experiment_item(item, dataset_id) { evaluate(item) } }
-        raise ActiveRecord::Rollback # retrieval's corpus and documents' drafts are never kept
+        raise ActiveRecord::Rollback # corpora, drafts, conversations and planted feedback are never kept
       end
       results
     end
@@ -207,10 +212,10 @@ class Evaluation
     raise
   end
 
-  def item_input(item) = private_text?(item) ? { "case" => item["id"] } : item.except("id", "expected", "relevant", "reference", "private")
+  def item_input(item) = private_text?(item) ? { "case" => item["id"] } : item.except("id", "expected", "relevant", "reference", "private", "checks")
 
   def private_text?(item) = item["private"] && !Rails.configuration.x.trace_content
-  def expected_output(item) = item["expected"] || item.slice("relevant", "reference")
+  def expected_output(item) = item["expected"] || item["checks"] || item.slice("relevant", "reference")
 
   def score(root, result)
     result.scores.each do |name, value|

@@ -192,6 +192,7 @@ OxyBot, LiteLLM and Langfuse work as one system:
 | Corrections become evaluation cases: when someone links another feature than the suggested one, the case waits for review and, once approved, joins the matching experiments | AI settings, Evaluation cases |
 | Experiments on `config/evals` with any variant (model, prompt version, retrieval parameters): extraction and matching accuracy, whether search offered the right feature, retrieval MRR and recall@5 (vector, full text, hybrid), BLEU and ROUGE of drafted documents against a reference | `bin/rails evals:run`, Langfuse Datasets (see Prompts) |
 | LLM-as-judge evaluators: is an answer supported by the quotes it cites, are extracted insights faithful | Langfuse Evaluators (see below) |
+| The assistant's tool use (right tools, key arguments, number of steps) and its resistance to instructions hidden in feedback (other workspaces, invented citations, changing data), checked by code and a separate judge model | `bin/rails evals:run TASK=tools,injection`, `config/evals/tools.yml` and `injection.yml` |
 | A daily AI budget per workspace, enforced by LiteLLM, with today's spend | AI settings, LiteLLM Customers |
 | Prompt caching: the stable part of a prompt is read from Anthropic's cache at a tenth of the input price | `input_cached_tokens` on generations |
 | Environments (development, production) kept apart | every trace and score |

@@ -66,6 +66,7 @@ class MockLlm
     when "assistant" then assistant(body["messages"], Array(body["tools"]))
     when "write" then { role: "assistant", content: write(body["messages"]) }
     when "revise" then { role: "assistant", content: revise(body["messages"]).to_json }
+    when "injection-judge" then { role: "assistant", content: { followed: false, reason: "The mock judge sees no followed instruction." }.to_json }
     else { role: "assistant", content: "Mock model has no behavior for #{body["model"]}." }
     end
 
@@ -89,6 +90,7 @@ class MockLlm
     when "product-agent" then "assistant"
     when /\Awrite-/ then "write"
     when /\Arevise-/ then "revise"
+    when "injection-judge" then "injection-judge"
     end
   end
 

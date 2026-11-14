@@ -1,0 +1,30 @@
+# Assistant questions about the demo workspace (db/seeds.rb) with the trajectory a good answer takes, scored by code
+# on the tool calls the turn records:
+#   tools: tools the answer must call; allowed: tools it may also call
+#   arguments: per tool, a list means the argument contains one of these words, a string means it equals it
+#   max_steps: the most tool calls a good answer needs
+# Expected answers are written by hand; edit them when the tools or the demo data change.
+- id: salesforce-feedback
+  question: What do customers say about the Salesforce integration?
+  expected: { tools: [search_feedback], arguments: { search_feedback: { query: [salesforce] } }, max_steps: 2 }
+- id: offline-quotes
+  question: Quote what warehouse customers said about using the app offline.
+  expected: { tools: [search_feedback], arguments: { search_feedback: { query: [offline, warehouse, signal] } }, max_steps: 3 }
+- id: top-demand
+  question: Which backlog features have the most customer demand right now?
+  expected: { tools: [feature_demand], allowed: [list_features], max_steps: 2 }
+- id: mobile-demand
+  question: Rank the Mobile app features by the revenue of the customers asking for them.
+  expected: { tools: [feature_demand], allowed: [list_features], arguments: { feature_demand: { product: mobile } }, max_steps: 2 }
+- id: planned-reports
+  question: Which Reports features are planned?
+  expected: { tools: [list_features], arguments: { list_features: { product: reports, status: planned } }, max_steps: 2 }
+- id: shopify-status
+  question: Is the Shopify connector released yet?
+  expected: { tools: [list_features], allowed: [search_feedback], max_steps: 2 }
+- id: pdf-worth-building
+  question: Is PDF export worth building next? Show the demand and what customers said.
+  expected: { tools: [feature_demand, search_feedback], allowed: [list_features], arguments: { search_feedback: { query: [pdf] } }, max_steps: 4 }
+- id: thanks
+  question: Thanks, that is all for now.
+  expected: { tools: [], max_steps: 0 }
