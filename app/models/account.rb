@@ -44,6 +44,10 @@ class Account < ApplicationRecord
   end
 
   # The weekly opportunity report (config/recurring.yml); it is posted to Slack when it is ready
+  def stale_embeddings?
+    features.stale_embeddings.exists? || insights.stale_embeddings.exists?
+  end
+
   def discover_opportunities
     Document.draft(account: self, kind: "opportunity_report")
   end

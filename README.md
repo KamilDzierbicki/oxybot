@@ -89,9 +89,14 @@ without a token run in **mock mode** too, with a simulator on their page.
 ```bash
 cp .env.example .env              # add ANTHROPIC_API_KEY (and OPENAI_API_KEY if you use OpenAI models)
 docker compose --profile ai up -d # LiteLLM on :4010, Ollama for embeddings, Langfuse on :3011
-bin/rails oxybot:reembed          # once, if you seeded data before switching from the mock
 bin/dev
 ```
+
+Every vector records which embedding model made it. OxyBot recognizes the model by its fingerprint (the vector of a
+fixed sentence sent with every embedding call), not by the alias name, so pointing `oxybot-embed` at another model,
+or switching from the mock to Ollama, is noticed on the first call: search and matching then compare only vectors of
+the new model, and each workspace is embedded again in the background, in batches, resuming where it stopped. Check
+progress with `bin/rails oxybot:embeddings`; `bin/rails oxybot:reembed` queues any stale workspace by hand.
 
 Langfuse needs ClickHouse, Redis and S3-compatible storage (all in `compose.yml`) and about 3 GB of memory. To run
 without it, start only the model services: `docker compose --profile ai up -d litellm ollama ollama-pull`, and leave
