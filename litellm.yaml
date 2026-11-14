@@ -71,6 +71,18 @@ model_list:
       model: ollama/nomic-embed-text
       api_base: os.environ/OLLAMA_API_BASE
 
+# When an alias still fails after its retries (overloaded, 5xx, timeout), LiteLLM sends the request to the next
+# alias in its list; the answer then names the fallback model and carries x-litellm-attempted-fallbacks. Both models
+# run on Anthropic, so this covers one model's outage, not Anthropic's: for that, add an alias on a second provider
+# at the end of each list. Each fallback keeps its own daily cap.
+router_settings:
+  fallbacks:
+    - oxybot-assistant: [oxybot-haiku]
+    - oxybot-writer: [oxybot-haiku]
+    - oxybot-extract: [oxybot-assistant]
+    - oxybot-judge: [oxybot-assistant]
+    - oxybot-haiku: [oxybot-assistant]
+
 litellm_settings:
   callbacks: ["langfuse_otel"]
   # Traces keep timings, tokens and cost but not the text: feedback is personal data and Langfuse keeps it separately.

@@ -34,7 +34,7 @@ class MockLlm
     body = JSON.parse(request.body.read)
 
     case request.path_info
-    when %r{/chat/completions\z} then json(chat_completion(body))
+    when %r{/chat/completions\z} then body["stream"] ? stream(chat_completion(body)) : json(chat_completion(body))
     when %r{/embeddings\z} then json(embeddings(body))
     else [ 404, { "content-type" => "application/json" }, [ { error: "not found" }.to_json ] ]
     end
@@ -57,6 +57,20 @@ class MockLlm
 
   def json(payload)
     [ 200, { "content-type" => "application/json" }, [ payload.to_json ] ]
+  end
+
+  # The completion as server-sent events, the way OpenAI-compatible APIs stream: the text in a few pieces, tool calls
+  # in one delta, then the finish reason with usage, then [DONE]
+  def stream(completion)
+    choice = completion[:choices].first
+    message = choice[:message]
+    envelope = completion.slice(:id, :object, :created, :model).merge(object: "chat.completion.chunk")
+    deltas = [ { role: "assistant" } ]
+    deltas += message[:content].to_s.scan(/.{1,40}/m).map { |piece| { content: piece } }
+    deltas << { tool_calls: message[:tool_calls].each_with_index.map { |call, index| call.merge(index: index) } } if message[:tool_calls]
+    events = deltas.map { |delta| envelope.merge(choices: [ { index: 0, delta: delta, finish_reason: nil } ]) }
+    events << envelope.merge(choices: [ { index: 0, delta: {}, finish_reason: choice[:finish_reason] } ], usage: completion[:usage])
+    [ 200, { "content-type" => "text/event-stream" }, events.map { |event| "data: #{event.to_json}\n\n" } + [ "data: [DONE]\n\n" ] ]
   end
 
   def chat_completion(body)

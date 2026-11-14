@@ -1,6 +1,6 @@
 <div id="<%= dom_id(message) %>" class="message message--<%= message.role %> <%= "message--failed" if message.failed? %>">
   <% if message.thinking? %>
-    <div class="message__body message__thinking" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Looking through your feedback…</div>
+    <div id="<%= dom_id(message, :body) %>" class="message__body message__thinking" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Looking through your feedback…</div>
   <% elsif message.assistant? %>
     <div class="message__body prose"><%= markdown(message.content, account: message.conversation.account) %></div>
     <div class="message__meta">

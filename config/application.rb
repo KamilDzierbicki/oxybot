@@ -34,7 +34,10 @@ module OxyBot
     config.middleware.insert 0, NullByteFilter
 
     # Model prompts and answers in Langfuse traces: off unless switched on deliberately (see the OpenTelemetry initializer)
-    config.x.trace_content = ENV["OXYBOT_TRACE_CONTENT"] == "true"
+    # Prompts and answers in traces: off by default; "redacted" sends them with personal data removed by Presidio,
+    # "true" sends them as they are (local work and demo workspaces only)
+    config.x.trace_content = %w[true redacted].include?(ENV["OXYBOT_TRACE_CONTENT"])
+    config.x.trace_redacted = ENV["OXYBOT_TRACE_CONTENT"] == "redacted"
 
     # Kill switch: AI_ENABLED=false stops every model call (answers, drafts, extraction) without a deploy
     config.x.ai_enabled = ENV.fetch("AI_ENABLED", "true") != "false"

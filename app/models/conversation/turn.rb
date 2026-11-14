@@ -20,11 +20,16 @@ class Conversation::Turn
 
     agent = ProductAgent.new(turn: self)
     history.each { |message| agent.add_message(role: message.role.to_sym, content: message.content) }
-    agent.before_tool_call { |call| @tool_calls << { name: call.name, arguments: call.arguments } }
+    # In the web app the answer appears while it is written; Slack and Mattermost get the finished answer
+    stream = Conversation::Stream.new(reply) if conversation.channel == "web"
+    agent.before_tool_call do |call|
+      @tool_calls << { name: call.name, arguments: call.arguments }
+      stream&.restart
+    end
 
     Langfuse.traced("assistant-turn", account: account, conversation_id: conversation.id, message_id: reply.id,
                     oxybot_url: Langfuse.url(conversation, anchor: "message_#{reply.id}")) do |trace|
-      response = Skill::Tracing.with(available: Skill.available_to(user), used: skill) { Prompt.linked("product-agent") { agent.ask(question_text) } }
+      response = Skill::Tracing.with(available: Skill.available_to(user), used: skill) { Prompt.linked("product-agent") { agent.ask(question_text, &stream) } }
       content, cited = checked_citations(response.content.to_s)
       reply.update!(status: "done", content: content.presence || "(no answer)", tool_calls: @tool_calls,
                     cited_insight_ids: cited, input_tokens: response.tokens&.input, output_tokens: response.tokens&.output)

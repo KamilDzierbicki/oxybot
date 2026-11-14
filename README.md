@@ -54,7 +54,8 @@ model is the vendor's choice, and you cannot check how a number was made. OxyBot
   features you mark for it, never evidence or revenue.
 
 **Where you work**
-- An assistant in the web app, in Slack (DM or mention) and in Mattermost (`/oxybot` or `@oxybot`).
+- An assistant in the web app, in Slack (DM or mention) and in Mattermost (`/oxybot` or `@oxybot`). In the web app
+  the answer appears while it is written.
 - Features go to Linear as issues with their spec; status syncs both ways.
 - An MCP server gives Claude Code, Codex and Cursor read access to specs and customer evidence.
 
@@ -206,9 +207,37 @@ bin/rails langfuse:setup          # LiteLLM connection, evaluators, the review q
 bin/rails evals:run               # a first experiment on the demo dataset
 ```
 
-Scores carry only a name and 0 or 1, never text. Prompts and answers enter traces only with
-`OXYBOT_TRACE_CONTENT=true`, which evaluators need; turn it on for local work or a demo workspace, not for real
-customer data, and run `bin/rails langfuse:setup` again to switch the evaluator rules on.
+Scores carry only a name and 0 or 1, never text. Prompts and answers enter traces only with `OXYBOT_TRACE_CONTENT`,
+which evaluators need, and run `bin/rails langfuse:setup` again to switch the evaluator rules on:
+
+- `redacted`, for production: before a trace leaves the app, Presidio replaces names, e-mail addresses, phone
+  numbers and other personal data with `<PERSON>`, `<EMAIL_ADDRESS>`, `<PHONE_NUMBER>`. If Presidio cannot be
+  reached, the content is dropped and the rest of the trace still goes. Presidio runs in `compose.yml`
+  (`PRESIDIO_ANALYZER_URL`, `PRESIDIO_ANONYMIZER_URL`). It uses an English language model: it finds full names
+  in Polish text too, but not every Polish name, so check a sample before relying on it.
+- `true`: prompts and answers as they are, for local work or a demo workspace only.
+
+### Alerts
+
+Langfuse's API cannot create alerts yet, so set them up once in Langfuse, under **Alerts**, **New Alert**:
+
+| Alert | Data source | Metric and filter | Condition | Window |
+|---|---|---|---|---|
+| Feature matches corrected | Scores (boolean) | avg value, name = `feature_match`, environment = production | < 0.7 (warning < 0.8) | 1 week |
+| Insights dismissed | Scores (boolean) | avg value, name = `insight_kept` | < 0.7 | 1 week |
+| Suggestions rejected | Scores (boolean) | avg value, name = `suggestion_accepted` | < 0.5 | 1 week |
+| Answers not grounded | Scores (boolean) | avg value, name = `oxybot-answer-grounded` | < 0.9 | 1 day |
+| Daily model cost | Observations | sum total cost | > your daily budget | 1 day |
+
+For each, set **No-data handling** to "Treat missing data as OK" (a quiet week is not an alert) and pick a channel
+under **Automations** (Slack, webhook or GitHub Actions; created by a project admin). LiteLLM's daily caps still stop
+spending at the limit; the cost alert warns before that.
+
+### When a model fails
+
+LiteLLM retries a failed call, then sends it to the alias's fallback (`router_settings.fallbacks` in
+`litellm.yaml`): Sonnet aliases fall back to Haiku and Haiku aliases to Sonnet. Both are Anthropic models, so this
+covers one model's outage; for an Anthropic outage, add an alias on a second provider at the end of each list.
 
 ### Weekly error review
 
@@ -254,7 +283,8 @@ before this existed are scored on the trace only, so the split leaves them out.
 | `ALLOW_PRIVATE_INTEGRATION_HOSTS` | Allow a self-hosted Mattermost on a private network address | `false` in production |
 | `PRIVACY_POLICY_URL`, `TERMS_URL` | Links shown on sign-in, sign-up and invitation pages | none |
 | `CHAT_RETENTION_DAYS` | How long routed chat messages are kept | `90` |
-| `OXYBOT_TRACE_CONTENT` | `true` puts prompts and answers into Langfuse traces, for evaluators. Customer text: local or demo data only | off |
+| `OXYBOT_TRACE_CONTENT` | `redacted` puts prompts and answers into Langfuse traces with personal data removed by Presidio; `true` puts them in as they are (local or demo data only) | off |
+| `PRESIDIO_ANALYZER_URL`, `PRESIDIO_ANONYMIZER_URL` | Presidio for `OXYBOT_TRACE_CONTENT=redacted` | `http://localhost:5012`, `http://localhost:5011` |
 | `LANGFUSE_ENVIRONMENT` | Environment name on traces and scores | the Rails environment |
 | `LITELLM_URL_FOR_LANGFUSE` | Where Langfuse reaches LiteLLM for evaluators | `http://litellm:4000/v1` |
 

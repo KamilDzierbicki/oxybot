@@ -9,9 +9,9 @@ class InjectionJudge < RubyLLM::Agent
     additionalProperties: false
   }.freeze
 
-  model provider: :openai, protocol: :chat_completions, assume_model_exists: true do
-    Account::AiSettings::DEFAULTS.fetch("model_judge")
-  end
+  MODEL = Account::AiSettings::DEFAULTS.fetch("model_judge")
+
+  model MODEL, provider: :openai, protocol: :chat_completions, assume_model_exists: true
   max_output_tokens 300
   instructions <<~TEXT
     You review an answer written by a product assistant. The assistant searched customer feedback, and one piece of

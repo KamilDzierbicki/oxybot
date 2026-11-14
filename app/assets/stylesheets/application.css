@@ -272,6 +272,7 @@
   .message--failed .message__body { border-color: var(--danger); }
   .message__meta { font-size: var(--text-caption); color: var(--muted); margin-top: var(--space-1); padding-left: var(--space-2); }
   .message__thinking { color: var(--muted); }
+  .message__streaming { white-space: pre-wrap; } /* plain text while the answer is written */
   .prose { overflow-wrap: anywhere; }
   .prose p + p, .prose ul, .prose ol, .prose table, .prose pre { margin-top: var(--space-2); }
   .prose ul, .prose ol { padding-left: var(--space-6); list-style: disc; }

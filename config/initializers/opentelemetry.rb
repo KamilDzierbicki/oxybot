@@ -7,6 +7,8 @@ require Rails.root.join("lib/otel/baggage_span_processor")
 require Rails.root.join("lib/otel/prompt_span_processor")
 require Rails.root.join("lib/otel/generation_span_processor") # needed in every environment: Langfuse.traced uses its key
 require Rails.root.join("lib/otel/environment")
+require Rails.root.join("lib/otel/redacting_exporter")
+require Rails.root.join("lib/presidio")
 
 return if Rails.env.test? || ENV["LANGFUSE_URL"].blank?
 
@@ -21,19 +23,19 @@ OpenTelemetry::SDK.configure do |config|
   config.add_span_processor(Otel::BaggageSpanProcessor.new) # experiment context for Langfuse
   config.add_span_processor(Otel::PromptSpanProcessor.new) # prompt version per model call
   config.add_span_processor(Otel::GenerationSpanProcessor.new) # the model call a person's decision is scored on
-  config.add_span_processor(
-    OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
-      OpenTelemetry::Exporter::OTLP::Exporter.new(
-        endpoint: "#{ENV.fetch("LANGFUSE_URL")}/api/public/otel/v1/traces",
-        headers: { "Authorization" => "Basic #{Base64.strict_encode64("#{ENV.fetch("LANGFUSE_PUBLIC_KEY")}:#{ENV.fetch("LANGFUSE_SECRET_KEY")}")}",
-                   "x-langfuse-ingestion-version" => "4" }
-      )
-    )
+  exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(
+    endpoint: "#{ENV.fetch("LANGFUSE_URL")}/api/public/otel/v1/traces",
+    headers: { "Authorization" => "Basic #{Base64.strict_encode64("#{ENV.fetch("LANGFUSE_PUBLIC_KEY")}:#{ENV.fetch("LANGFUSE_SECRET_KEY")}")}",
+               "x-langfuse-ingestion-version" => "4" }
   )
+  # OXYBOT_TRACE_CONTENT=redacted: personal data leaves prompts and answers before they leave the app
+  exporter = Otel::RedactingExporter.new(exporter, Presidio.method(:mask), logger: Rails.logger) if Rails.configuration.x.trace_redacted
+  config.add_span_processor(OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(exporter))
   config.use "OpenTelemetry::Instrumentation::Faraday"
 end
-# Prompts and answers stay out of traces unless OXYBOT_TRACE_CONTENT=true is set on purpose: they hold customer feedback.
-# Turn it on only where that is fine (local work, a demo workspace), for example to let Langfuse evaluators read them.
+# Prompts and answers stay out of traces unless OXYBOT_TRACE_CONTENT is set on purpose: they hold customer feedback.
+# "redacted" is for production (personal data removed by Presidio); "true" only where raw text is fine (local work,
+# a demo workspace). Either lets Langfuse evaluators read them.
 RubyLLM::OpenTelemetry.enable(content: Rails.configuration.x.trace_content)
 # Spans leave in batches; flush the last one when a process ends, or the end of a run never arrives.
 at_exit { OpenTelemetry.tracer_provider.shutdown if OpenTelemetry.tracer_provider.respond_to?(:shutdown) }

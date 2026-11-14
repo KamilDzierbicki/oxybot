@@ -214,7 +214,8 @@ class Evaluation
 
   def item_input(item) = private_text?(item) ? { "case" => item["id"] } : item.except("id", "expected", "relevant", "reference", "private", "checks")
 
-  def private_text?(item) = item["private"] && !Rails.configuration.x.trace_content
+  # Dataset items reach Langfuse through its API, not a trace, so redaction would not apply: only raw mode sends them
+  def private_text?(item) = item["private"] && (!Rails.configuration.x.trace_content || Rails.configuration.x.trace_redacted)
   def expected_output(item) = item["expected"] || item["checks"] || item.slice("relevant", "reference")
 
   def score(root, result)
