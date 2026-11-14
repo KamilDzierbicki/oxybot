@@ -37,3 +37,7 @@
 
 # Impeccable critique snapshots (local tool state)
 /.impeccable/
+
+# Secrets come from environment variables (see README); local encrypted credentials stay local
+/config/master.key
+/config/credentials.yml.enc

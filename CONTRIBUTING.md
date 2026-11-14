@@ -7,7 +7,7 @@ Thanks for helping. OxyBot is a Rails app, so most changes are a model method, a
 ```bash
 bundle install
 docker compose up -d db
-bin/rails db:prepare db:seed
+bin/rails db:prepare  # creates the databases and loads the demo data
 bin/dev            # http://localhost:3120, mock model, no API keys needed
 ```
 

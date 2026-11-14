@@ -38,8 +38,14 @@ class Document::Revision
     suggestion.base_version&.body || document.body
   end
 
-  # Models sometimes echo the framing around the document; it is never part of the document
+  # Models sometimes echo the framing around the document, or put its title on top as a heading; neither is part
+  # of the document unless the document already started that way
   def clean(text)
-    text.to_s.gsub(%r{</?document>}, "").sub(/\A\s*(Current version|Request):.*\n/, "").strip
+    text = text.to_s.gsub(%r{</?document>}, "").sub(/\A\s*(Current version|Request):.*\n/, "").strip
+    first_line = text.lines.first.to_s
+    if first_line.start_with?("# ") && first_line.include?(document.title) && !base_body.lstrip.start_with?(first_line.strip)
+      text = text.lines.drop(1).join.lstrip
+    end
+    text
   end
 end
