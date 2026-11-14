@@ -64,12 +64,24 @@ class Prompt
 
     # Only successes are cached: after a failure the next call tries Langfuse again, using the file meanwhile
     choice = selected(name)
-    Rails.cache.read(cache_key(name, choice)) ||
-      Prompt::Langfuse.fetch(name, choice).tap { |template| Rails.cache.write(cache_key(name, choice), template, expires_in: CACHE_TTL) }
+    cached = Rails.cache.read(cache_key(name, choice))
+    return Template.new(**cached) if cached
+
+    fetch_choice(name, choice).tap { |template| Rails.cache.write(cache_key(name, choice), template.to_h, expires_in: CACHE_TTL) }
   rescue Prompt::Langfuse::Error, Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNREFUSED => e
     Rails.logger.warn("[prompt] #{name}: #{e.message}; using config/prompts")
     Rails.cache.write(UNREACHABLE_KEY, true, expires_in: 1.minute)
     from_file(name)
+  end
+
+  # A missing label or version (a rollout whose candidate was deleted) falls back to production, not to the files
+  def self.fetch_choice(name, choice)
+    Prompt::Langfuse.fetch(name, choice)
+  rescue Prompt::Langfuse::Error => e
+    raise if choice == LABEL || !e.message.include?("answered 404")
+
+    Rails.logger.warn("[prompt] #{name}: no version #{choice.inspect} in Langfuse; using #{LABEL}")
+    Prompt::Langfuse.fetch(name, LABEL)
   end
 
   # Model calls in the block are linked to the Langfuse version of this prompt; a file prompt has no version to link
@@ -118,7 +130,9 @@ class Prompt
     NAMES.each { |name| Rails.cache.delete(cache_key(name, LABEL)) }
   end
 
-  def self.cache_key(name, choice) = "prompt/#{name}/#{choice}"
+  # A plain hash is cached, not the Template: a cached object of an older Template shape cannot be loaded after a
+  # deploy. The v2 prefix leaves entries of the old shape behind.
+  def self.cache_key(name, choice) = "prompt/v2/#{name}/#{choice}"
 
   # For trace metadata: which prompt version produced an answer
   def self.version_tag(name)

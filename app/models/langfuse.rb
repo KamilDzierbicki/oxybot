@@ -27,13 +27,18 @@ module Langfuse
   # Runs the block in a named span, the root of a Langfuse trace, and yields the Trace.
   # langfuse.trace.name: Langfuse v4 does not derive the trace name from the root span, and evaluation rules select
   # traces by it. ids: record ids and an oxybot_url link, never text, as filterable trace metadata, so a reviewer
-  # in Langfuse finds the record in OxyBot.
-  def traced(name, **ids)
+  # in Langfuse finds the record in OxyBot. account: the workspace whose request this is; prompt rollouts
+  # (PromptRollout) pick its prompt versions here, and prompt_variant names the candidates it got.
+  def traced(name, account:, **ids)
+    versions = PromptRollout.versions_for(account)
+    ids[:prompt_variant] = versions.map { |prompt, label| "#{prompt}@#{label}" }.join(",").presence
     attributes = { "langfuse.trace.name" => name }
     ids.compact.each { |key, value| attributes["langfuse.trace.metadata.#{key}"] = value.to_s }
-    OpenTelemetry.tracer_provider.tracer("oxybot").in_span(name, attributes: attributes) do |span|
-      trace = Trace.new(span.context.valid? ? span.context.hex_trace_id : nil, span)
-      OpenTelemetry::Context.with_value(Otel::TRACE, trace) { yield trace }
+    Prompt.using(versions) do
+      OpenTelemetry.tracer_provider.tracer("oxybot").in_span(name, attributes: attributes) do |span|
+        trace = Trace.new(span.context.valid? ? span.context.hex_trace_id : nil, span)
+        OpenTelemetry::Context.with_value(Otel::TRACE, trace) { yield trace }
+      end
     end
   end
 

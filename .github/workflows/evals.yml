@@ -1,0 +1,97 @@
+name: Evals
+
+# Measures prompts, agents, tools and retrieval against config/evals/baseline.yml with a real model, when they
+# change. Needs the ANTHROPIC_API_KEY secret; without it (forks, a fresh clone) the job is skipped, not failed.
+# Cost: litellm.ci.yaml caps one run at 1 USD.
+on:
+  pull_request:
+    paths:
+      - config/prompts/**
+      - config/evals/**
+      - app/agents/**
+      - app/tools/**
+      - app/models/prompt.rb
+      - app/models/prompt/**
+      - app/models/evaluation.rb
+      - app/models/evaluation/**
+      - app/models/concerns/hybrid_searchable.rb
+      - app/models/conversation/turn.rb
+      - app/models/insight/matchable.rb
+      - app/models/feedback_note/extractable.rb
+      - lib/tasks/evals.rake
+      - litellm.ci.yaml
+      - .github/workflows/evals.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Secrets cannot be used in a job's `if:`, so this job reports whether the key is there
+  key:
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.check.outputs.present }}
+    steps:
+      - id: check
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "::notice::ANTHROPIC_API_KEY is not set, evals skipped"; fi
+
+  evals:
+    needs: key
+    if: needs.key.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+      ollama:
+        image: ollama/ollama:0.40.6
+        ports:
+          - 11434:11434
+    env:
+      # The test environment with a real model: one database, and jobs are not run
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/oxybot_evals
+      LITELLM_URL: http://localhost:4000/v1
+      LITELLM_API_KEY: sk-oxybot-ci
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Pull the embedding model
+        run: curl -sf --retry 10 --retry-connrefused http://localhost:11434/api/pull -d '{"model":"nomic-embed-text"}' | tail -1
+
+      - name: Start LiteLLM with the CI spend caps
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          docker run -d --name litellm --network host -e ANTHROPIC_API_KEY -e OLLAMA_API_BASE=http://localhost:11434 \
+            -v "$PWD/litellm.ci.yaml:/app/config.yaml:ro" ghcr.io/berriai/litellm:v1.90.2 --config /app/config.yaml --port 4000
+          for _ in $(seq 1 60); do curl -sf http://localhost:4000/health/liveliness && exit 0; sleep 2; done
+          docker logs litellm; exit 1
+
+      - name: Prepare the demo workspace
+        run: bin/rails db:prepare db:seed evals:prepare
+
+      - name: Compare with the baseline
+        run: bin/rails evals:check
+
+      - name: LiteLLM log
+        if: failure()
+        run: docker logs litellm | tail -100

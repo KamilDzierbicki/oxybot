@@ -15,7 +15,7 @@ module Insight::Matchable
   def match
     return unless Rails.configuration.x.ai_enabled
 
-    Langfuse.traced("match-insight", insight_id: id, oxybot_url: Langfuse.url(self)) do |trace|
+    Langfuse.traced("match-insight", account: account, insight_id: id, oxybot_url: Langfuse.url(self)) do |trace|
       candidates = match_candidates
       next update!(suggested_feature: nil, match_confidence: nil, match_reason: "No features in #{product.name} yet.") if candidates.empty?
 

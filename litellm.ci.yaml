@@ -1,0 +1,30 @@
+# LiteLLM for the Evals workflow (.github/workflows/evals.yml): only the aliases the evaluations call, each with a
+# hard spend cap. LiteLLM keeps the spend in memory and the container lives for one run, so one run can cost at
+# most the sum of the caps (1 USD); past a cap LiteLLM answers 429, the evaluation fails and the job fails loudly.
+model_list:
+  - model_name: oxybot-haiku # the model under test (evals:check)
+    litellm_params:
+      model: anthropic/claude-haiku-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 0.6
+      budget_duration: 1d
+  - model_name: oxybot-judge # the injection judge
+    litellm_params:
+      model: anthropic/claude-haiku-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 0.2
+      budget_duration: 1d
+  - model_name: oxybot-extract # evals:prepare extracts the demo feedback
+    litellm_params:
+      model: anthropic/claude-haiku-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_budget: 0.2
+      budget_duration: 1d
+  - model_name: oxybot-embed
+    litellm_params:
+      model: ollama/nomic-embed-text
+      api_base: os.environ/OLLAMA_API_BASE
+
+litellm_settings:
+  num_retries: 1
+  request_timeout: 60

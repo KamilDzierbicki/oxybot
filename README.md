@@ -293,6 +293,33 @@ bin/rails evals:run TASK=matching MODEL=oxybot-judge RAG=limit=8
 Each run is a Langfuse experiment named after its variant, with the model, prompt version and retrieval parameters
 in its metadata, so the runs of one dataset sit side by side.
 
+Then roll the change out gradually. Label the new version `candidate` in Langfuse and serve it to a share of the
+traffic, by workspace (the same workspaces keep it) or by request:
+
+```bash
+bin/rails prompts:rollout PROMPT=product-agent SHARE=10           # 10% of workspaces
+bin/rails prompts:rollout PROMPT=feature-judge SHARE=50 BY=request
+bin/rails prompts:rollouts                                         # what is rolled out
+bin/rails prompts:rollout PROMPT=product-agent SHARE=0             # stop
+bin/rails prompts:promote PROMPT=product-agent                     # candidate becomes production, rollout ends
+```
+
+Traces of requests that got a candidate carry `prompt_variant` in their metadata, and scores sit on the model call
+that links its prompt version, so the "OxyBot corrections" dashboard shows the candidate next to production. A
+candidate label missing in Langfuse serves production.
+
+### Evals in CI
+
+The **Evals** workflow runs when prompts, agents, tools or retrieval change. It starts LiteLLM with
+`litellm.ci.yaml`, seeds the demo workspace, and runs `bin/rails evals:check`: matching, retrieval, tool use and
+injection, compared with the minimums in `config/evals/baseline.yml`. A score below its minimum fails the job.
+It needs the `ANTHROPIC_API_KEY` repository secret and is skipped without it. The spend caps in `litellm.ci.yaml`
+limit one run to 1 USD; past a cap LiteLLM refuses calls and the job fails. Locally:
+
+```bash
+bin/rails evals:prepare evals:check
+```
+
 ## Integrations
 
 Every integration starts in mock mode until you save its token, and has a **Test connection** button.

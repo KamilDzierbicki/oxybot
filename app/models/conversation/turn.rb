@@ -22,7 +22,7 @@ class Conversation::Turn
     history.each { |message| agent.add_message(role: message.role.to_sym, content: message.content) }
     agent.before_tool_call { |call| @tool_calls << { name: call.name, arguments: call.arguments } }
 
-    Langfuse.traced("assistant-turn", conversation_id: conversation.id, message_id: reply.id,
+    Langfuse.traced("assistant-turn", account: account, conversation_id: conversation.id, message_id: reply.id,
                     oxybot_url: Langfuse.url(conversation, anchor: "message_#{reply.id}")) do |trace|
       response = Skill::Tracing.with(available: Skill.available_to(user), used: skill) { Prompt.linked("product-agent") { agent.ask(question_text) } }
       content, cited = checked_citations(response.content.to_s)

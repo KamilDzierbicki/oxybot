@@ -15,7 +15,7 @@ class Document::Generation
     return unless document.drafting?
     return document.update!(status: "failed", body: "AI drafting is paused on this server.") unless Rails.configuration.x.ai_enabled
 
-    Langfuse.traced("draft-document", document_id: document.id, oxybot_url: Langfuse.url(document)) do
+    Langfuse.traced("draft-document", account: account, document_id: document.id, oxybot_url: Langfuse.url(document)) do
       brief = Document::Brief.new(document, self).to_s
       response = Prompt.linked("document-writer") { DocumentWriter.new(generation: self).ask(brief) }
       body, cited = checked_citations(response.content)

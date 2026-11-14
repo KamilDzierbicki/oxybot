@@ -79,6 +79,17 @@ class PromptVariantTest < ActiveSupport::TestCase
     end
   end
 
+  test "a prompt cached before a deploy that changed the template's shape still loads" do
+    with_langfuse do
+      # What an older release cached: the fields of its day, without config
+      Rails.cache.write(Prompt.cache_key("feature-judge", "production"), { name: "feature-judge", text: "Cached text", source: "langfuse", version: 2 })
+
+      template = Prompt.fetch("feature-judge")
+
+      assert_equal [ "Cached text", 2, {} ], [ template.text, template.version, template.config ]
+    end
+  end
+
   private
 
   def stub_prompt(name, query, version:, config: {})

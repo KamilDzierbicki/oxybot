@@ -12,7 +12,7 @@ class Document::Revision
   end
 
   def run
-    Langfuse.traced("revise-document", document_id: document.id, suggestion_id: suggestion.id,
+    Langfuse.traced("revise-document", account: account, document_id: document.id, suggestion_id: suggestion.id,
                                         oxybot_url: Langfuse.url(document, anchor: "document_suggestion_#{suggestion.id}")) do |trace|
       remember_insights(document.cited_insight_ids)
       reply = Prompt.linked("document-reviser") do
