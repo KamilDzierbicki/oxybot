@@ -19,13 +19,18 @@ module Insight::Matchable
       candidates = product.features.hybrid_search(summary, vector: embedding, space: embedding_space, limit: account.ai_setting("match_candidates"))
       next update!(suggested_feature: nil, match_confidence: nil, match_reason: "No features in #{product.name} yet.") if candidates.empty?
 
-      question = "<insight>\nInsight: #{summary.squish}\nQuote: #{quote.squish}\n</insight>\n\nWhich feature does this insight ask for?"
-      verdict = FeatureJudge.new(insight: self, candidates: candidates).ask(question).parsed || {}
+      verdict = judge(candidates)
       # The model can only pick from the candidates it was shown
       suggested = candidates.find { |feature| feature.id == verdict["feature_id"] }
       update!(suggested_feature: suggested, match_confidence: verdict["confidence"].to_f.clamp(0, 1),
               match_reason: readable_reason(verdict["reason"], candidates), match_trace_id: trace_id)
     end
+  end
+
+  # The judge's verdict on these candidates: {"feature_id", "confidence", "reason"}. Also used by Evaluation.
+  def judge(candidates)
+    question = "<insight>\nInsight: #{summary.squish}\nQuote: #{quote.squish}\n</insight>\n\nWhich feature does this insight ask for?"
+    FeatureJudge.new(insight: self, candidates: candidates).ask(question).parsed || {}
   end
 
   private

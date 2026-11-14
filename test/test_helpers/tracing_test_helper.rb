@@ -4,6 +4,7 @@ module TracingTestHelper
   EXPORTER = OpenTelemetry::SDK::Trace::Export::InMemorySpanExporter.new
   PROVIDER = OpenTelemetry::SDK::Trace::TracerProvider.new.tap do |provider|
     provider.add_span_processor(Otel::SkillSpanProcessor.new)
+    provider.add_span_processor(Otel::BaggageSpanProcessor.new)
     provider.add_span_processor(OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(EXPORTER))
   end
   LANGFUSE = { "LANGFUSE_URL" => "http://langfuse.test", "LANGFUSE_PUBLIC_KEY" => "pk", "LANGFUSE_SECRET_KEY" => "sk" }.freeze

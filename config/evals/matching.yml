@@ -1,0 +1,46 @@
+# Customer needs with the demo backlog feature (db/seeds.rb) they ask for, or null when no feature fits.
+# The judge sees every feature of the product as a candidate. Expected answers are written by hand.
+- id: board-pdf-with-logo
+  product: reports
+  input: Export reports to PDF with the company logo for the monthly board meeting.
+  expected: { feature: PDF export of reports }
+- id: auditors-pdf
+  product: reports
+  input: Auditors need monthly reports delivered as PDF files.
+  expected: { feature: PDF export of reports }
+- id: monday-email
+  product: reports
+  input: Send the sales dashboard by email every Monday morning to store managers.
+  expected: { feature: Scheduled email reports }
+- id: quarter-comparison
+  product: reports
+  input: Compare this quarter with the same quarter last year in charts.
+  expected: { feature: Custom date ranges in charts }
+- id: dark-mode
+  product: reports
+  input: Dark mode for dashboards, easier on the eyes at night.
+  expected: { feature: null }
+- id: warehouse-offline
+  product: mobile
+  input: Open dashboards in the mobile app offline when the warehouse signal drops.
+  expected: { feature: Offline mode }
+- id: threshold-push
+  product: mobile
+  input: Get a phone notification when daily revenue falls below a set level.
+  expected: { feature: Push alerts on metric thresholds }
+- id: salesforce-write-back
+  product: integrations
+  input: Write scores back to Salesforce opportunities instead of only reading them.
+  expected: { feature: Salesforce two-way sync }
+- id: shopify-reconnect
+  product: integrations
+  input: The Shopify connector stops syncing every few weeks and has to be reconnected.
+  expected: { feature: Shopify connector }
+- id: refresh-webhook
+  product: integrations
+  input: Call our endpoint when a report finishes refreshing so our pipeline can start.
+  expected: { feature: Webhook on report refresh }
+- id: google-sheets-import
+  product: integrations
+  input: Import budget numbers from Google Sheets into dashboards.
+  expected: { feature: null }

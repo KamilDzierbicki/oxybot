@@ -3,6 +3,7 @@
 # become children of the app's span and one assistant turn is one trace.
 require "opentelemetry/sdk"
 require Rails.root.join("lib/otel/skill_span_processor") # needed in every environment: Skill::Tracing uses its key
+require Rails.root.join("lib/otel/baggage_span_processor")
 
 return if Rails.env.test? || ENV["LANGFUSE_URL"].blank?
 
@@ -12,6 +13,7 @@ require "opentelemetry/instrumentation/faraday"
 OpenTelemetry::SDK.configure do |config|
   config.service_name = "oxybot-rails"
   config.add_span_processor(Otel::SkillSpanProcessor.new) # skill names for Langfuse's Skills view
+  config.add_span_processor(Otel::BaggageSpanProcessor.new) # experiment context for Langfuse
   config.add_span_processor(
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
       OpenTelemetry::Exporter::OTLP::Exporter.new(

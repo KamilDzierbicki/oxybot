@@ -1,0 +1,28 @@
+# Demo feedback (db/seeds.rb) with the insights a good extractor finds: which products, and how many needs.
+# Expected answers are written by hand; edit them when the demo data or the product list changes.
+- id: northwind-pdf-and-offline
+  input: |
+    Hi! Our board meets monthly and we still screenshot dashboards. We really need to export reports to PDF with our logo.
+    Also the mobile app is useless in the warehouse: it cannot open dashboards offline when the signal drops.
+  expected: { products: [reports, mobile], min: 2, max: 2 }
+- id: fabrikam-auditors
+  input: |
+    Auditors asked for monthly reports as PDF files. Without PDF export we cannot roll Acme out to the other hospitals.
+  expected: { products: [reports], min: 1, max: 2 }
+- id: contoso-email-and-ranges
+  input: |
+    Could you send the sales dashboard by email every Monday morning? Our store managers never log in.
+    It would also help to compare this quarter with the same quarter last year in the charts.
+  expected: { products: [reports], min: 2, max: 2 }
+- id: litware-salesforce
+  input: |
+    We need the scores written back to Salesforce opportunities. Reading only is not enough for our sales team.
+  expected: { products: [integrations], min: 1, max: 1 }
+- id: tailspin-dark-mode
+  input: |
+    Thanks for the great support last week! One thing: dark mode for the dashboards would be easier on the eyes at night.
+  expected: { products: [reports], min: 1, max: 1 }
+- id: contoso-shopify-sync
+  input: |
+    The Shopify connector stops syncing every few weeks and we have to reconnect it. Orders from the last two days were missing in our sales dashboard.
+  expected: { products: [integrations], min: 1, max: 2 }
