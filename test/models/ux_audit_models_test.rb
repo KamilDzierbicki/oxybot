@@ -31,4 +31,15 @@ class UxAuditModelsTest < ActiveSupport::TestCase
 
     assert_equal "“PDF export” provides PDF export", reason
   end
+
+  test "a revision never gains a title heading the document did not have" do
+    document = accounts(:acme).documents.create!(kind: "prd", title: "Spec: PDF export", status: "ready", body: "## Summary\nText")
+    suggestion = document.suggestions.create!(instruction: "x", status: "thinking")
+    revision = Document::Revision.new(suggestion)
+
+    assert_equal "## Summary\nShorter", revision.send(:clean, "# Spec: PDF export (Product spec)\n\n## Summary\nShorter")
+    document.update!(body: "# Spec: PDF export\n\n## Summary\nText")
+    assert_equal "# Spec: PDF export\n\n## Summary\nShorter", revision.send(:clean, "# Spec: PDF export\n\n## Summary\nShorter"),
+                 "a heading the document already had stays"
+  end
 end

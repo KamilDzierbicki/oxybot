@@ -6,9 +6,27 @@ much revenue they bring, and drafts specs, reports and release notes with a cita
 questions in the web app, in Slack or in Mattermost, and coding agents read its specs over MCP.
 
 It is a self-hosted alternative to AI product-management agents such as Productboard Spark, built with Ruby on Rails,
-Postgres with pgvector, LiteLLM and Langfuse.
+Postgres with pgvector, LiteLLM and Langfuse. MIT licensed.
 
-![The assistant answers with cited customer evidence](docs/screenshots/assistant.jpg)
+![The assistant answers with cited customer evidence; a citation opens the quote, the customer and their ARR](docs/screenshots/assistant.jpg)
+
+## Why OxyBot
+
+Customer feedback is scattered: a sales call note in Slack, a support thread in Mattermost, a request in the CRM.
+Product managers read some of it, remember the loudest customer, and decide from there. Nobody can say how many
+customers asked for a feature, how much revenue they bring, or where a claim in a spec came from.
+
+AI product agents fix part of this, but most are closed SaaS: your customers' words and revenue go to a vendor, the
+model is the vendor's choice, and you cannot check how a number was made. OxyBot takes a different position:
+
+- **Evidence first.** Every claim in an answer or a document links to the customer quote it comes from. Code drops any
+  citation the model did not get from a tool, and code, not the model, counts customers and ARR.
+- **People decide.** The model proposes a feature for each insight; a product manager confirms it. Documents change
+  only through suggestions you accept, with a diff and a version history you can restore.
+- **Your data, your models.** It runs on your server. LiteLLM lets you pick Claude, OpenAI or a local model per task
+  and caps the daily spend; embeddings run locally in Ollama; Langfuse traces every call.
+- **Where the team already works.** Ask in Slack or Mattermost, send features to Linear, and give coding agents the
+  spec and its evidence over MCP.
 
 ## Features
 
@@ -17,7 +35,8 @@ Postgres with pgvector, LiteLLM and Langfuse.
 - A model splits each note into atomic insights, one product each, with urgency and the customer behind it.
 - Customers and ARR sync from HubSpot; an insight's customer is found from the author's email or domain.
 - Hybrid search (vectors plus full text) and a judge model suggest the backlog feature each insight asks for.
-- An inbox where a product manager confirms, relinks, creates a feature or dismisses: the model proposes, people decide.
+- A triage list where a product manager links, picks another feature, creates one or dismisses, with keyboard
+  shortcuts and undo: the model proposes, people decide.
 
 **Decisions and documents**
 - Features ranked by demand: insights, distinct customers and their ARR, each customer counted once.
@@ -37,9 +56,9 @@ Postgres with pgvector, LiteLLM and Langfuse.
 - Revenue never appears in shared channels; private chats and the web app show it.
 - Multi-tenant from the first table: every query is scoped to the account.
 
-| Inbox | Spec with evidence and code context |
+| Insights to triage | Spec with an agent suggestion and its diff |
 |---|---|
-| ![Inbox](docs/screenshots/inbox.jpg) | ![Spec](docs/screenshots/spec.jpg) |
+| ![Insights to triage](docs/screenshots/inbox.jpg) | ![Spec](docs/screenshots/spec.jpg) |
 | **Features by demand** | **AI settings** |
 | ![Features](docs/screenshots/features.jpg) | ![AI settings](docs/screenshots/ai-settings.jpg) |
 
@@ -50,7 +69,7 @@ Postgres with pgvector, LiteLLM and Langfuse.
                                                                     │                                     │
  HubSpot ──► Customer (ARR) ────────────────────────────────────────┘                    suggested feature │
                                                                                                            ▼
-                                                                    PM confirms in the Inbox ──► Feature (demand)
+                                                                    PM confirms in Insights ──► Feature (demand)
                                                                                                            │
             Assistant (app, Slack, Mattermost) ◄── read-only tools ◄───────────────────────────────────────┤
             Documents: spec, VoC, opportunities, release notes, launch review ◄── facts gathered by code ◄──┤
@@ -67,17 +86,20 @@ text written by outsiders.
 
 ## Quick start
 
-Requirements: Ruby 4.0, Docker. Everything below runs on your machine.
+You need Ruby 4.0.9 (the version in `.ruby-version`; install it with mise, rbenv or asdf) and Docker. Everything below
+runs on your machine, needs no API key and takes a few minutes.
 
 ```bash
-git clone <this repository> oxybot && cd oxybot
+git clone https://github.com/KamilDzierbicki/oxybot.git
+cd oxybot
 bundle install
-docker compose up -d db
-bin/rails db:prepare db:seed
-bin/dev
+docker compose up -d db          # Postgres 17 with pgvector on localhost:5435
+bin/rails db:prepare             # creates the databases, loads the schema and the demo data
+bin/dev                          # web server and background jobs on http://localhost:3120
 ```
 
-Open http://localhost:3120 and sign in as `demo@oxybot.local` (password in `db/seeds.rb`), or create a new
+Open http://localhost:3120 and sign in as `demo@oxybot.local` with the password `oxybot-demo`. The demo workspace
+has products, a backlog, customers with ARR, feedback, and mock Slack and HubSpot. To start empty, create your own
 workspace at http://localhost:3120/signup/new.
 
 Without `LITELLM_URL` OxyBot runs on a **built-in mock model** (`lib/mock_llm.rb`): no API keys, every request still
@@ -105,6 +127,43 @@ the `LANGFUSE_*` variables empty.
 Pick the model for each task in **AI settings**. The default aliases are in `litellm.yaml`; `oxybot-haiku` is a cheap
 alias that runs every task on Claude Haiku.
 
+## Run in production
+
+The `Dockerfile` builds a production image that serves the app on port 80 and runs background jobs in the same
+process. On start it creates or migrates the databases. A production database gets no demo data; create the first
+workspace at `/signup/new` and invite your team from **Users**.
+
+```bash
+docker build -t oxybot .
+bin/rails secret                       # value for SECRET_KEY_BASE
+bin/rails db:encryption:init           # values for the three ACTIVE_RECORD_ENCRYPTION_* variables
+docker run -d --name oxybot -p 80:80 --env-file .env.production oxybot
+```
+
+A minimal `.env.production`:
+
+```bash
+SECRET_KEY_BASE=...
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=...
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=...
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=...
+DB_HOST=db.internal                    # Postgres 17 with the pgvector extension available
+DB_USER=oxybot                         # needs permission to create databases on first start
+DB_PASSWORD=...
+APP_HOST=oxybot.example.com            # the public host name, used in links and allowed in requests
+SOLID_QUEUE_IN_PUMA=true               # background jobs inside the web process
+LITELLM_URL=https://litellm.internal/v1
+LITELLM_API_KEY=...
+```
+
+The app uses four databases: `DB_NAME` (default `oxybot_production`) and the same name with `_cache`, `_queue` and
+`_cable`. Run LiteLLM, Ollama and, if you want traces, Langfuse next to it; `compose.yml` and `litellm.yaml` show a
+working setup. `config/deploy.yml` is a starting point for deploying with Kamal. Put HTTPS in front of the app;
+`FORCE_SSL` is on by default.
+
+Keep the encryption keys safe: integration tokens are encrypted with them, and losing them means connecting every
+integration again.
+
 ## Configuration
 
 | Variable | Purpose | Default |
@@ -115,7 +174,10 @@ alias that runs every task on Claude Haiku.
 | `LANGFUSE_URL`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` | Traces from Rails and prompt management | off |
 | `SLACK_SIGNING_SECRET` | Verifies Slack events | local default in development |
 | `APP_HOST`, `APP_PROTOCOL` | Links in chat messages and Linear issues | `localhost:3120`, `http` |
-| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | Postgres with pgvector | compose database on 5435 |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | Postgres with pgvector | compose database on 5435 |
+| `SECRET_KEY_BASE` | Signs sessions and cookies (production) | required |
+| `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`, `..._DETERMINISTIC_KEY`, `..._KEY_DERIVATION_SALT` | Encrypt integration tokens (production) | required |
+| `SEED_DEMO` | `true` loads the demo workspace into a production database | off |
 | `AI_ENABLED` | `false` stops every model call (answers, drafts, extraction) without a deploy | `true` |
 | `SENTRY_DSN` | Error and job failure reports to Sentry or a self-hosted GlitchTip | off |
 | `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAILER_FROM` | Outgoing mail (invitations, password resets) | none: links are shown in the app |
@@ -130,8 +192,9 @@ Everything else is set in the dashboard:
 |---|---|---|
 | Connect, test and disconnect Slack, Mattermost, HubSpot, Linear, GitHub | Integrations | admins |
 | Users, roles (admin, member), invitations | Users | admins |
-| Model per task, matching and theme thresholds, agent step limit, weekly report schedule and time zone | AI settings | admins |
-| Team instructions, document templates | Knowledge, Documents → Templates | admins |
+| Model per task, matching and theme thresholds, agent step limit, weekly report schedule | AI settings | admins |
+| Time zone, export, deletion of the workspace | Workspace | admins |
+| Team instructions, document templates | Knowledge base, Documents → Templates | admins |
 | Products, features, knowledge, skills, personal instructions, chat ids, MCP token | their pages, Profile | everyone |
 
 Model budgets and which provider an alias calls stay in LiteLLM (`litellm.yaml` or its admin UI).
@@ -224,4 +287,4 @@ Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Not chosen yet. Until a license file is added, all rights are reserved by the author.
+[MIT](LICENSE). Use it, change it, host it for your team or your customers; keep the copyright notice.

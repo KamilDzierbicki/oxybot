@@ -2,6 +2,13 @@
 # Feedback notes enqueue extraction and matching jobs, which run once the app is up (bin/dev).
 #
 # Sign in as demo@oxybot.local with the password "oxybot-demo" (local demo account only).
+#
+# A production database gets no demo data: its known password would be a way in. db:prepare runs this file on a
+# fresh database, so production returns here; set SEED_DEMO=true for a public demo instance.
+if Rails.env.production? && ENV["SEED_DEMO"] != "true"
+  puts "Production: no demo data (set SEED_DEMO=true to load it). Create the first workspace at /signup/new."
+  return
+end
 
 account = Account.find_or_create_by!(name: "Acme Analytics")
 
