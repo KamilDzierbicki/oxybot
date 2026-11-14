@@ -12,15 +12,17 @@ class Document::Revision
   end
 
   def run
-    remember_insights(document.cited_insight_ids)
-    reply = DocumentReviser.new(revision: self).ask("<document>\n#{base_body}\n</document>\n\nRequest: #{suggestion.instruction}").parsed || {}
-    body, _cited = checked_citations(clean(reply["body"]))
-    if body.blank? || body.squish == base_body.squish
-      return suggestion.update!(status: "failed", rationale: "The agent returned the document unchanged. Try a more specific request.")
-    end
+    Langfuse.traced("revise-document") do |trace_id|
+      remember_insights(document.cited_insight_ids)
+      reply = DocumentReviser.new(revision: self).ask("<document>\n#{base_body}\n</document>\n\nRequest: #{suggestion.instruction}").parsed || {}
+      body, _cited = checked_citations(clean(reply["body"]))
+      if body.blank? || body.squish == base_body.squish
+        next suggestion.update!(status: "failed", rationale: "The agent returned the document unchanged. Try a more specific request.", trace_id: trace_id)
+      end
 
-    suggestion.update!(body: body, rationale: reply["rationale"].to_s.truncate(1_000), status: "pending")
-    suggestion.accept(user: suggestion.user) if document.auto_accept? && !suggestion.stale?
+      suggestion.update!(body: body, rationale: reply["rationale"].to_s.truncate(1_000), status: "pending", trace_id: trace_id)
+      suggestion.accept(user: suggestion.user) if document.auto_accept? && !suggestion.stale?
+    end
   rescue RubyLLM::Error, Faraday::Error => e
     Rails.error.report(e, context: { suggestion_id: suggestion.id })
     suggestion.update!(status: "failed", rationale: "The agent could not revise the document (#{e.class.name.demodulize}).")

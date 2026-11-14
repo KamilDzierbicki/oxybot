@@ -3,6 +3,7 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
 require_relative "test_helpers/session_test_helper"
+require_relative "test_helpers/tracing_test_helper"
 
 # Nothing leaves the machine. The model host is answered by the same MockLlm Rack app development uses,
 # so tests exercise the real RubyLLM requests, schemas and tool calls.

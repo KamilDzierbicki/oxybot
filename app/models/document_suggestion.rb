@@ -32,13 +32,23 @@ class DocumentSuggestion < ApplicationRecord
       document.edit(body, user: user, summary: "Accepted agent suggestion: #{instruction.truncate(80)}")
       update!(status: "accepted")
     end
+    score_acceptance(true)
   end
 
   def reject
     update!(status: "rejected")
+    score_acceptance(false)
   end
+
 
   def diff
     Document::Diff.new(base_version&.body || "", body.to_s)
+  end
+
+  private
+
+  # On the reviser's call: did the person take the suggested change?
+  def score_acceptance(accepted)
+    Langfuse::Score.record("oxybot-suggestion-#{id}-accepted", trace_id: trace_id, name: "suggestion_accepted", value: accepted)
   end
 end

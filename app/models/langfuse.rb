@@ -11,6 +11,21 @@ module Langfuse
   def get(path) = request(Net::HTTP::Get, path)
   def post(path, payload) = request(Net::HTTP::Post, path, payload)
 
+  # Deleting what is already gone is fine
+  def delete(path)
+    request(Net::HTTP::Delete, path)
+  rescue Error => e
+    raise unless e.message.end_with?("404")
+  end
+
+  # Runs the block in a named span, the root of a Langfuse trace, and yields the trace id so a person's later
+  # decision can be scored on exactly this call. Yields nil when tracing is off.
+  def traced(name)
+    OpenTelemetry.tracer_provider.tracer("oxybot").in_span(name) do |span|
+      yield(span.context.valid? ? span.context.hex_trace_id : nil)
+    end
+  end
+
   def request(method, path, payload = nil)
     uri = URI("#{ENV.fetch("LANGFUSE_URL")}#{path}")
     request = method.new(uri, "Content-Type" => "application/json")

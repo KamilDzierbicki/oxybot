@@ -29,10 +29,12 @@ module FeedbackNote::Extractable
     return if awaiting_product?
     return unless self.class.where(id: id, processed_at: nil).update_all(processed_at: Time.current) == 1
 
-    reply = InsightExtractor.new(note: self).ask("Feedback:\n#{body}")
-    transaction do
-      Array(reply.parsed&.dig("insights")).each { |attributes| build_insight(attributes)&.save! }
-      touch(:processed_at)
+    Langfuse.traced("extract-insights") do |trace_id|
+      reply = InsightExtractor.new(note: self).ask("Feedback:\n#{body}")
+      transaction do
+        Array(reply.parsed&.dig("insights")).each { |attributes| build_insight(attributes)&.save! }
+        update_columns(processed_at: Time.current, extraction_trace_id: trace_id)
+      end
     end
   rescue StandardError
     self.class.where(id: id).update_all(processed_at: nil) # released, so the job retry can run it

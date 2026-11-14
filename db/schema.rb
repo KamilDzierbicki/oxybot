@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -98,6 +98,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_110000) do
     t.string "status", default: "thinking", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "trace_id"
     t.index ["base_version_id"], name: "index_document_suggestions_on_base_version_id"
     t.index ["document_id"], name: "index_document_suggestions_on_document_id"
     t.index ["user_id"], name: "index_document_suggestions_on_user_id"
@@ -189,6 +190,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_110000) do
     t.datetime "processed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "extraction_trace_id"
     t.index ["account_id", "created_at", "id"], name: "index_feedback_notes_for_list", order: { created_at: :desc, id: :desc }
     t.index ["account_id", "source", "external_id"], name: "index_feedback_notes_on_account_id_and_source_and_external_id", unique: true, where: "(external_id IS NOT NULL)"
     t.index ["account_id"], name: "index_feedback_notes_on_account_id"
@@ -213,6 +215,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_110000) do
     t.datetime "updated_at", null: false
     t.vector "embedding", limit: 768
     t.bigint "embedding_space_id"
+    t.string "match_trace_id"
     t.index ["account_id", "triage_state", "created_at", "id"], name: "index_insights_for_inbox", order: { created_at: :desc, id: :desc }
     t.index ["account_id", "triage_state"], name: "index_insights_on_account_id_and_triage_state"
     t.index ["account_id"], name: "index_insights_on_account_id"

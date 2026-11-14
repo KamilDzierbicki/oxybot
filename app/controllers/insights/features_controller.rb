@@ -5,7 +5,7 @@ class Insights::FeaturesController < ApplicationController
   def create
     feature = @insight.product.features.create!(account: Current.account, title: params[:title].presence || @insight.summary.truncate(120),
                                                  description: @insight.summary)
-    @insight.link_to(feature)
+    @insight.link_to(feature, created: true)
     respond_with_triaged "Created #{feature.title}."
   end
 end

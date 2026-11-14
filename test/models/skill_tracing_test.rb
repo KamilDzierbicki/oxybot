@@ -1,28 +1,17 @@
 require "test_helper"
 
 class SkillTracingTest < ActiveSupport::TestCase
-  # OpenTelemetry accepts a global tracer provider once per process, so the tests share one and reset its exporter
-  EXPORTER = OpenTelemetry::SDK::Trace::Export::InMemorySpanExporter.new
-  PROVIDER = OpenTelemetry::SDK::Trace::TracerProvider.new.tap do |provider|
-    provider.add_span_processor(Otel::SkillSpanProcessor.new)
-    provider.add_span_processor(OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(EXPORTER))
-  end
+  include TracingTestHelper
 
-  setup do
-    OpenTelemetry.tracer_provider = PROVIDER unless OpenTelemetry.tracer_provider == PROVIDER
-    EXPORTER.reset
-    RubyLLM::OpenTelemetry.enable
-    @exporter = EXPORTER
-  end
-
-  teardown { RubyLLM::OpenTelemetry.disable }
+  setup { start_tracing }
+  teardown { stop_tracing }
 
   test "a skill run in a chat shows in Langfuse as loaded, and model spans list only this workspace's skills" do
     conversation = users(:kamil).conversations.create!(account: accounts(:acme))
     conversation.ask("/voc")
     perform_enqueued_jobs(only: GenerateReplyJob)
 
-    spans = @exporter.finished_spans
+    spans = finished_spans
     load = spans.find { |span| span.name == "loadSkill" }
     assert load, "Langfuse counts a skill as used only through a tool call named loadSkill"
     assert_equal "tool", load.attributes["langfuse.observation.type"]
@@ -43,7 +32,7 @@ class SkillTracingTest < ActiveSupport::TestCase
     conversation.ask("What do customers say about PDF export?")
     perform_enqueued_jobs(only: GenerateReplyJob)
 
-    assert_not @exporter.finished_spans.any? { |span| span.name == "loadSkill" }
+    assert_not finished_spans.any? { |span| span.name == "loadSkill" }
   end
 
   test "registering a skill in Langfuse sends its name and description, never its instructions, and keeps the version" do
@@ -66,17 +55,6 @@ class SkillTracingTest < ActiveSupport::TestCase
     end
 
     assert_equal [ { "name" => skills(:team_voc).langfuse_name, "version" => 7 } ],
-                 JSON.parse(@exporter.finished_spans.last.attributes[Skill::Tracing::AVAILABLE])
-  end
-
-  private
-
-  def with_langfuse
-    keys = { "LANGFUSE_URL" => "http://langfuse.test", "LANGFUSE_PUBLIC_KEY" => "pk", "LANGFUSE_SECRET_KEY" => "sk" }
-    previous = keys.keys.to_h { |key| [ key, ENV[key] ] }
-    ENV.update(keys)
-    yield
-  ensure
-    previous.each { |key, value| ENV[key] = value }
+                 JSON.parse(finished_spans.last.attributes[Skill::Tracing::AVAILABLE])
   end
 end
