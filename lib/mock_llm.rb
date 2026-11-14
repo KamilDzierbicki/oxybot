@@ -22,6 +22,11 @@ class MockLlm
   URGENT = /\b(block|blocker|blocking|cannot|can't|churn|cancel|urgent|critical|losing|lost|blokuje|pilne|nie możemy|rezygn)/i
   PLEASANTRY = /\A\s*(hi|hello|hey|thanks|thank you|cheers|regards|best|cześć|dzień dobry|dzięki|pozdrawiam)\b/i
 
+  # model_variant stands for another embedding model behind the same alias: same dimensions, different vectors
+  def initialize(model_variant: 0)
+    @model_variant = model_variant
+  end
+
   def call(env)
     request = Rack::Request.new(env)
     return json(models) if request.get? && request.path_info.end_with?("/models")
@@ -35,9 +40,9 @@ class MockLlm
     end
   end
 
-  def self.vector(text)
+  def self.vector(text, variant: 0)
     vector = Array.new(DIMENSIONS, 0.0)
-    stems(text).each { |stem| vector[Zlib.crc32(stem) % DIMENSIONS] += 1.0 }
+    stems(text).each { |stem| vector[(Zlib.crc32(stem) + variant * 9_973) % DIMENSIONS] += 1.0 }
     vector[0] = 0.01 if vector.all?(&:zero?)
     norm = Math.sqrt(vector.sum { |x| x * x })
     vector.map { |x| (x / norm).round(6) }
@@ -90,7 +95,7 @@ class MockLlm
   def embeddings(body)
     inputs = Array(body["input"])
     { object: "list", model: body["model"], usage: { prompt_tokens: 0, total_tokens: 0 },
-      data: inputs.each_with_index.map { |text, index| { object: "embedding", index: index, embedding: self.class.vector(text) } } }
+      data: inputs.each_with_index.map { |text, index| { object: "embedding", index: index, embedding: self.class.vector(text, variant: @model_variant) } } }
   end
 
   # The prompt lists products as "- slug: Name. Description" and ends with the feedback after "Feedback:".

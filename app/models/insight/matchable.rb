@@ -14,8 +14,8 @@ module Insight::Matchable
   def match
     return unless Rails.configuration.x.ai_enabled
 
-    embed if embedding.nil?
-    candidates = product.features.hybrid_search(summary, vector: embedding, limit: account.ai_setting("match_candidates"))
+    embed unless embedding_current?
+    candidates = product.features.hybrid_search(summary, vector: embedding, space: embedding_space, limit: account.ai_setting("match_candidates"))
     return update!(suggested_feature: nil, match_confidence: nil, match_reason: "No features in #{product.name} yet.") if candidates.empty?
 
     question = "<insight>\nInsight: #{summary.squish}\nQuote: #{quote.squish}\n</insight>\n\nWhich feature does this insight ask for?"

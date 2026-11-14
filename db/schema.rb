@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -145,6 +145,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_230000) do
     t.index ["feature_id"], name: "index_documents_on_feature_id"
   end
 
+  create_table "embedding_spaces", force: :cascade do |t|
+    t.string "model_alias", null: false
+    t.string "upstream_model"
+    t.vector "probe", limit: 768, null: false
+    t.datetime "activated_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "features", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "product_id", null: false
@@ -160,9 +169,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_230000) do
     t.string "linear_url"
     t.string "linear_state"
     t.vector "embedding", limit: 768
+    t.bigint "embedding_space_id"
     t.index ["account_id", "linear_issue_id"], name: "index_features_on_account_id_and_linear_issue_id", unique: true, where: "(linear_issue_id IS NOT NULL)"
     t.index ["account_id"], name: "index_features_on_account_id"
     t.index ["embedding"], name: "index_features_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["embedding_space_id"], name: "index_features_on_embedding_space_id"
     t.index ["product_id"], name: "index_features_on_product_id"
     t.index ["search_vector"], name: "index_features_on_search_vector", using: :gin
   end
@@ -201,11 +212,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_230000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.vector "embedding", limit: 768
+    t.bigint "embedding_space_id"
     t.index ["account_id", "triage_state", "created_at", "id"], name: "index_insights_for_inbox", order: { created_at: :desc, id: :desc }
     t.index ["account_id", "triage_state"], name: "index_insights_on_account_id_and_triage_state"
     t.index ["account_id"], name: "index_insights_on_account_id"
     t.index ["customer_id"], name: "index_insights_on_customer_id"
     t.index ["embedding"], name: "index_insights_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["embedding_space_id"], name: "index_insights_on_embedding_space_id"
     t.index ["feature_id"], name: "index_insights_on_feature_id"
     t.index ["feedback_note_id"], name: "index_insights_on_feedback_note_id"
     t.index ["product_id"], name: "index_insights_on_product_id"
@@ -339,11 +352,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_230000) do
   add_foreign_key "documents", "features"
   add_foreign_key "documents", "users", column: "creator_id"
   add_foreign_key "features", "accounts"
+  add_foreign_key "features", "embedding_spaces"
   add_foreign_key "features", "products"
   add_foreign_key "feedback_notes", "accounts"
   add_foreign_key "feedback_notes", "customers"
   add_foreign_key "insights", "accounts"
   add_foreign_key "insights", "customers"
+  add_foreign_key "insights", "embedding_spaces"
   add_foreign_key "insights", "features"
   add_foreign_key "insights", "features", column: "suggested_feature_id"
   add_foreign_key "insights", "feedback_notes"

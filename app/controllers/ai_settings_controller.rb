@@ -1,20 +1,30 @@
 class AiSettingsController < ApplicationController
   admin_only
+  before_action :set_account
 
   def show
-    @account = Current.account
-    @models = Account::AiSettings.available_models
-    @prompts = Prompt::NAMES.map { |name| Prompt.fetch(name) }
+    load_page
   end
 
   def update
-    @account = Current.account
     if @account.update_ai_settings(params.expect(account: Account::AiSettings::DEFAULTS.keys).to_h)
       redirect_to ai_settings_path, notice: "AI settings saved."
     else
-      @models = Account::AiSettings.available_models
-      @prompts = Prompt::NAMES.map { |name| Prompt.fetch(name) }
+      load_page
       render :show, status: :unprocessable_entity
     end
+  end
+
+  private
+
+  def set_account
+    @account = Current.account
+  end
+
+  def load_page
+    @models = Account::AiSettings.available_models
+    @prompts = Prompt::NAMES.map { |name| Prompt.fetch(name) }
+    @embedding_space = EmbeddingSpace.active
+    @stale_vectors = @account.features.stale_embeddings.count + @account.insights.stale_embeddings.count
   end
 end

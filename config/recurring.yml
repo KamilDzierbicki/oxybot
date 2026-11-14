@@ -8,6 +8,11 @@ default: &default
     class: PurgeExpiredDataJob
     queue: default
     schedule: every day at 3:23am
+  reembed_sweep:
+    # Restarts re-embedding that died without notice (a killed worker); a workspace already up to date is skipped
+    command: "ReembedJob.sweep"
+    queue: default
+    schedule: every hour at minute 41
   opportunity_discovery:
     class: OpportunityDiscoveryJob
     queue: default

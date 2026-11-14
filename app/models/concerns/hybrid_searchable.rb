@@ -7,9 +7,13 @@ module HybridSearchable
   RRF_K = 60 # the usual constant from the RRF paper; one list's first place cannot decide alone
 
   class_methods do
-    def hybrid_search(text, vector: nil, limit: 8)
-      vector ||= embed(text, task: :query)
-      fuse(vector_matches(vector), text_matches(text)).first(limit)
+    # The query vector must come from the same model as the stored ones: pass both vector and its space, or neither
+    def hybrid_search(text, vector: nil, space: nil, limit: 8)
+      if vector.nil?
+        space, vectors = EmbeddingSpace.embed([ text ], task: :query)
+        vector = vectors.first
+      end
+      fuse(vector_matches(vector, space), text_matches(text)).first(limit)
     end
 
     # Full-text only: no model call, for the search box
@@ -19,11 +23,14 @@ module HybridSearchable
 
     private
 
-    def vector_matches(vector)
+    # Only vectors from the query's model: distances between two models' vectors mean nothing
+    def vector_matches(vector, space)
+      return [] if space.nil?
+
       transaction do
         # With a WHERE on account or product, HNSW alone can return fewer rows than asked (pgvector 0.8+)
         connection.execute("SET LOCAL hnsw.iterative_scan = relaxed_order")
-        all.where.not(embedding: nil).nearest_neighbors(:embedding, vector, distance: "cosine").first(CANDIDATES)
+        all.where(embedding_space: space).where.not(embedding: nil).nearest_neighbors(:embedding, vector, distance: "cosine").first(CANDIDATES)
       end
     end
 

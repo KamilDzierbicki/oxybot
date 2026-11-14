@@ -44,7 +44,9 @@
     <% else %>
       Langfuse is not configured, so the files in <code>config/prompts</code> are used. Set LANGFUSE_URL and keys, then run <code>bin/rails langfuse:push_prompts</code> to edit prompts in Langfuse.
     <% end %>
-    Search uses the <code><%= Embeddable::MODEL %></code> embedding model, which stays fixed because changing it means re-embedding everything.
+    Search and matching use the <code><%= Embeddable::MODEL %></code> embedding model<%= " (#{@embedding_space.name})" if @embedding_space %>.
+    If LiteLLM points it at another model, OxyBot notices and embeds everything again in the background.
+    <% if @stale_vectors.positive? %><strong><%= pluralize(@stale_vectors, "record") %> still waiting to be embedded.</strong><% end %>
   </p>
   <div class="table-wrap">
   <table class="table">
