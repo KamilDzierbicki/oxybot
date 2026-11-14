@@ -14,6 +14,22 @@ class Evaluation::Baseline
     @tasks = definition.fetch("tasks")
   end
 
+  # The baseline file with the minimums replaced by these averages, rounded down to two decimals, for
+  # bin/rails evals:baseline. Rewritten whole, so review the diff before committing it.
+  def self.text(model, averages)
+    tasks = averages.map do |task, scores|
+      "  #{task}: { #{scores.map { |score, value| "#{score}: #{(value * 100).floor / 100.0}" }.join(", ")} }"
+    end
+    <<~YAML
+      # The minimum average a change must keep, per evaluation task and score (bin/rails evals:check, run by the CI
+      # Evals workflow when prompts, agents, tools or retrieval change). Written by bin/rails evals:baseline from a
+      # measured run; review the diff and commit it on purpose, never to make a failing change pass. See docs/EVALS.md.
+      model: #{model}
+      tasks:
+      #{tasks.join("\n")}
+    YAML
+  end
+
   # averages: task => Evaluation.averages of its run
   def compare(averages)
     tasks.flat_map do |task, minimums|

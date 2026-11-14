@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -368,6 +368,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_190000) do
     t.string "unit", default: "workspace", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "previous_version"
     t.index ["prompt_name"], name: "index_prompt_rollouts_on_prompt_name", unique: true
   end
 

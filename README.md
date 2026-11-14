@@ -188,10 +188,10 @@ OxyBot, LiteLLM and Langfuse work as one system:
 | Every model call, with its cost, linked to the prompt version it was built from | Langfuse traces, LiteLLM logs |
 | Each trace names its record (`insight_id`, `feedback_note_id`, `document_id`, `suggestion_id`, `conversation_id`, `message_id`) and links to it (`oxybot_url`) as filterable metadata | Langfuse trace metadata |
 | People's decisions as scores on the call they judge: `feature_match` (linked the suggested feature), `insight_kept` (kept or dismissed an insight), `suggestion_accepted` (took the agent's edit) | Langfuse scores |
-| Corrections per week, split by prompt version and by model, and a queue for the weekly error review | Langfuse dashboard "OxyBot corrections", Human annotation (see below) |
+| Corrections per week, split by prompt version and by model, and a queue for the weekly error review | Langfuse dashboard "OxyBot corrections", Human annotation ([docs/EVALS.md](docs/EVALS.md)) |
 | Skills run in the assistant (`/churn-risk`), with use counts per skill | Langfuse Skills |
 | Corrections become evaluation cases: when someone links another feature than the suggested one, the case waits for review and, once approved, joins the matching experiments | AI settings, Evaluation cases |
-| Experiments on `config/evals` with any variant (model, prompt version, retrieval parameters): extraction and matching accuracy, whether search offered the right feature, retrieval MRR and recall@5 (vector, full text, hybrid), BLEU and ROUGE of drafted documents against a reference | `bin/rails evals:run`, Langfuse Datasets (see Prompts) |
+| Experiments on `config/evals` with any variant (model, prompt version, retrieval parameters): extraction and matching accuracy, whether search offered the right feature, retrieval MRR and recall@5 (vector, full text, hybrid), BLEU and ROUGE of drafted documents against a reference | `bin/rails evals:run`, Langfuse Datasets ([docs/EVALS.md](docs/EVALS.md)) |
 | LLM-as-judge evaluators: is an answer supported by the quotes it cites, are extracted insights faithful | Langfuse Evaluators (see below) |
 | The assistant's tool use (right tools, key arguments, number of steps) and its resistance to instructions hidden in feedback (other workspaces, invented citations, changing data), checked by code and a separate judge model | `bin/rails evals:run TASK=tools,injection`, `config/evals/tools.yml` and `injection.yml` |
 | A daily AI budget per workspace, enforced by LiteLLM, with today's spend | AI settings, LiteLLM Customers |
@@ -239,28 +239,19 @@ LiteLLM retries a failed call, then sends it to the alias's fallback (`router_se
 `litellm.yaml`): Sonnet aliases fall back to Haiku and Haiku aliases to Sonnet. Both are Anthropic models, so this
 covers one model's outage; for an Anthropic outage, add an alias on a second provider at the end of each list.
 
-### Weekly error review
+### Evaluations and prompt rollouts
 
-`bin/rails langfuse:setup` creates what the review needs, and running it again changes nothing that is in place:
+[docs/EVALS.md](docs/EVALS.md) is the runbook: how to add cases to each dataset, run and compare evaluations
+(model, prompt version, retrieval parameters), read MRR, recall@5, tool use and injection results, roll a prompt
+version out to part of the traffic and promote or roll it back, keep the CI baseline, and run the weekly error
+review. The main commands:
 
-- the dashboard **OxyBot corrections**: for each decision, the share of AI outputs people kept, by prompt version
-  and by model. The correction rate is 1 minus that share. The two tables on top also count the decisions, so a
-  share from a handful of decisions is easy to spot. Pick **Past 90 days** for weekly points; shorter ranges use
-  days or hours. In the line charts Langfuse draws weeks with no decisions as an `n/a` line at 0: that is no data,
-  not a week of corrections.
-- the score config `failure_type` (`wrong_feature`, `missed_need`, `invented_fact`, `wrong_product`, `unclear`, `ok`)
-  and the annotation queue `oxybot-weekly-review` that asks for it.
-
-Each week:
-
-1. In the dashboard, find the step and the prompt version or model whose share dropped.
-2. In **Tracing**, keep root observations, filter **Boolean Scores** by the score (for example `feature_match` false)
-   and the week, select the rows and choose **Add to Annotation Queue**, `oxybot-weekly-review`.
-3. In **Human annotation**, work through the queue: score `failure_type` on each trace, and open the record in
-   OxyBot through `oxybot_url` in the trace metadata.
-
-Scores are split by prompt version and model because they sit on the model call, which carries both. Decisions made
-before this existed are scored on the trace only, so the split leaves them out.
+```bash
+bin/rails evals:run TASK=retrieval,tools,injection [MODEL=oxybot-haiku] [LABEL=candidate] [RAG=text_weight=0.3]
+bin/rails prompts:status
+bin/rails prompts:rollout NAME=product-agent SHARE=10
+bin/rails prompts:promote NAME=product-agent      # or prompts:rollback NAME=product-agent
+```
 
 ## Configuration
 
@@ -312,44 +303,7 @@ descriptions in `product-agent`, and the retrieval parameters in `product-agent`
 `feature-judge` (the features compared per insight). Retrieval parameters are `limit`, `candidates` per list,
 `rrf_k` and the `vector_weight` and `text_weight` of the fusion; a value out of range falls back to the file.
 
-Compare a change before it goes live:
-
-```bash
-bin/rails evals:run TASK=retrieval RAG=text_weight=0.3        # retrieval parameters
-bin/rails evals:run TASK=matching PROMPT=candidate             # the version labeled candidate (or a number)
-bin/rails evals:run TASK=matching MODEL=oxybot-judge RAG=limit=8
-```
-
-Each run is a Langfuse experiment named after its variant, with the model, prompt version and retrieval parameters
-in its metadata, so the runs of one dataset sit side by side.
-
-Then roll the change out gradually. Label the new version `candidate` in Langfuse and serve it to a share of the
-traffic, by workspace (the same workspaces keep it) or by request:
-
-```bash
-bin/rails langfuse:push_prompts NAME=product-agent LABEL=candidate # the edited file as the candidate
-bin/rails prompts:rollout PROMPT=product-agent SHARE=10           # 10% of workspaces
-bin/rails prompts:rollout PROMPT=feature-judge SHARE=50 BY=request
-bin/rails prompts:rollouts                                         # what is rolled out
-bin/rails prompts:rollout PROMPT=product-agent SHARE=0             # stop
-bin/rails prompts:promote PROMPT=product-agent                     # candidate becomes production, rollout ends
-```
-
-Traces of requests that got a candidate carry `prompt_variant` in their metadata, and scores sit on the model call
-that links its prompt version, so the "OxyBot corrections" dashboard shows the candidate next to production. A
-candidate label missing in Langfuse serves production.
-
-### Evals in CI
-
-The **Evals** workflow runs when prompts, agents, tools or retrieval change. It starts LiteLLM with
-`litellm.ci.yaml`, seeds the demo workspace, and runs `bin/rails evals:check`: matching, retrieval, tool use and
-injection, compared with the minimums in `config/evals/baseline.yml`. A score below its minimum fails the job.
-It needs the `ANTHROPIC_API_KEY` repository secret and is skipped without it. The spend caps in `litellm.ci.yaml`
-limit one run to 1 USD; past a cap LiteLLM refuses calls and the job fails. Locally:
-
-```bash
-bin/rails evals:prepare evals:check
-```
+To compare a change, roll it out gradually and promote or roll it back, see [docs/EVALS.md](docs/EVALS.md).
 
 ## Integrations
 
