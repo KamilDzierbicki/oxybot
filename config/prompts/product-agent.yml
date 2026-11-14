@@ -9,4 +9,4 @@ retrieval:
   candidates: 20 # per list (vector, full text) before fusion
   rrf_k: 60 # reciprocal rank fusion constant: higher flattens the difference between ranks
   vector_weight: 1.0
-  text_weight: 1.0
+  text_weight: 0.3 # measured: MRR 0.925 against 0.875 at 1.0, recall@5 unchanged (config/evals/retrieval.yml)

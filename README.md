@@ -327,6 +327,7 @@ Then roll the change out gradually. Label the new version `candidate` in Langfus
 traffic, by workspace (the same workspaces keep it) or by request:
 
 ```bash
+bin/rails langfuse:push_prompts NAME=product-agent LABEL=candidate # the edited file as the candidate
 bin/rails prompts:rollout PROMPT=product-agent SHARE=10           # 10% of workspaces
 bin/rails prompts:rollout PROMPT=feature-judge SHARE=50 BY=request
 bin/rails prompts:rollouts                                         # what is rolled out
