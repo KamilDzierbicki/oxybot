@@ -11,6 +11,7 @@ class EmbeddingSpace < ApplicationRecord
   has_neighbors :probe
   has_many :features, dependent: :nullify
   has_many :insights, dependent: :nullify
+  has_many :knowledge_chunks, dependent: :nullify
 
   # The space the alias serves now; vectors from any other space are stale
   def self.active = order(activated_at: :desc, id: :desc).first

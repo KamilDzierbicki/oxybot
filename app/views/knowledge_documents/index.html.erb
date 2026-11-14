@@ -3,7 +3,7 @@
   <h1>Knowledge</h1>
   <%= link_to "Add document", new_knowledge_document_path, class: "button button--primary" %>
 </div>
-<p class="muted">Company context the agent always reads: strategy, personas, pricing, competitors. Keep each document short.</p>
+<p class="muted">Company context for the agent: strategy, personas, pricing, competitors. Documents up to <%= number_with_delimiter(KnowledgeDocument::IN_PROMPT_LIMIT) %> characters go into every answer in full; longer ones are split into sections the agent searches when a question needs them.</p>
 <div class="card">
   <% if Current.user.admin? %>
   <%= form_with model: Current.account, url: team_instructions_path, method: :patch, class: "form" do |form| %>
@@ -17,6 +17,7 @@
 <% @documents.each do |document| %>
   <div class="card">
     <div class="insight__head"><strong><%= document.title %></strong> <%= link_to "Edit", edit_knowledge_document_path(document) %></div>
+    <p class="muted small"><%= document.long? ? "Long document: searched in #{pluralize(document.chunks.size, "section")}" : "Always in the agent's context" %></p>
     <div class="prose muted"><%= markdown(document.body.truncate(400)) %></div>
   </div>
 <% end %>

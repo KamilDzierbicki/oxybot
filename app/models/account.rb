@@ -13,6 +13,7 @@ class Account < ApplicationRecord
   has_many :feedback_notes, dependent: :destroy
   has_many :insights, dependent: :destroy
   has_many :knowledge_documents, dependent: :destroy
+  has_many :knowledge_chunks # deleted with their documents
   has_many :conversations, dependent: :destroy
   has_many :integrations, dependent: :destroy
   has_many :documents, dependent: :destroy
@@ -62,7 +63,7 @@ class Account < ApplicationRecord
   end
 
   def stale_embeddings?
-    features.stale_embeddings.exists? || insights.stale_embeddings.exists?
+    features.stale_embeddings.exists? || insights.stale_embeddings.exists? || knowledge_chunks.stale_embeddings.exists?
   end
 
   def discover_opportunities

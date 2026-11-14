@@ -22,9 +22,15 @@ class Prompt::Context
 
   private
 
+  # Short documents in full; long ones only by title, since the agent searches their sections with search_knowledge
   def company_context
-    documents = @account.knowledge_documents.alphabetically.map { |document| "## #{document.title}\n#{document.body.strip}" }
-    documents.any? ? "Company context:\n\n#{documents.join("\n\n")}" : ""
+    long, short = @account.knowledge_documents.alphabetically.partition(&:long?)
+    parts = short.map { |document| "## #{document.title}\n#{document.body.strip}" }
+    if long.any?
+      parts << "Longer company documents, not included here; search them with the search_knowledge tool when a question needs them:\n" +
+               long.map { |document| "- #{document.title}" }.join("\n")
+    end
+    parts.any? ? "Company context:\n\n#{parts.join("\n\n")}" : ""
   end
 
   def section(title, text)

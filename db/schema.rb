@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -300,6 +300,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_200000) do
     t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
   end
 
+  create_table "knowledge_chunks", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "knowledge_document_id", null: false
+    t.integer "position", null: false
+    t.string "heading"
+    t.text "body", null: false
+    t.vector "embedding", limit: 768
+    t.bigint "embedding_space_id"
+    t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(heading, ''::character varying))::text || ' '::text) || COALESCE(body, ''::text)))", stored: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_knowledge_chunks_on_account_id"
+    t.index ["embedding"], name: "index_knowledge_chunks_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["embedding_space_id"], name: "index_knowledge_chunks_on_embedding_space_id"
+    t.index ["knowledge_document_id", "position"], name: "index_knowledge_chunks_on_knowledge_document_id_and_position", unique: true
+    t.index ["knowledge_document_id"], name: "index_knowledge_chunks_on_knowledge_document_id"
+    t.index ["search_vector"], name: "index_knowledge_chunks_on_search_vector", using: :gin
+  end
+
   create_table "knowledge_documents", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "title", null: false
@@ -450,6 +469,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_200000) do
   add_foreign_key "integrations", "accounts"
   add_foreign_key "invitations", "accounts"
   add_foreign_key "invitations", "users", column: "invited_by_id"
+  add_foreign_key "knowledge_chunks", "accounts"
+  add_foreign_key "knowledge_chunks", "embedding_spaces"
+  add_foreign_key "knowledge_chunks", "knowledge_documents"
   add_foreign_key "knowledge_documents", "accounts"
   add_foreign_key "messages", "conversations"
   add_foreign_key "portal_visitors", "accounts"

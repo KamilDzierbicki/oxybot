@@ -3,7 +3,7 @@ namespace :oxybot do
   task reembed: :environment do
     accounts = ENV["ACCOUNT_ID"] ? Account.where(id: ENV["ACCOUNT_ID"]) : Account.all
     accounts.find_each do |account|
-      stale = account.features.stale_embeddings.count + account.insights.stale_embeddings.count
+      stale = account.features.stale_embeddings.count + account.insights.stale_embeddings.count + account.knowledge_chunks.stale_embeddings.count
       next puts("#{account.name}: up to date") if stale.zero?
 
       ReembedJob.perform_later(account)
@@ -16,8 +16,8 @@ namespace :oxybot do
     active = EmbeddingSpace.active
     puts "Active model: #{active ? "#{active.name} (space #{active.id}, since #{active.activated_at.to_fs(:short)})" : "none yet"}"
     Account.find_each do |account|
-      total = account.features.count + account.insights.count
-      stale = account.features.stale_embeddings.count + account.insights.stale_embeddings.count
+      total = account.features.count + account.insights.count + account.knowledge_chunks.count
+      stale = account.features.stale_embeddings.count + account.insights.stale_embeddings.count + account.knowledge_chunks.stale_embeddings.count
       puts "#{account.name}: #{total - stale} of #{total} current"
     end
   end

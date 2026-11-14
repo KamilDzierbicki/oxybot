@@ -10,6 +10,7 @@ class DocumentWriter < RubyLLM::Agent
   tools do
     tools = [ SearchFeedbackTool.new(generation) ]
     tools += [ SearchCodeTool.new(generation), ReadFileTool.new(generation) ] if generation.account.github_integration
+    tools << SearchKnowledgeTool.new(generation) if generation.account.knowledge_chunks.exists?
     tools
   end
   tool_options { { rounds: generation.account.ai_setting("agent_max_rounds") } }

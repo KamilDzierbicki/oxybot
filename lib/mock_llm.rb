@@ -219,6 +219,8 @@ class MockLlm
       [ "feature_demand", {} ]
     elsif text.match?(/\b(features?|backlog|roadmap|funkcj|planned)\b/) && names.include?("list_features")
       [ "list_features", {} ]
+    elsif text.match?(/\b(strateg|pricing|price|competitor|persona|policy|cennik|konkuren)/) && names.include?("search_knowledge")
+      [ "search_knowledge", { query: question } ]
     elsif names.include?("search_feedback")
       [ "search_feedback", { query: question } ]
     end
@@ -226,7 +228,7 @@ class MockLlm
 
   def answer_from(tool_json)
     data = JSON.parse(tool_json)
-    rows = data.is_a?(Hash) ? (data["insights"] || data["features"] || []) : data
+    rows = data.is_a?(Hash) ? (data["insights"] || data["features"] || data["passages"] || []) : data
     return "I could not use that data: #{data["error"]}" if data.is_a?(Hash) && data["error"]
     return "I found nothing in your feedback about that." if rows.empty?
 
@@ -238,6 +240,8 @@ class MockLlm
       elsif row.key?("quote")
         who = [ row["customer"], row["arr"] ].compact.join(", ")
         "- #{row["summary"]}#{" (#{who})" if who.present?} [insight:#{row["id"]}]"
+      elsif row.key?("text")
+        "- **#{[ row["document"], row["section"] ].compact.join(", ")}**: #{row["text"].truncate(200)}"
       else
         "- **#{row["title"]}** (#{row["product"]}, #{row["status"]})"
       end

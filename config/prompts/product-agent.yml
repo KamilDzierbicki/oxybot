@@ -4,6 +4,7 @@ tools:
   search_feedback: Searches customer feedback insights by meaning and keywords. Returns quotes, customers and linked features.
   feature_demand: "Ranks backlog features by customer demand: linked insights, distinct customers and their combined ARR."
   list_features: Lists backlog features with their status, description and RICE priority (null when not scored), highest priority first.
+  search_knowledge: Searches the company's longer documents (strategy, pricing, personas, competitors) and returns matching sections.
 retrieval:
   limit: 10 # insights returned to the model
   candidates: 20 # per list (vector, full text) before fusion

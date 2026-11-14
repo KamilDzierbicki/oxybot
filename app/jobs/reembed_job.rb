@@ -18,6 +18,7 @@ class ReembedJob < ApplicationJob
   def perform(account)
     step(:features) { |step| reembed(account.features, step) }
     step(:insights) { |step| reembed(account.insights, step) }
+    step(:knowledge_chunks) { |step| reembed(account.knowledge_chunks.includes(:knowledge_document), step) }
   end
 
   private
