@@ -21,6 +21,16 @@ module HybridSearchable
       text_matches(text).first(limit)
     end
 
+    # The ranking of one search mode (:vector, :text or :hybrid), for measuring retrieval (Evaluation)
+    def ranked(text, mode:, vector:, space:)
+      case mode
+      when :vector then vector_matches(vector, space)
+      when :text then text_matches(text)
+      when :hybrid then fuse(vector_matches(vector, space), text_matches(text))
+      else raise ArgumentError, "unknown search mode #{mode}"
+      end
+    end
+
     private
 
     # Only vectors from the query's model: distances between two models' vectors mean nothing

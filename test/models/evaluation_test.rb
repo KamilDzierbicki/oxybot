@@ -76,4 +76,56 @@ class EvaluationTest < ActiveSupport::TestCase
   ensure
     stop_tracing
   end
+
+  test "retrieval measures MRR and recall@5 for each search mode on its own corpus, and keeps nothing" do
+    evaluation = Evaluation.new(task: "retrieval", model: "oxybot-haiku", account: accounts(:acme))
+    evaluation.instance_variable_set(:@dataset, {
+      "corpus" => [ { "key" => "pdf", "product" => "reports", "text" => "Board meetings need reports exported to PDF." },
+                    { "key" => "dark", "product" => "reports", "text" => "Dark mode for dashboards at night." },
+                    { "key" => "shopify", "product" => "integrations", "text" => "The Shopify connector stops syncing." } ],
+      "queries" => [ { "id" => "pdf-query", "query" => "reports exported to PDF", "relevant" => [ "pdf" ] } ]
+    })
+
+    results = assert_no_difference -> { [ Account.count, Insight.count, FeedbackNote.count ].sum } do
+      evaluation.run
+    end
+
+    scores = results.first.scores
+    assert_equal %w[mrr_hybrid mrr_text mrr_vector recall_at_5_hybrid recall_at_5_text recall_at_5_vector], scores.keys.sort
+    assert_equal 1.0, scores["mrr_text"], "the only text match ranks first"
+    assert_equal 1.0, scores["recall_at_5_hybrid"]
+    assert results.first.correct
+  end
+
+  test "documents score a draft against the reference with BLEU and ROUGE, and keep nothing" do
+    evaluation = Evaluation.new(task: "documents", model: "oxybot-haiku", account: accounts(:acme))
+    evaluation.instance_variable_set(:@dataset, [ { "id" => "notes", "kind" => "release_notes", "feature" => "Shopify connector",
+                                                    "reference" => "## Highlights\n- Shopify connector: import orders and products." } ])
+
+    results = assert_no_difference -> { Document.count } do
+      evaluation.run
+    end
+
+    assert_equal %w[bleu rouge1 rouge2 rougeL], results.first.scores.keys.sort
+    assert results.first.scores.except("correct").values.all? { |value| value.between?(0, 1) }
+    assert_operator results.first.scores["rouge1"], :>, 0, "the mock draft shares words with the reference"
+  end
+
+  test "numeric scores reach Langfuse as numbers on the item's root" do
+    start_tracing
+    stub_request(:get, %r{langfuse\.test/api/public/v2/datasets/oxybot-retrieval}).to_return(body: { id: "ds-r" }.to_json)
+    stub_request(:post, "http://langfuse.test/api/public/dataset-items").to_return(body: "{}")
+    scores = stub_request(:post, "http://langfuse.test/api/public/scores").to_return(body: "{}")
+    evaluation = Evaluation.new(task: "retrieval", model: "oxybot-haiku", account: accounts(:acme))
+    evaluation.instance_variable_set(:@dataset, { "corpus" => [ { "key" => "pdf", "product" => "reports", "text" => "PDF export please" } ],
+                                                  "queries" => [ { "id" => "q", "query" => "PDF export", "relevant" => [ "pdf" ] } ] })
+
+    with_langfuse { evaluation.run }
+
+    assert_requested scores, times: 6
+    sent = WebMock::RequestRegistry.instance.requested_signatures.hash.keys.select { |request| request.uri.path.end_with?("/scores") }.map { |request| JSON.parse(request.body) }
+    assert_equal [ "NUMERIC" ], sent.map { |score| score["dataType"] }.uniq
+  ensure
+    stop_tracing
+  end
 end

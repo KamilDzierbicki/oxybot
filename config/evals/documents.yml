@@ -1,0 +1,16 @@
+# Documents: how close does a drafted document come to a reference written by hand from the demo data?
+# Scored with BLEU-4 and ROUGE-1, ROUGE-2 and ROUGE-L against the reference. Useful for comparing models and prompt
+# versions on the same input; a different but good wording also scores low, so read them as a trend, not a grade.
+- id: release-notes-shopify
+  kind: release_notes
+  feature: Shopify connector
+  reference: |
+    ## Highlights
+    - Shopify connector: import orders and products from your Shopify stores into Acme Analytics.
+
+    ## What's new
+    **Shopify connector.** Connect a Shopify store and Acme Analytics imports its orders and products, so sales
+    dashboards include store data without manual exports.
+
+    ## Customers to notify
+    - Contoso Retail asked about Shopify order imports; their account owner should close the loop.

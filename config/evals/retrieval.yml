@@ -1,0 +1,31 @@
+# Retrieval: does hybrid search find the right customer needs? A fixed corpus of insights (written for this, in the
+# style of the demo data) and queries with the insights that answer them. Measured with MRR and recall@5 for
+# vector search alone, full-text search alone and the fused hybrid search the assistant uses.
+corpus:
+  - { key: pdf-board, product: reports, text: "Board meetings need every report exported to PDF with the company logo." }
+  - { key: pdf-auditors, product: reports, text: "Auditors ask for the monthly figures as PDF files." }
+  - { key: pdf-email, product: reports, text: "The weekly scheduled email should attach the report as a PDF." }
+  - { key: email-monday, product: reports, text: "Store managers want the sales dashboard emailed every Monday morning." }
+  - { key: quarter-compare, product: reports, text: "Compare this quarter with the same quarter last year in charts." }
+  - { key: dark-mode, product: reports, text: "Dark mode for dashboards would be easier on the eyes at night." }
+  - { key: csv-excel, product: reports, text: "CSV exports open with broken characters in Excel." }
+  - { key: offline-warehouse, product: mobile, text: "The phone app cannot open dashboards when the warehouse signal drops." }
+  - { key: offline-flight, product: mobile, text: "Sales reps want to read the latest numbers on a plane without internet." }
+  - { key: push-revenue, product: mobile, text: "Notify me on my phone when daily revenue falls below target." }
+  - { key: ipad-logout, product: mobile, text: "The iPad app keeps logging us out every few hours." }
+  - { key: sf-writeback, product: integrations, text: "Write lead scores back into Salesforce opportunities." }
+  - { key: shopify-sync, product: integrations, text: "The Shopify connector stops syncing and has to be reconnected." }
+  - { key: shopify-orders, product: integrations, text: "Orders from the last two days were missing after the store import." }
+  - { key: sheets-import, product: integrations, text: "Pull budget numbers from Google Sheets into a dashboard." }
+  - { key: webhook-refresh, product: integrations, text: "Call our endpoint when a report finishes refreshing." }
+queries:
+  - { id: pdf-export, query: "customers who need PDF exports", relevant: [pdf-board, pdf-auditors, pdf-email] }
+  - { id: scheduled-email, query: "send reports by email on a schedule", relevant: [email-monday, pdf-email] }
+  - { id: no-internet, query: "using the mobile app without connectivity", relevant: [offline-warehouse, offline-flight] }
+  - { id: alerts, query: "alerts when a metric drops", relevant: [push-revenue] }
+  - { id: shopify-problems, query: "Shopify integration reliability", relevant: [shopify-sync, shopify-orders] }
+  - { id: crm-sync, query: "two-way CRM sync", relevant: [sf-writeback] }
+  - { id: year-over-year, query: "year over year comparison", relevant: [quarter-compare] }
+  - { id: session-expiry, query: "tablet session expires too often", relevant: [ipad-logout] }
+  - { id: spreadsheet, query: "spreadsheet data source", relevant: [sheets-import, csv-excel] }
+  - { id: theme, query: "night theme", relevant: [dark-mode] }
