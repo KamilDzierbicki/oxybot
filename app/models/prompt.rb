@@ -10,10 +10,22 @@ class Prompt
 
   Template = Data.define(:name, :text, :source, :version)
 
+  # Separates the part of a prompt that is the same on every call (cached by the provider) from what changes per call
+  PER_REQUEST = /^--- per request ---$/
+
   def self.render(name, **variables)
     template = fetch(name)
     text = template.text.gsub(/\{\{\s*(\w+)\s*\}\}/) { variables.fetch($1.to_sym, "").to_s.strip }
     text.gsub(/\n{3,}/, "\n\n").strip
+  end
+
+  # [stable, per_request]: two system messages, so the provider caches the first however the second changes.
+  # A prompt version without the marker is all stable.
+  def self.render_parts(name, **variables) = split_parts(render(name, **variables))
+
+  def self.split_parts(text)
+    stable, per_request = text.split(PER_REQUEST, 2)
+    [ stable.to_s.strip, per_request.to_s.strip ]
   end
 
   def self.fetch(name)

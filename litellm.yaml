@@ -4,6 +4,10 @@
 # Every paid alias has a daily spend cap; past it LiteLLM answers 429 instead of calling the provider,
 # so a retry loop cannot burn the month's budget. OxyBot also sends the tenant as the end user
 # ("account-42"), so LiteLLM shows spend per tenant.
+#
+# Every Anthropic alias marks system messages for prompt caching: OxyBot sends the stable part of a prompt
+# (instructions, products, company context) as the first system message, so later calls read it from the cache
+# at a tenth of the input price. Haiku 5.5 and Sonnet 5.5 cache prefixes from 512 tokens.
 model_list:
   # Splits raw feedback into insights: many calls, short output, so a fast model
   - model_name: oxybot-extract
@@ -12,6 +16,9 @@ model_list:
       api_key: os.environ/ANTHROPIC_API_KEY
       max_budget: 3 # USD
       budget_duration: 1d
+      cache_control_injection_points:
+        - location: message
+          role: system
 
   # Picks the matching feature among a few candidates
   - model_name: oxybot-judge
@@ -20,6 +27,9 @@ model_list:
       api_key: os.environ/ANTHROPIC_API_KEY
       max_budget: 2
       budget_duration: 1d
+      cache_control_injection_points:
+        - location: message
+          role: system
 
   # The product assistant (tool use, longer reasoning)
   - model_name: oxybot-assistant
@@ -50,6 +60,9 @@ model_list:
       api_key: os.environ/ANTHROPIC_API_KEY
       max_budget: 3
       budget_duration: 1d
+      cache_control_injection_points:
+        - location: message
+          role: system
 
   # Local embeddings (768 dimensions, matching insights.embedding and features.embedding), no key needed.
   # The app adds nomic's "search_document:" / "search_query:" prefixes itself.

@@ -23,7 +23,7 @@ class SkillTest < ActiveSupport::TestCase
     perform_enqueued_jobs(only: GenerateReplyJob)
 
     request = JSON.parse(llm_requests("oxybot-assistant").first.body)
-    system = request["messages"].find { |message| message["role"] == "system" }["content"].to_s
+    system = request["messages"].select { |message| message["role"] == "system" }.map { |message| message["content"].to_s }.join("\n")
     assert_includes system, "Use exactly three bullets."
     assert_equal "PDF export", request["messages"].reverse.find { |message| message["role"] == "user" }["content"].to_s
   end

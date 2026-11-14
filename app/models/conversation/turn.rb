@@ -45,6 +45,10 @@ class Conversation::Turn
       generation_name: "product-agent" }
   end
 
+  def system_prompt
+    @system_prompt ||= Prompt.render_parts("product-agent", **prompt_variables)
+  end
+
   def prompt_variables
     Prompt::Context.new(account, user).to_h.merge(
       revenue_rule: revenue_visible? ? "" : "This answer is posted in a shared Slack channel. Do not mention revenue, ARR or contract values; counts of customers are fine.",

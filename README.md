@@ -190,6 +190,7 @@ OxyBot, LiteLLM and Langfuse work as one system:
 | Experiments: the demo dataset in `config/evals` run on any model, with accuracy | `bin/rails evals:run MODEL=oxybot-haiku`, Langfuse Datasets |
 | LLM-as-judge evaluators: is an answer supported by the quotes it cites, are extracted insights faithful | Langfuse Evaluators (see below) |
 | A daily AI budget per workspace, enforced by LiteLLM, with today's spend | AI settings, LiteLLM Customers |
+| Prompt caching: the stable part of a prompt is read from Anthropic's cache at a tenth of the input price | `input_cached_tokens` on generations |
 | Environments (development, production) kept apart | every trace and score |
 
 Set it up once Langfuse runs:

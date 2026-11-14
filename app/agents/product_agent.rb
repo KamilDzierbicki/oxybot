@@ -6,7 +6,9 @@ class ProductAgent < RubyLLM::Agent
   end
   max_output_tokens 1500
   inputs :turn
-  instructions { Prompt.render("product-agent", **turn.prompt_variables) }
+  # Two system messages: the stable part first, so LiteLLM's cache mark makes later calls read it from the cache
+  instructions { turn.system_prompt.first }
+  instructions(append: true) { turn.system_prompt.last.presence }
   tools { [ SearchFeedbackTool.new(turn), FeatureDemandTool.new(turn), ListFeaturesTool.new(turn) ] }
   tool_options { { rounds: turn.account.ai_setting("agent_max_rounds") } }
   # LiteLLM counts spend per end user, so each tenant's cost is visible and can get its own budget
