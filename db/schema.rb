@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -309,6 +309,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_100000) do
     t.text "instructions", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "langfuse_version"
     t.index ["account_id", "user_id", "name"], name: "index_skills_on_account_id_and_user_id_and_name", unique: true, nulls_not_distinct: true
     t.index ["account_id"], name: "index_skills_on_account_id"
     t.index ["user_id"], name: "index_skills_on_user_id"

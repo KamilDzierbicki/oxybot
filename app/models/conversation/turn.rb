@@ -22,7 +22,7 @@ class Conversation::Turn
     history.each { |message| agent.add_message(role: message.role.to_sym, content: message.content) }
     agent.before_tool_call { |call| @tool_calls << { name: call.name, arguments: call.arguments } }
 
-    response = agent.ask(question_text)
+    response = Skill::Tracing.with(available: Skill.available_to(user), used: skill) { agent.ask(question_text) }
     content, cited = checked_citations(response.content.to_s)
     reply.update!(status: "done", content: content.presence || "(no answer)", tool_calls: @tool_calls,
                   cited_insight_ids: cited, input_tokens: response.tokens&.input, output_tokens: response.tokens&.output)
@@ -37,7 +37,8 @@ class Conversation::Turn
   # Grouped in Langfuse by conversation (session) and tagged with the tenant
   def trace_metadata
     { session_id: "conversation-#{conversation.id}", trace_user_id: "user-#{user.id}",
-      tags: [ "account-#{account.id}", "channel-#{conversation.channel}", Prompt.version_tag("product-agent") ], generation_name: "product-agent" }
+      tags: [ "account-#{account.id}", "channel-#{conversation.channel}", Prompt.version_tag("product-agent"), ("skill-#{skill.name}" if skill) ].compact,
+      generation_name: "product-agent" }
   end
 
   def prompt_variables

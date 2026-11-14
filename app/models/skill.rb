@@ -10,6 +10,10 @@ class Skill < ApplicationRecord
   validates :name, uniqueness: { scope: [ :account_id, :user_id ] }
 
   scope :alphabetically, -> { order(:name) }
+
+  # Registered in Langfuse so its Skills view can count uses; only the name and description leave OxyBot
+  after_commit -> { PublishSkillJob.perform_later(self) },
+               on: %i[create update], if: -> { Langfuse.configured? && (saved_change_to_name? || saved_change_to_description? || langfuse_version.nil?) }
   scope :available_to, ->(user) { where(account: user.account, user: [ nil, user ]) }
 
   INVOCATION = %r{\A/([a-z0-9-]+)\b\s*(.*)\z}m
@@ -24,4 +28,7 @@ class Skill < ApplicationRecord
   end
 
   def team? = user_id.nil?
+
+  # One Langfuse project serves every workspace, so the name carries the workspace (and the owner of a personal skill)
+  def langfuse_name = [ "a#{account_id}", ("u#{user_id}" if user_id), name ].compact.join("-")
 end

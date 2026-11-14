@@ -9,4 +9,14 @@ namespace :langfuse do
     end
     Prompt.refresh
   end
+
+  desc "Register every skill in Langfuse, so its Skills view can show where each one is used"
+  task push_skills: :environment do
+    abort "Set LANGFUSE_URL, LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY first" unless Langfuse.configured?
+
+    Skill.find_each do |skill|
+      Skill::Tracing.publish(skill)
+      puts "#{skill.langfuse_name}: version #{skill.langfuse_version}"
+    end
+  end
 end
