@@ -3,12 +3,16 @@
 #   docker compose up -d db              # enough for the app in mock mode (no API keys needed)
 #   docker compose --profile ai up -d    # adds LiteLLM and Langfuse for real model calls and traces
 #
+# Long-running services restart with Docker (restart: unless-stopped), so traces keep arriving after a reboot;
+# `docker compose stop` keeps them stopped.
+#
 # Ports avoid the defaults (3000, 3001, 4000, 5432) so OxyBot runs next to other local stacks:
 # Postgres 5435, Langfuse 3011, LiteLLM 4010, Presidio 5011 and 5012. Every value marked CHANGEME is a local demo default.
 services:
   # Postgres 17 with pgvector (insights.embedding, features.embedding). Langfuse keeps its own
   # tables in a separate "langfuse" database on the same server (created by db/init).
   db:
+    restart: unless-stopped
     image: pgvector/pgvector:pg17
     environment:
       POSTGRES_PASSWORD: postgres # CHANGEME
@@ -26,6 +30,7 @@ services:
   # The only place the app calls models from. Rails knows aliases (oxybot-extract, oxybot-judge,
   # oxybot-assistant, oxybot-embed), never providers; litellm.yaml maps them and caps the daily spend.
   litellm:
+    restart: unless-stopped
     profiles: ["ai"]
     image: ghcr.io/berriai/litellm:v1.90.2
     command: ["--config", "/app/config.yaml"]
@@ -65,18 +70,21 @@ services:
   # with OXYBOT_TRACE_CONTENT=redacted every prompt and answer goes through it before a trace leaves the app.
   # The project moved from Microsoft to the Data Privacy Stack; the mcr.microsoft.com images are no longer updated.
   presidio-analyzer:
+    restart: unless-stopped
     profiles: ["ai"]
     image: ghcr.io/data-privacy-stack/presidio-analyzer:2.2.366
     ports:
       - "127.0.0.1:5012:3000"
 
   presidio-anonymizer:
+    restart: unless-stopped
     profiles: ["ai"]
     image: ghcr.io/data-privacy-stack/presidio-anonymizer:2.2.366
     ports:
       - "127.0.0.1:5011:3000"
 
   ollama:
+    restart: unless-stopped
     profiles: ["ai"]
     image: ollama/ollama:0.40.6
     volumes:
@@ -101,6 +109,7 @@ services:
   # Langfuse 4: traces from LiteLLM and from Rails (OpenTelemetry), UI on http://localhost:3011.
   # It needs ClickHouse (traces), Redis (queues) and S3-compatible storage (raw events).
   langfuse-web:
+    restart: unless-stopped
     profiles: ["ai"]
     image: langfuse/langfuse:4.79.0
     environment: &langfuse-env
@@ -157,12 +166,14 @@ services:
       start_period: 20s
 
   langfuse-worker:
+    restart: unless-stopped
     profiles: ["ai"]
     image: langfuse/langfuse-worker:4.79.0
     environment: *langfuse-env
     depends_on: *langfuse-deps
 
   clickhouse:
+    restart: unless-stopped
     profiles: ["ai"]
     image: clickhouse/clickhouse-server:26.3.62.3
     user: "101:101"
@@ -179,6 +190,7 @@ services:
       retries: 20
 
   redis:
+    restart: unless-stopped
     profiles: ["ai"]
     image: redis:7.4.12
     command: ["--requirepass", "oxybot-local-redis", "--maxmemory-policy", "noeviction"] # CHANGEME
@@ -190,6 +202,7 @@ services:
 
   # MinIO from Chainguard (as in Langfuse's own compose file), pinned by digest. The command creates the bucket.
   minio:
+    restart: unless-stopped
     profiles: ["ai"]
     image: cgr.dev/chainguard/minio@sha256:96b6cf3e14084d3427ec46de10c2873af61b945ad9272eec266cfc8df551cba5
     entrypoint: sh
