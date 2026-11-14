@@ -1,6 +1,6 @@
 <% content_for :title, "Features" %>
 <div class="page-header">
-  <h1>Features by demand</h1>
+  <h1>Features</h1>
   <div class="row">
     <%= link_to "Products", products_path, class: "button" %>
     <%= link_to "Add feature", new_feature_path(product: @product&.slug), class: "button button--primary" %>
@@ -20,16 +20,20 @@
     <%= form.submit "Filter", class: "button", name: nil %>
   <% end %>
 <% end %>
+<nav class="tabs" aria-label="Sort">
+  <%= tab_link "By demand (ARR)", features_path(product: @product&.slug), @sort == "demand" %>
+  <%= tab_link "By priority (RICE)", features_path(product: @product&.slug, sort: "priority"), @sort == "priority" %>
+</nav>
 <div class="table-wrap">
 <table class="table table--cards">
-  <thead><tr><th>Feature</th><th class="num">ARR asking</th><th class="num">Customers</th><th class="num">Insights</th><th>Status</th><th>Product</th></tr></thead>
+  <thead><tr><th>Feature</th><th class="num">ARR asking</th><th class="num">Customers</th><th class="num">RICE</th><th>Status</th><th>Product</th></tr></thead>
   <tbody>
     <% @features.each do |feature| %>
       <tr>
         <td class="table__title"><%= link_to feature.title, feature %></td>
         <td class="num" data-label="ARR asking"><strong class="arr"><%= money(feature.demand_arr_cents) %></strong></td>
         <td class="num" data-label="Customers"><%= feature.customer_count %></td>
-        <td class="num" data-label="Insights"><%= feature.insight_count %></td>
+        <td class="num" data-label="RICE"><%= feature.rice_score || tag.span("Not scored", class: "muted") %></td>
         <td data-label="Status"><%= status_pill feature.status %></td>
         <td class="muted" data-label="Product"><%= feature.product.name %></td>
       </tr>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -171,12 +171,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
     t.string "linear_state"
     t.vector "embedding", limit: 768
     t.bigint "embedding_space_id"
+    t.decimal "impact", precision: 4, scale: 2
+    t.integer "confidence"
+    t.decimal "effort", precision: 6, scale: 1
     t.index ["account_id", "linear_issue_id"], name: "index_features_on_account_id_and_linear_issue_id", unique: true, where: "(linear_issue_id IS NOT NULL)"
     t.index ["account_id"], name: "index_features_on_account_id"
     t.index ["embedding"], name: "index_features_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
     t.index ["embedding_space_id"], name: "index_features_on_embedding_space_id"
     t.index ["product_id"], name: "index_features_on_product_id"
     t.index ["search_vector"], name: "index_features_on_search_vector", using: :gin
+    t.check_constraint "confidence IS NULL OR (confidence = ANY (ARRAY[50, 80, 100]))", name: "features_confidence_scale"
+    t.check_constraint "effort IS NULL OR effort > 0::numeric", name: "features_effort_positive"
+    t.check_constraint "impact IS NULL OR (impact = ANY (ARRAY[0.25, 0.5, 1::numeric, 2::numeric, 3::numeric]))", name: "features_impact_scale"
   end
 
   create_table "feedback_notes", force: :cascade do |t|

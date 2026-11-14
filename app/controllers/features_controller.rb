@@ -5,7 +5,8 @@ class FeaturesController < ApplicationController
   def index
     @products = Current.account.products.alphabetically
     @product = Current.account.products.find_by(slug: params[:product]) if params[:product].present?
-    features = Current.account.features.includes(:product).by_demand
+    @sort = params[:sort] == "priority" ? "priority" : "demand"
+    features = Current.account.features.includes(:product).public_send(@sort == "priority" ? :by_priority : :by_demand)
     @features = paginate(@product ? features.where(product: @product) : features)
   end
 
@@ -44,7 +45,7 @@ class FeaturesController < ApplicationController
   end
 
   def feature_params
-    attributes = params.expect(feature: %i[title description status product_id])
+    attributes = params.expect(feature: %i[title description status product_id impact confidence effort])
     # The product id comes from a form: it must be one of this account's products
     attributes[:product_id] = Current.account.products.find(attributes[:product_id]).id if attributes[:product_id].present?
     attributes

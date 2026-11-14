@@ -9,7 +9,18 @@
   <div class="stat stat--focus"><div class="stat__value arr"><%= money(@feature.demand_arr_cents) %></div><div class="stat__label">ARR of the customers asking</div></div>
   <div class="stat"><div class="stat__value"><%= @feature.customer_count %></div><div class="stat__label"><%= "customer".pluralize(@feature.customer_count) %></div></div>
   <div class="stat"><div class="stat__value"><%= @feature.insight_count %></div><div class="stat__label"><%= "insight".pluralize(@feature.insight_count) %></div></div>
+  <div class="stat">
+    <div class="stat__value"><%= @feature.rice_score || "Not scored" %></div>
+    <div class="stat__label">RICE priority</div>
+  </div>
 </div>
+<p class="muted small rice-formula">
+  <% if @feature.rice_score %>
+    RICE = <%= @feature.reach %> customers × impact <%= @feature.impact.to_f.to_s.delete_suffix(".0") %> × <%= @feature.confidence %>% confidence ÷ <%= @feature.effort.to_f.to_s.delete_suffix(".0") %> person-weeks.
+  <% else %>
+    Reach is <%= pluralize(@feature.reach, "customer") %>. Set <%= @feature.rice_missing.to_sentence %> in <%= link_to "Edit", edit_feature_path(@feature) %> to get a RICE score.
+  <% end %>
+</p>
 <div class="grid grid--tight">
   <section class="card">
     <h2 class="section-title section-title--flush">Documents</h2>
