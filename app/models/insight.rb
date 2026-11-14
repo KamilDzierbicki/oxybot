@@ -29,8 +29,11 @@ class Insight < ApplicationRecord
   # created: the person made a new feature for it, which is right when the judge found no existing one
   def link_to(feature, created: false)
     update!(feature: feature, triage_state: "linked")
-    score_match(feature == suggested_feature || (created && suggested_feature.nil?))
+    correct = feature == suggested_feature || (created && suggested_feature.nil?)
+    score_match(correct)
     score_kept(true)
+    # The judge ran and got it wrong: the person's answer becomes an evaluation case to review
+    EvaluationCase.record_matching_correction(self) if !correct && match_reason.present? && !created
   end
 
   def dismiss
@@ -41,6 +44,7 @@ class Insight < ApplicationRecord
 
   def restore
     update!(feature: nil, triage_state: "pending")
+    EvaluationCase.pending.where(insight: self).delete_all
     Langfuse::Score.remove(score_id("feature-match"))
     Langfuse::Score.remove(score_id("kept"))
   end

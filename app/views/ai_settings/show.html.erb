@@ -48,6 +48,12 @@
   <div><%= form.submit "Save AI settings", class: "button button--primary" %></div>
 <% end %>
 
+<h2 class="section-title">Evaluation</h2>
+<p class="small">
+  <%= link_to "Evaluation cases", evaluation_cases_path %>: <%= pluralize(@account.evaluation_cases.pending.count, "correction") %> to review,
+  <%= @account.evaluation_cases.approved.count %> approved for experiments.
+</p>
+
 <details class="advanced">
   <summary>Advanced: prompts</summary>
   <p class="muted small">

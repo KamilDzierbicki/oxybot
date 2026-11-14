@@ -187,6 +187,7 @@ OxyBot, LiteLLM and Langfuse work as one system:
 | Every model call, with its cost, linked to the prompt version it was built from | Langfuse traces, LiteLLM logs |
 | People's decisions as scores on the call they judge: `feature_match` (linked the suggested feature), `insight_kept` (kept or dismissed an insight), `suggestion_accepted` (took the agent's edit) | Langfuse scores |
 | Skills run in the assistant (`/churn-risk`), with use counts per skill | Langfuse Skills |
+| Corrections become evaluation cases: when someone links another feature than the suggested one, the case waits for review and, once approved, joins the matching experiments | AI settings, Evaluation cases |
 | Experiments on `config/evals` with any model: extraction and matching accuracy, retrieval MRR and recall@5 (vector, full text, hybrid), BLEU and ROUGE of drafted documents against a reference | `bin/rails evals:run MODEL=oxybot-haiku [TASK=retrieval]`, Langfuse Datasets |
 | LLM-as-judge evaluators: is an answer supported by the quotes it cites, are extracted insights faithful | Langfuse Evaluators (see below) |
 | A daily AI budget per workspace, enforced by LiteLLM, with today's spend | AI settings, LiteLLM Customers |

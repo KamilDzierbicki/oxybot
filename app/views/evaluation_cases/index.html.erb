@@ -1,0 +1,41 @@
+<% content_for :title, "Evaluation cases" %>
+<div class="page-header">
+  <h1>Evaluation cases</h1>
+  <nav class="tabs" aria-label="Review state">
+    <% { "pending" => "To review", "approved" => "Approved", "rejected" => "Rejected" }.each do |status, label| %>
+      <%= tab_link label, evaluation_cases_path(status: status), status == @status %>
+    <% end %>
+  </nav>
+</div>
+<p class="muted page-intro">When someone links a different feature than the one the model suggested, the need and the right feature land here.
+  Approved cases join the matching experiments (<code>bin/rails evals:run TASK=matching</code>), so the dataset grows from real corrections.
+  Their text goes to Langfuse only when traces may carry content.</p>
+
+<% if @cases.any? %>
+  <div class="table-wrap">
+  <table class="table table--cards">
+    <thead><tr><th>Customer need</th><th>Model suggested</th><th>Right feature</th><th><span class="visually-hidden">Review</span></th></tr></thead>
+    <tbody>
+      <% @cases.each do |evaluation_case| %>
+        <tr>
+          <td class="table__title table__title--text"><%= evaluation_case.insight ? link_to(evaluation_case.input["input"], evaluation_case.insight) : evaluation_case.input["input"] %></td>
+          <td data-label="Model suggested"><%= evaluation_case.expected["suggested"] || tag.span("Nothing", class: "muted") %></td>
+          <td data-label="Right feature"><strong><%= evaluation_case.expected["feature"] %></strong></td>
+          <td>
+            <% if evaluation_case.pending? %>
+              <span class="row">
+                <%= button_to "Approve", evaluation_case_path(evaluation_case), method: :patch, params: { status: "approved" }, class: "button" %>
+                <%= button_to "Reject", evaluation_case_path(evaluation_case), method: :patch, params: { status: "rejected" }, class: "button button--quiet" %>
+              </span>
+            <% else %>
+              <span class="muted small"><%= evaluation_case.reviewed_by&.name %></span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  </div>
+<% else %>
+  <p class="empty">No <%= @status == "pending" ? "cases to review" : "#{@status} cases" %>. Corrections in Insights add them.</p>
+<% end %>

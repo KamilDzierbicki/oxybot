@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   root "conversations#index"
   resource :search, only: :show
   resource :roadmap, only: :show
+  resources :evaluation_cases, only: %i[index update]
 
   # The public customer portal of a workspace
   scope "p/:portal_slug", module: :portal, as: :portal do

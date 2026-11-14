@@ -19,6 +19,7 @@ class Account < ApplicationRecord
   has_many :document_templates, dependent: :destroy
   has_many :skills, dependent: :destroy
   has_many :invitations, dependent: :destroy
+  has_many :evaluation_cases, dependent: :delete_all
   has_one :slack_integration, class_name: "Integration::Slack"
   has_one :mattermost_integration, class_name: "Integration::Mattermost"
   has_one :hubspot_integration, class_name: "Integration::Hubspot"

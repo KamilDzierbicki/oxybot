@@ -34,7 +34,11 @@ class Evaluation
   end
 
   def items
-    @items ||= task == "retrieval" ? dataset.fetch("queries") : dataset
+    @items ||= case task
+    when "retrieval" then dataset.fetch("queries")
+    when "matching" then dataset + @account.evaluation_cases.approved.where(task: "matching").order(:id).map(&:to_item)
+    else dataset
+    end
   end
 
   def dataset
@@ -143,6 +147,7 @@ class Evaluation
       Langfuse.post("/api/public/v2/datasets", { name: dataset_name, description: "OxyBot demo #{task} cases (config/evals/#{task}.yml)" })
     end
     items.each do |item|
+      next if private_text?(item) # cases from real corrections hold customer text
       Langfuse.post("/api/public/dataset-items", { datasetName: dataset_name, id: item_id(item), input: item_input(item),
                                                    expectedOutput: expected_output(item) })
     end
@@ -180,7 +185,9 @@ class Evaluation
     raise
   end
 
-  def item_input(item) = item.except("id", "expected", "relevant", "reference")
+  def item_input(item) = private_text?(item) ? { "case" => item["id"] } : item.except("id", "expected", "relevant", "reference", "private")
+
+  def private_text?(item) = item["private"] && !Rails.configuration.x.trace_content
   def expected_output(item) = item["expected"] || item.slice("relevant", "reference")
 
   def score(root, result)

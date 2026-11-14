@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -159,6 +159,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_160000) do
     t.datetime "activated_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "evaluation_cases", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "insight_id"
+    t.bigint "reviewed_by_id"
+    t.string "task", null: false
+    t.jsonb "input", default: {}, null: false
+    t.jsonb "expected", default: {}, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "task", "status"], name: "index_evaluation_cases_on_account_id_and_task_and_status"
+    t.index ["account_id"], name: "index_evaluation_cases_on_account_id"
+    t.index ["insight_id", "task"], name: "index_evaluation_cases_on_insight_id_and_task", unique: true, where: "(insight_id IS NOT NULL)"
+    t.index ["insight_id"], name: "index_evaluation_cases_on_insight_id"
+    t.index ["reviewed_by_id"], name: "index_evaluation_cases_on_reviewed_by_id"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying]::text[])", name: "evaluation_cases_status"
   end
 
   create_table "features", force: :cascade do |t|
@@ -400,6 +418,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_160000) do
   add_foreign_key "documents", "document_templates"
   add_foreign_key "documents", "features"
   add_foreign_key "documents", "users", column: "creator_id"
+  add_foreign_key "evaluation_cases", "accounts"
+  add_foreign_key "evaluation_cases", "insights", on_delete: :nullify
+  add_foreign_key "evaluation_cases", "users", column: "reviewed_by_id", on_delete: :nullify
   add_foreign_key "features", "accounts"
   add_foreign_key "features", "embedding_spaces"
   add_foreign_key "features", "products"
