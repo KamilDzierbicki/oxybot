@@ -4,11 +4,12 @@
 module Langfuse::Score
   module_function
 
-  def record(id, trace_id:, name:, value:)
+  # observation_id: the model call within the trace, so Langfuse can split the score by its prompt version and model
+  def record(id, trace_id:, observation_id:, name:, value:)
     return if trace_id.blank? || !Langfuse.configured?
 
-    LangfuseScoreJob.perform_later(id, { "traceId" => trace_id, "name" => name, "value" => value ? 1 : 0, "dataType" => "BOOLEAN",
-                                         "environment" => Langfuse.environment })
+    LangfuseScoreJob.perform_later(id, { "traceId" => trace_id, "observationId" => observation_id, "name" => name, "value" => value ? 1 : 0,
+                                         "dataType" => "BOOLEAN", "environment" => Langfuse.environment }.compact)
   end
 
   def remove(id)

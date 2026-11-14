@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -105,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_170000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "trace_id"
+    t.string "observation_id"
     t.index ["base_version_id"], name: "index_document_suggestions_on_base_version_id"
     t.index ["document_id"], name: "index_document_suggestions_on_document_id"
     t.index ["user_id"], name: "index_document_suggestions_on_user_id"
@@ -176,7 +177,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_170000) do
     t.index ["insight_id", "task"], name: "index_evaluation_cases_on_insight_id_and_task", unique: true, where: "(insight_id IS NOT NULL)"
     t.index ["insight_id"], name: "index_evaluation_cases_on_insight_id"
     t.index ["reviewed_by_id"], name: "index_evaluation_cases_on_reviewed_by_id"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying]::text[])", name: "evaluation_cases_status"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text])", name: "evaluation_cases_status"
   end
 
   create_table "features", force: :cascade do |t|
@@ -211,7 +212,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_170000) do
     t.check_constraint "confidence IS NULL OR (confidence = ANY (ARRAY[50, 80, 100]))", name: "features_confidence_scale"
     t.check_constraint "effort IS NULL OR effort > 0::numeric", name: "features_effort_positive"
     t.check_constraint "impact IS NULL OR (impact = ANY (ARRAY[0.25, 0.5, 1::numeric, 2::numeric, 3::numeric]))", name: "features_impact_scale"
-    t.check_constraint "roadmap_lane IS NULL OR (roadmap_lane::text = ANY (ARRAY['now'::character varying, 'next'::character varying, 'later'::character varying]::text[]))", name: "features_roadmap_lane"
+    t.check_constraint "roadmap_lane IS NULL OR (roadmap_lane::text = ANY (ARRAY['now'::character varying::text, 'next'::character varying::text, 'later'::character varying::text]))", name: "features_roadmap_lane"
   end
 
   create_table "feedback_notes", force: :cascade do |t|
@@ -226,6 +227,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_170000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "extraction_trace_id"
+    t.string "extraction_observation_id"
     t.index ["account_id", "created_at", "id"], name: "index_feedback_notes_for_list", order: { created_at: :desc, id: :desc }
     t.index ["account_id", "source", "external_id"], name: "index_feedback_notes_on_account_id_and_source_and_external_id", unique: true, where: "(external_id IS NOT NULL)"
     t.index ["account_id"], name: "index_feedback_notes_on_account_id"
@@ -251,6 +253,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_170000) do
     t.vector "embedding", limit: 768
     t.bigint "embedding_space_id"
     t.string "match_trace_id"
+    t.string "match_observation_id"
     t.index ["account_id", "triage_state", "created_at", "id"], name: "index_insights_for_inbox", order: { created_at: :desc, id: :desc }
     t.index ["account_id", "triage_state"], name: "index_insights_on_account_id_and_triage_state"
     t.index ["account_id"], name: "index_insights_on_account_id"

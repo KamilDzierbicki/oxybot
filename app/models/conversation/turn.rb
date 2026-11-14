@@ -22,13 +22,14 @@ class Conversation::Turn
     history.each { |message| agent.add_message(role: message.role.to_sym, content: message.content) }
     agent.before_tool_call { |call| @tool_calls << { name: call.name, arguments: call.arguments } }
 
-    Langfuse.traced("assistant-turn") do |_trace_id, span|
+    Langfuse.traced("assistant-turn", conversation_id: conversation.id, message_id: reply.id,
+                    oxybot_url: Langfuse.url(conversation, anchor: "message_#{reply.id}")) do |trace|
       response = Skill::Tracing.with(available: Skill.available_to(user), used: skill) { Prompt.linked("product-agent") { agent.ask(question_text) } }
       content, cited = checked_citations(response.content.to_s)
       reply.update!(status: "done", content: content.presence || "(no answer)", tool_calls: @tool_calls,
                     cited_insight_ids: cited, input_tokens: response.tokens&.input, output_tokens: response.tokens&.output)
       # The evaluator checks the answer against what the tools returned for the cited insights: quote and customer record
-      Langfuse.record_content(span, input: question_text, output: reply.content, metadata: { evidence: evidence_for(cited) })
+      Langfuse.record_content(trace.span, input: question_text, output: reply.content, metadata: { evidence: evidence_for(cited) })
     end
     deliver_to_chat
   rescue RubyLLM::Error, RubyLLM::ToolRoundLimitError, Faraday::Error => e

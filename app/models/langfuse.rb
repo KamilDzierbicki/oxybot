@@ -20,14 +20,26 @@ module Langfuse
     raise unless e.message.include?("answered 404")
   end
 
-  # Runs the block in a named span, the root of a Langfuse trace, and yields the trace id so a person's later
-  # decision can be scored on exactly this call. Yields nil when tracing is off.
+  # The root span of an OxyBot trace. id and generation_id (its last model call) let a person's later decision be
+  # scored on exactly this call; both are nil when tracing is off.
+  Trace = Struct.new(:id, :span, :generation_id)
+
+  # Runs the block in a named span, the root of a Langfuse trace, and yields the Trace.
   # langfuse.trace.name: Langfuse v4 does not derive the trace name from the root span, and evaluation rules select
-  # traces by it
-  def traced(name)
-    OpenTelemetry.tracer_provider.tracer("oxybot").in_span(name, attributes: { "langfuse.trace.name" => name }) do |span|
-      yield(span.context.valid? ? span.context.hex_trace_id : nil, span)
+  # traces by it. ids: record ids and an oxybot_url link, never text, as filterable trace metadata, so a reviewer
+  # in Langfuse finds the record in OxyBot.
+  def traced(name, **ids)
+    attributes = { "langfuse.trace.name" => name }
+    ids.compact.each { |key, value| attributes["langfuse.trace.metadata.#{key}"] = value.to_s }
+    OpenTelemetry.tracer_provider.tracer("oxybot").in_span(name, attributes: attributes) do |span|
+      trace = Trace.new(span.context.valid? ? span.context.hex_trace_id : nil, span)
+      OpenTelemetry::Context.with_value(Otel::TRACE, trace) { yield trace }
     end
+  end
+
+  # The absolute OxyBot link to a record, for trace metadata
+  def url(record, **options)
+    Rails.application.routes.url_helpers.polymorphic_url(record, **Rails.application.config.x.url_options, **options)
   end
 
   # What the evaluators read on a root span: input, output and extra context. Written only when OXYBOT_TRACE_CONTENT

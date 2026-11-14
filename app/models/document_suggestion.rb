@@ -49,6 +49,6 @@ class DocumentSuggestion < ApplicationRecord
 
   # On the reviser's call: did the person take the suggested change?
   def score_acceptance(accepted)
-    Langfuse::Score.record("oxybot-suggestion-#{id}-accepted", trace_id: trace_id, name: "suggestion_accepted", value: accepted)
+    Langfuse::Score.record("oxybot-suggestion-#{id}-accepted", trace_id: trace_id, observation_id: observation_id, name: "suggestion_accepted", value: accepted)
   end
 end

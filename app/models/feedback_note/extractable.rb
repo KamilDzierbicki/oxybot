@@ -29,12 +29,12 @@ module FeedbackNote::Extractable
     return if awaiting_product?
     return unless self.class.where(id: id, processed_at: nil).update_all(processed_at: Time.current) == 1
 
-    Langfuse.traced("extract-insights") do |trace_id, span|
+    Langfuse.traced("extract-insights", feedback_note_id: id, oxybot_url: Langfuse.url(self)) do |trace|
       extracted = ask_extractor
-      Langfuse.record_content(span, input: body, output: extracted)
+      Langfuse.record_content(trace.span, input: body, output: extracted)
       transaction do
         extracted.each { |attributes| build_insight(attributes)&.save! }
-        update_columns(processed_at: Time.current, extraction_trace_id: trace_id)
+        update_columns(processed_at: Time.current, extraction_trace_id: trace.id, extraction_observation_id: trace.generation_id)
       end
     end
   rescue StandardError

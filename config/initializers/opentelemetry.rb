@@ -5,6 +5,7 @@ require "opentelemetry/sdk"
 require Rails.root.join("lib/otel/skill_span_processor") # needed in every environment: Skill::Tracing uses its key
 require Rails.root.join("lib/otel/baggage_span_processor")
 require Rails.root.join("lib/otel/prompt_span_processor")
+require Rails.root.join("lib/otel/generation_span_processor") # needed in every environment: Langfuse.traced uses its key
 require Rails.root.join("lib/otel/environment")
 
 return if Rails.env.test? || ENV["LANGFUSE_URL"].blank?
@@ -19,6 +20,7 @@ OpenTelemetry::SDK.configure do |config|
   config.add_span_processor(Otel::SkillSpanProcessor.new) # skill names for Langfuse's Skills view
   config.add_span_processor(Otel::BaggageSpanProcessor.new) # experiment context for Langfuse
   config.add_span_processor(Otel::PromptSpanProcessor.new) # prompt version per model call
+  config.add_span_processor(Otel::GenerationSpanProcessor.new) # the model call a person's decision is scored on
   config.add_span_processor(
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
       OpenTelemetry::Exporter::OTLP::Exporter.new(

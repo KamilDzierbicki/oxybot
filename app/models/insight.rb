@@ -53,12 +53,13 @@ class Insight < ApplicationRecord
 
   # On the judge's call: did it suggest the feature the person chose?
   def score_match(correct)
-    Langfuse::Score.record(score_id("feature-match"), trace_id: match_trace_id, name: "feature_match", value: correct)
+    Langfuse::Score.record(score_id("feature-match"), trace_id: match_trace_id, observation_id: match_observation_id, name: "feature_match", value: correct)
   end
 
   # On the extraction call of the note: was this a real customer need?
   def score_kept(kept)
-    Langfuse::Score.record(score_id("kept"), trace_id: feedback_note.extraction_trace_id, name: "insight_kept", value: kept)
+    Langfuse::Score.record(score_id("kept"), trace_id: feedback_note.extraction_trace_id,
+                                             observation_id: feedback_note.extraction_observation_id, name: "insight_kept", value: kept)
   end
 
   def score_id(name) = "oxybot-insight-#{id}-#{name}"

@@ -15,12 +15,14 @@ class Document::Generation
     return unless document.drafting?
     return document.update!(status: "failed", body: "AI drafting is paused on this server.") unless Rails.configuration.x.ai_enabled
 
-    brief = Document::Brief.new(document, self).to_s
-    response = Prompt.linked("document-writer") { DocumentWriter.new(generation: self).ask(brief) }
-    body, cited = checked_citations(response.content)
-    document.transaction do
-      document.update!(body: body, status: "ready", cited_insight_ids: cited)
-      document.versions.create!(body: body, summary: "Drafted by the agent")
+    Langfuse.traced("draft-document", document_id: document.id, oxybot_url: Langfuse.url(document)) do
+      brief = Document::Brief.new(document, self).to_s
+      response = Prompt.linked("document-writer") { DocumentWriter.new(generation: self).ask(brief) }
+      body, cited = checked_citations(response.content)
+      document.transaction do
+        document.update!(body: body, status: "ready", cited_insight_ids: cited)
+        document.versions.create!(body: body, summary: "Drafted by the agent")
+      end
     end
     account.integrations.select(&:chat?).each { |chat| chat.post_document(document) } if document.kind == "opportunity_report"
   rescue RubyLLM::Error, RubyLLM::ToolRoundLimitError, Faraday::Error => e

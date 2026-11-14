@@ -15,7 +15,7 @@ module Insight::Matchable
   def match
     return unless Rails.configuration.x.ai_enabled
 
-    Langfuse.traced("match-insight") do |trace_id|
+    Langfuse.traced("match-insight", insight_id: id, oxybot_url: Langfuse.url(self)) do |trace|
       embed unless embedding_current?
       candidates = product.features.hybrid_search(summary, vector: embedding, space: embedding_space, limit: account.ai_setting("match_candidates"))
       next update!(suggested_feature: nil, match_confidence: nil, match_reason: "No features in #{product.name} yet.") if candidates.empty?
@@ -24,7 +24,8 @@ module Insight::Matchable
       # The model can only pick from the candidates it was shown
       suggested = candidates.find { |feature| feature.id == verdict["feature_id"] }
       update!(suggested_feature: suggested, match_confidence: verdict["confidence"].to_f.clamp(0, 1),
-              match_reason: readable_reason(verdict["reason"], candidates), match_trace_id: trace_id)
+              match_reason: readable_reason(verdict["reason"], candidates), match_trace_id: trace.id,
+              match_observation_id: trace.generation_id)
     end
   end
 

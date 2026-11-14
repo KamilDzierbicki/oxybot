@@ -12,17 +12,20 @@ class Document::Revision
   end
 
   def run
-    Langfuse.traced("revise-document") do |trace_id|
+    Langfuse.traced("revise-document", document_id: document.id, suggestion_id: suggestion.id,
+                                        oxybot_url: Langfuse.url(document, anchor: "document_suggestion_#{suggestion.id}")) do |trace|
       remember_insights(document.cited_insight_ids)
       reply = Prompt.linked("document-reviser") do
         DocumentReviser.new(revision: self).ask("<document>\n#{base_body}\n</document>\n\nRequest: #{suggestion.instruction}")
       end.parsed || {}
       body, _cited = checked_citations(clean(reply["body"]))
       if body.blank? || body.squish == base_body.squish
-        next suggestion.update!(status: "failed", rationale: "The agent returned the document unchanged. Try a more specific request.", trace_id: trace_id)
+        next suggestion.update!(status: "failed", rationale: "The agent returned the document unchanged. Try a more specific request.", trace_id: trace.id,
+                                  observation_id: trace.generation_id)
       end
 
-      suggestion.update!(body: body, rationale: reply["rationale"].to_s.truncate(1_000), status: "pending", trace_id: trace_id)
+      suggestion.update!(body: body, rationale: reply["rationale"].to_s.truncate(1_000), status: "pending", trace_id: trace.id,
+                         observation_id: trace.generation_id)
       suggestion.accept(user: suggestion.user) if document.auto_accept? && !suggestion.stale?
     end
   rescue RubyLLM::Error, Faraday::Error => e

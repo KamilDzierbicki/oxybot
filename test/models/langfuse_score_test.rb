@@ -113,7 +113,8 @@ class LangfuseScoreTest < ActiveSupport::TestCase
   def assert_score(id, trace:, name:, value:)
     payload = score_jobs(id).last&.dig("arguments", 1)
     assert payload, "expected a score #{id}"
-    assert_equal({ "traceId" => trace, "name" => name, "value" => value, "dataType" => "BOOLEAN", "environment" => "test" }, payload.except("_aj_symbol_keys", "_aj_hash_with_indifferent_access"))
+    assert_equal({ "traceId" => trace, "name" => name, "value" => value, "dataType" => "BOOLEAN", "environment" => "test" },
+                 payload.except("_aj_symbol_keys", "_aj_hash_with_indifferent_access", "observationId"))
   end
 
   def assert_no_score(id)

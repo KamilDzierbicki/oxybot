@@ -185,7 +185,9 @@ OxyBot, LiteLLM and Langfuse work as one system:
 | What | Where it shows |
 |---|---|
 | Every model call, with its cost, linked to the prompt version it was built from | Langfuse traces, LiteLLM logs |
+| Each trace names its record (`insight_id`, `feedback_note_id`, `document_id`, `suggestion_id`, `conversation_id`, `message_id`) and links to it (`oxybot_url`) as filterable metadata | Langfuse trace metadata |
 | People's decisions as scores on the call they judge: `feature_match` (linked the suggested feature), `insight_kept` (kept or dismissed an insight), `suggestion_accepted` (took the agent's edit) | Langfuse scores |
+| Corrections per week, split by prompt version and by model, and a queue for the weekly error review | Langfuse dashboard "OxyBot corrections", Human annotation (see below) |
 | Skills run in the assistant (`/churn-risk`), with use counts per skill | Langfuse Skills |
 | Corrections become evaluation cases: when someone links another feature than the suggested one, the case waits for review and, once approved, joins the matching experiments | AI settings, Evaluation cases |
 | Experiments on `config/evals` with any model: extraction and matching accuracy, retrieval MRR and recall@5 (vector, full text, hybrid), BLEU and ROUGE of drafted documents against a reference | `bin/rails evals:run MODEL=oxybot-haiku [TASK=retrieval]`, Langfuse Datasets |
@@ -199,13 +201,36 @@ Set it up once Langfuse runs:
 ```bash
 bin/rails langfuse:push_prompts   # prompts become versions in Langfuse
 bin/rails langfuse:push_skills    # skills appear in Langfuse's Skills view
-bin/rails langfuse:setup          # Langfuse calls models through LiteLLM; evaluators and their rules
+bin/rails langfuse:setup          # LiteLLM connection, evaluators, the review queue and the corrections dashboard
 bin/rails evals:run               # a first experiment on the demo dataset
 ```
 
 Scores carry only a name and 0 or 1, never text. Prompts and answers enter traces only with
 `OXYBOT_TRACE_CONTENT=true`, which evaluators need; turn it on for local work or a demo workspace, not for real
 customer data, and run `bin/rails langfuse:setup` again to switch the evaluator rules on.
+
+### Weekly error review
+
+`bin/rails langfuse:setup` creates what the review needs, and running it again changes nothing that is in place:
+
+- the dashboard **OxyBot corrections**: for each decision, the share of AI outputs people kept, by prompt version
+  and by model. The correction rate is 1 minus that share. The two tables on top also count the decisions, so a
+  share from a handful of decisions is easy to spot. Pick **Past 90 days** for weekly points; shorter ranges use
+  days or hours. In the line charts Langfuse draws weeks with no decisions as an `n/a` line at 0: that is no data,
+  not a week of corrections.
+- the score config `failure_type` (`wrong_feature`, `missed_need`, `invented_fact`, `wrong_product`, `unclear`, `ok`)
+  and the annotation queue `oxybot-weekly-review` that asks for it.
+
+Each week:
+
+1. In the dashboard, find the step and the prompt version or model whose share dropped.
+2. In **Tracing**, keep root observations, filter **Boolean Scores** by the score (for example `feature_match` false)
+   and the week, select the rows and choose **Add to Annotation Queue**, `oxybot-weekly-review`.
+3. In **Human annotation**, work through the queue: score `failure_type` on each trace, and open the record in
+   OxyBot through `oxybot_url` in the trace metadata.
+
+Scores are split by prompt version and model because they sit on the model call, which carries both. Decisions made
+before this existed are scored on the trace only, so the split leaves them out.
 
 ## Configuration
 
