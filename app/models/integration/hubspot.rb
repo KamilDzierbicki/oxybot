@@ -13,10 +13,6 @@ class Integration::Hubspot < Integration
   def arr_property = super.presence || "arr"
   def plan_property = super.presence || "plan"
 
-  def sync_later
-    SyncHubspotJob.perform_later(self)
-  end
-
   def sync
     transaction do
       companies = client.companies(properties: [ "name", "domain", arr_property, plan_property ]).to_h do |company|

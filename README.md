@@ -264,6 +264,22 @@ Every integration starts in mock mode until you save its token, and has a **Test
   company property that holds ARR. Syncs every hour.
 - **Linear:** a personal API key, the team id, and a webhook (Issues) to `/linear/webhooks` with its signing secret.
 - **GitHub:** a fine-grained, read-only token for the repository; the spec writer searches it for technical context.
+- **Salesforce:** an External Client App with the client credentials flow and a read-only integration user: My
+  Domain address, consumer key and secret. Accounts (ARR from `AnnualRevenue` or a custom field like `ARR__c`) and
+  contacts sync every hour, like HubSpot.
+- **Intercom:** a private app access token. Customer messages of conversations (optionally only those with a tag)
+  become feedback every hour; internal notes and AI answers are skipped.
+- **Zendesk:** an OAuth client (client credentials, scopes `tickets:read users:read`), because Zendesk retires API
+  tokens in 2027. Tickets with a tag (`feedback` by default) become feedback every hour.
+- **Gong:** an access key and secret and your API base URL (Gong settings, API page). What external speakers said on
+  calls becomes feedback every hour.
+- **Amplitude or Pendo:** for launch reviews. Set an event name (Amplitude) or feature id (Pendo) on each feature;
+  the review compares weekly unique users before and after the release.
+- **Hex:** Hex's API runs a published project but cannot return its numbers, so a launch review links to a fresh run
+  of your launch analysis (inputs `feature` and `released_on`) instead of quoting figures.
+
+Each of these was built from the service's current API documentation and is tested against its documented request
+and response shapes; none has been run against a live account yet. In test mode they use sample data, labeled as such.
 - **Coding agents (MCP):** create a token on your profile, then
   `claude mcp add --transport http oxybot https://your-host/mcp --header "Authorization: Bearer <token>"`.
   Tools: `list_specs`, `get_spec`, `search_feedback`.

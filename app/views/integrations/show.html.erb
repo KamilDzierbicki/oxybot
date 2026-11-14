@@ -10,7 +10,8 @@
                                                             "mattermost" => "Replies are recorded below instead of being posted to Mattermost.",
                                                             "hubspot" => "Sync reads config/mocks/hubspot.yml instead of the HubSpot API.",
                                                             "linear" => "Issues are kept inside OxyBot instead of Linear.",
-                                                            "github" => "The spec writer reads the sample repository in config/mocks/github." }[@integration.kind] %></p>
+                                                            "github" => "The spec writer reads the sample repository in config/mocks/github." }[@integration.kind] ||
+                                                         (@integration.analytics? ? "Launch reviews get sample numbers, labeled as such." : "Sync imports a few sample items.") %></p>
 <% end %>
 
 <div class="card row check-row">
@@ -26,5 +27,5 @@
   <% end %>
 </div>
 
-<%= render @integration.kind, integration: @integration %>
+<%= render(@integration.class.form_fields ? "integrations/generic" : "integrations/#{@integration.kind}", integration: @integration) %>
 <%= render "integrations/#{@integration.kind}_setup" if lookup_context.exists?("integrations/_#{@integration.kind}_setup") %>

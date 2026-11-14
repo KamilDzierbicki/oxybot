@@ -20,6 +20,8 @@
     <label>Personal API key<%= form.password_field :access_token %></label>
   <% when "github" %>
     <label>Fine-grained token with read access to contents<%= form.password_field :access_token %></label>
+  <% else %>
+    <%= render "integrations/fields", form: form, integration: @integration %>
   <% end %>
   <%= form.submit "Connect", class: "button button--primary" %>
 <% end %>

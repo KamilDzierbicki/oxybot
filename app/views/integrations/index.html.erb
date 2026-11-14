@@ -6,7 +6,14 @@
        "mattermost" => "Self-hosted chat: feedback channels through outgoing webhooks, questions with @oxybot in channels or privately with /oxybot.",
        "hubspot" => "Companies with ARR and contacts sync every hour, so feedback is weighted by revenue.",
        "linear" => "Send features with their spec as issues; status syncs both ways through Linear's webhook.",
-       "github" => "The spec writer searches your repository for technical context. Read-only." }.each do |kind, text| %>
+       "github" => "The spec writer searches your repository for technical context. Read-only.",
+       "salesforce" => "Accounts with ARR and contacts sync every hour, like HubSpot, so feedback is weighted by revenue.",
+       "intercom" => "Customer messages from support conversations become feedback every hour, optionally only tagged ones.",
+       "zendesk" => "Tickets with a feedback tag become feedback every hour (OAuth client, since Zendesk retires API tokens).",
+       "gong" => "What customers said on sales calls, from transcripts, becomes feedback every hour.",
+       "amplitude" => "Launch reviews get weekly users of each feature's event before and after release.",
+       "pendo" => "Launch reviews get weekly users of each feature's Pendo feature before and after release.",
+       "hex" => "Launch reviews link to a fresh run of your Hex launch analysis (Hex's API returns no numbers)." }.each do |kind, text| %>
     <% integration = @integrations[kind] %>
     <div class="card">
       <div class="insight__head"><strong><%= Integration.class_for(kind).new.display_name %></strong>

@@ -45,7 +45,7 @@ class FeaturesController < ApplicationController
   end
 
   def feature_params
-    attributes = params.expect(feature: %i[title description status product_id impact confidence effort])
+    attributes = params.expect(feature: %i[title description status product_id impact confidence effort analytics_key])
     # The product id comes from a form: it must be one of this account's products
     attributes[:product_id] = Current.account.products.find(attributes[:product_id]).id if attributes[:product_id].present?
     attributes

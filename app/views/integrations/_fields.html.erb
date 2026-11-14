@@ -1,0 +1,12 @@
+<%# Fields declared by the integration class (Integration.form_fields); secrets are never echoed back %>
+<% integration.class.form_fields.each do |name, label, type, options| %>
+  <% case type %>
+  <% when :password %>
+    <label><%= label %><%= form.password_field name, value: nil, autocomplete: "off",
+                                               placeholder: integration.persisted? && integration.public_send(name).present? ? "Stored, leave empty to keep" : "Not set (test mode)" %></label>
+  <% when :select %>
+    <label><%= label %><%= form.select name, options, selected: integration.public_send(name) %></label>
+  <% else %>
+    <label><%= label %><%= form.text_field name, value: integration.public_send(name) %></label>
+  <% end %>
+<% end %>

@@ -102,4 +102,12 @@ class UxAuditRegressionsTest < ActionDispatch::IntegrationTest
 
     assert_equal "mobile-app", @account.products.find_by(name: "Mobile App").slug
   end
+
+  test "a forged field of another integration kind is ignored instead of failing" do
+    post integrations_path, params: { integration: { kind: "pendo", external_id: "acme-pendo", host: "app.pendo.io", region: "eu", arr_field: "x" } }
+
+    pendo = @account.integrations.find_by!(type: "Integration::Pendo")
+    assert_equal "app.pendo.io", pendo.host
+    assert_redirected_to integration_path(pendo)
+  end
 end

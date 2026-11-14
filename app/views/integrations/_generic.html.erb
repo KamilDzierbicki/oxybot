@@ -1,0 +1,21 @@
+<% if integration.syncs? %>
+  <div class="card">
+    <p>Last sync: <strong><%= integration.synced_at ? "#{time_ago_in_words(integration.synced_at)} ago" : "never" %></strong>
+      <% if integration.feedback_source? %> · <%= link_to "#{integration.account.feedback_notes.where(source: integration.kind).count} feedback notes", feedback_notes_path %><% end %></p>
+    <%= button_to "Sync now", integration_sync_path(integration), class: "button button--primary" if Current.user.admin? %>
+  </div>
+<% end %>
+<% if integration.analytics? %>
+  <div class="card">
+    <p class="small">Launch reviews read weekly users from <%= integration.display_name %> for each released feature that has a
+      <strong><%= integration.class.analytics_key_label %></strong> (set it on the feature's Edit page).
+      <%= " In test mode they use sample numbers and say so." if integration.mock? %></p>
+  </div>
+<% end %>
+<% if Current.user.admin? %>
+  <h2 class="section-title">Settings</h2>
+  <%= form_with model: integration, scope: :integration, url: integration_path(integration), method: :patch, class: "form" do |form| %>
+    <%= render "integrations/fields", form: form, integration: integration %>
+    <div><%= form.submit "Save", class: "button" %></div>
+  <% end %>
+<% end %>

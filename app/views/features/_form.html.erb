@@ -6,6 +6,10 @@
     <label>Status<%= form.select :status, Feature::STATUSES.map { |status| [status.humanize, status] } %></label>
   </div>
   <label>Description<%= form.text_area :description, rows: 4 %></label>
+  <% if (analytics = Current.account.integrations.find(&:analytics?)) %>
+    <label><%= analytics.class.analytics_key_label %><%= form.text_field :analytics_key %>
+      <small class="muted">Launch reviews read weekly users of this from <%= analytics.display_name %> after the feature is released.</small></label>
+  <% end %>
   <fieldset class="fieldset">
     <legend>Priority (RICE)</legend>
     <p class="form-hint">Reach is the number of customers asking, counted from linked insights. Set the other three to get a score.</p>

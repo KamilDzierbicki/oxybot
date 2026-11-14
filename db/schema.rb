@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -53,6 +53,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_150000) do
     t.string "hubspot_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "salesforce_id"
     t.index ["account_id", "email"], name: "index_contacts_on_account_id_and_email", unique: true
     t.index ["account_id"], name: "index_contacts_on_account_id"
     t.index ["customer_id"], name: "index_contacts_on_customer_id"
@@ -86,8 +87,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_150000) do
     t.datetime "synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "salesforce_id"
     t.index ["account_id", "domain"], name: "index_customers_on_account_id_and_domain", unique: true, where: "(domain IS NOT NULL)"
     t.index ["account_id", "hubspot_id"], name: "index_customers_on_account_id_and_hubspot_id", unique: true, where: "(hubspot_id IS NOT NULL)"
+    t.index ["account_id", "salesforce_id"], name: "index_customers_on_account_id_and_salesforce_id", unique: true, where: "(salesforce_id IS NOT NULL)"
     t.index ["account_id"], name: "index_customers_on_account_id"
   end
 
@@ -179,6 +182,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_150000) do
     t.decimal "effort", precision: 6, scale: 1
     t.string "roadmap_lane"
     t.boolean "on_portal", default: false, null: false
+    t.string "analytics_key"
     t.index ["account_id", "linear_issue_id"], name: "index_features_on_account_id_and_linear_issue_id", unique: true, where: "(linear_issue_id IS NOT NULL)"
     t.index ["account_id", "roadmap_lane"], name: "index_features_on_account_id_and_roadmap_lane"
     t.index ["account_id"], name: "index_features_on_account_id"
@@ -253,6 +257,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_150000) do
     t.datetime "updated_at", null: false
     t.text "webhook_secret"
     t.text "command_token"
+    t.text "secret"
     t.index ["account_id", "type"], name: "index_integrations_on_account_id_and_type", unique: true
     t.index ["account_id"], name: "index_integrations_on_account_id"
     t.index ["type", "external_id"], name: "index_integrations_on_type_and_external_id", unique: true

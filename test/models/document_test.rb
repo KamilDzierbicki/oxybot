@@ -86,9 +86,13 @@ class DocumentTest < ActiveSupport::TestCase
     spec = draft("prd", feature: features(:shopify))
     spec.edit("## Goals and success metrics\n- 20% of eligible accounts connect within 30 days\n", user: users(:kamil), summary: "metrics")
 
+    Integration::Amplitude.create!(account: accounts(:acme), external_id: "amplitude-project")
+    features(:shopify).update!(analytics_key: "Shopify Connected", released_at: 3.weeks.ago)
+
     review = draft("launch_review", feature: features(:shopify))
 
-    assert_includes review.body, "14 of 120", "usage comes from the analytics mock"
+    assert_includes review.body, "Weekly users before the release", "usage comes from the workspace's analytics integration"
+    assert_includes review.body, "test mode: sample numbers", "sample numbers are never passed off as real usage"
   end
 
   test "the opportunity report is posted to the Slack report channel" do

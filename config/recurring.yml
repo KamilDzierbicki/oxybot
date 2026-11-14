@@ -1,7 +1,7 @@
 # Recurring jobs run by Solid Queue's scheduler (bin/dev in development, bin/jobs in production).
 default: &default
-  sync_hubspot:
-    class: SyncHubspotJob
+  sync_integrations:
+    class: SyncIntegrationJob
     queue: default
     schedule: every hour at minute 17
   purge_expired_data:

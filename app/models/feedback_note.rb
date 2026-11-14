@@ -2,7 +2,7 @@
 class FeedbackNote < ApplicationRecord
   include Extractable
 
-  SOURCES = %w[manual slack mattermost hubspot email portal].freeze
+  SOURCES = %w[manual slack mattermost hubspot email portal intercom zendesk gong].freeze
 
   belongs_to :account
   belongs_to :customer, optional: true

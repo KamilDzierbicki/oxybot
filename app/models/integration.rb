@@ -4,7 +4,7 @@
 class Integration < ApplicationRecord
   belongs_to :account
 
-  encrypts :access_token
+  encrypts :access_token, :secret
 
   broadcasts_refreshes
 
@@ -14,7 +14,10 @@ class Integration < ApplicationRecord
   def self.model_name = ActiveModel::Name.new(self, nil, "Integration")
 
   KINDS = { "slack" => "Integration::Slack", "mattermost" => "Integration::Mattermost", "hubspot" => "Integration::Hubspot",
-            "linear" => "Integration::Linear", "github" => "Integration::Github" }.freeze
+            "linear" => "Integration::Linear", "github" => "Integration::Github",
+            "amplitude" => "Integration::Amplitude", "pendo" => "Integration::Pendo", "hex" => "Integration::Hex",
+            "intercom" => "Integration::Intercom", "zendesk" => "Integration::Zendesk", "gong" => "Integration::Gong",
+            "salesforce" => "Integration::Salesforce" }.freeze
 
   store_accessor :settings, :last_check_ok, :last_check_message, :last_checked_at, :verified_external_id
 
@@ -24,6 +27,15 @@ class Integration < ApplicationRecord
   def self.external_id_label = "Id"
 
   def mock? = access_token.blank?
+
+  # Capabilities a kind adds through Integration::FeedbackSource, Integration::Analytics or a CRM sync
+  def feedback_source? = false
+  def analytics? = false
+  def syncs? = respond_to?(:sync)
+
+  def sync_later
+    SyncIntegrationJob.perform_later(self)
+  end
 
   # The workspace or organization id was confirmed by the service itself with this integration's token
   def verified? = verified_external_id.present? && verified_external_id == external_id
@@ -44,7 +56,15 @@ class Integration < ApplicationRecord
 
   def kind = type.demodulize.downcase
 
-  def display_name = { "slack" => "Slack", "mattermost" => "Mattermost", "hubspot" => "HubSpot", "linear" => "Linear", "github" => "GitHub" }.fetch(kind)
+  NAMES = { "slack" => "Slack", "mattermost" => "Mattermost", "hubspot" => "HubSpot", "linear" => "Linear", "github" => "GitHub",
+            "amplitude" => "Amplitude", "pendo" => "Pendo", "hex" => "Hex", "intercom" => "Intercom", "zendesk" => "Zendesk",
+            "gong" => "Gong", "salesforce" => "Salesforce" }.freeze
+
+  def display_name = NAMES.fetch(kind)
+
+  # Settings fields of kinds whose forms are built from this list (newer integrations):
+  # [ name, label, :text | :password | :select, options ]. access_token and secret are encrypted; the others are settings.
+  def self.form_fields = nil
 
   def chat? = is_a?(Integration::Chat)
 end
