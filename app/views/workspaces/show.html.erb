@@ -12,6 +12,20 @@
 </section>
 
 <section class="card">
+  <h2 class="section-title section-title--flush">Customer portal</h2>
+  <p class="small">A public roadmap where customers sign in with their email, vote and share ideas. It shows only features marked “Show on the customer portal”, never evidence or revenue. Votes count as customer evidence.</p>
+  <%= form_with model: @account, url: workspace_path, method: :patch, class: "form" do |form| %>
+    <label class="checkbox"><%= form.check_box :portal_enabled %> Portal is open</label>
+    <label>Address<%= form.text_field :portal_slug, placeholder: @account.name.parameterize, pattern: "[a-z0-9-]{3,40}" %>
+      <small class="muted">Lowercase letters, numbers and hyphens: <%= request.base_url %>/p/<strong><%= @account.portal_slug.presence || "your-name" %></strong></small></label>
+    <div><%= form.submit "Save portal", class: "button" %></div>
+  <% end %>
+  <% if @account.portal_enabled && @account.portal_slug %>
+    <p class="small">Open: <%= link_to portal_root_url(portal_slug: @account.portal_slug), portal_root_path(portal_slug: @account.portal_slug), target: "_blank", rel: "noopener" %> · <%= pluralize(@account.portal_votes.count, "vote") %> from <%= pluralize(@account.portal_visitors.count, "customer") %></p>
+  <% end %>
+</section>
+
+<section class="card">
   <h2 class="section-title section-title--flush">Export</h2>
   <p class="small">Download everything this workspace holds as one JSON file: users, products, features, customers, feedback, insights, documents, conversations. Tokens and passwords are not included.</p>
   <p><%= link_to "Download export", workspace_export_path, class: "button", data: { turbo: false } %></p>

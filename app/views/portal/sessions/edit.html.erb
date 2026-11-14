@@ -1,0 +1,5 @@
+<% content_for :title, "Sign in" %>
+<div class="card auth portal-auth">
+  <h1>Continue as <%= @visitor.email %></h1>
+  <%= button_to "Sign in", portal_sign_in_path(portal_slug: portal.portal_slug, token: params[:token]), method: :patch, class: "button button--primary" %>
+</div>

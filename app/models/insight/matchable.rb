@@ -4,7 +4,8 @@ module Insight::Matchable
   extend ActiveSupport::Concern
 
   included do
-    after_create_commit :match_later
+    # An insight created already linked (a portal vote) needs no suggestion
+    after_create_commit :match_later, unless: :feature_id?
   end
 
   def match_later

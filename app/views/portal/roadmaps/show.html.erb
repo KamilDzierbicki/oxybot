@@ -1,0 +1,38 @@
+<% content_for :title, "Roadmap" %>
+<h1>What we are working on</h1>
+<p class="muted page-intro">Vote for what matters to you; votes go straight to the product team.<%= " Sign in with your email to vote or share an idea." unless current_visitor %></p>
+
+<div class="roadmap">
+  <% @lanes.each do |lane, features| %>
+    <section class="roadmap__lane" aria-labelledby="portal-lane-<%= lane %>">
+      <h2 class="roadmap__title" id="portal-lane-<%= lane %>"><%= Feature::LANES[lane] %></h2>
+      <% features.each do |feature| %>
+        <article class="card roadmap__card" id="<%= dom_id(feature, :portal) %>">
+          <div class="roadmap__head">
+            <span class="roadmap__feature"><%= feature.title %></span>
+            <span class="muted small"><%= pluralize(@votes.fetch(feature.id, 0), "vote") %></span>
+          </div>
+          <% if feature.description.present? %><p class="small"><%= feature.description %></p><% end %>
+          <% if current_visitor&.voted_for?(feature) %>
+            <%= button_to "Voted · remove vote", portal_feature_vote_path(portal_slug: portal.portal_slug, feature_id: feature), method: :delete,
+                          class: "button", aria: { label: "Remove your vote for #{feature.title}" } %>
+          <% elsif current_visitor %>
+            <%= button_to "Vote", portal_feature_vote_path(portal_slug: portal.portal_slug, feature_id: feature),
+                          class: "button button--primary", aria: { label: "Vote for #{feature.title}" } %>
+          <% end %>
+        </article>
+      <% end %>
+      <%= tag.p("Nothing here right now.", class: "muted small") if features.empty? %>
+    </section>
+  <% end %>
+</div>
+
+<% if @released.any? %>
+  <h2 class="section-title">Recently released</h2>
+  <ul class="list">
+    <% @released.each do |feature| %>
+      <li class="list__item"><span><strong><%= feature.title %></strong> <span class="muted small"><%= feature.description.truncate(140) %></span></span>
+        <span class="muted small"><%= feature.released_at.to_date.to_fs(:long) %></span></li>
+    <% end %>
+  </ul>
+<% end %>

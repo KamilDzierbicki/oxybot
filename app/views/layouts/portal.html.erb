@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= safe_join([ content_for(:title), "#{portal.name} roadmap" ].compact_blank, " · ") %></title>
+    <meta name="description" content="What <%= portal.name %> is working on, and what customers ask for.">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="portal-body">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="portal-header">
+      <%= link_to portal.name, portal_root_path(portal_slug: portal.portal_slug), class: "portal-header__name" %>
+      <nav class="row" aria-label="Portal">
+        <% if current_visitor %>
+          <%= link_to "Share an idea", new_portal_idea_path(portal_slug: portal.portal_slug), class: "button button--primary" %>
+          <span class="muted small"><%= current_visitor.email %></span>
+          <%= button_to "Sign out", portal_session_path(portal_slug: portal.portal_slug), method: :delete, class: "link-button" %>
+        <% else %>
+          <%= link_to "Sign in to vote", new_portal_session_path(portal_slug: portal.portal_slug), class: "button button--primary" %>
+        <% end %>
+      </nav>
+    </header>
+    <main class="main portal-main" id="main">
+      <%= render "shared/flash" %>
+      <%= yield %>
+    </main>
+    <footer class="portal-footer muted small">Product feedback for <%= portal.name %> · runs on OxyBot</footer>
+  </body>
+</html>

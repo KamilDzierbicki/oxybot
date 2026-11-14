@@ -17,6 +17,19 @@ Rails.application.routes.draw do
   resource :search, only: :show
   resource :roadmap, only: :show
 
+  # The public customer portal of a workspace
+  scope "p/:portal_slug", module: :portal, as: :portal do
+    root "roadmaps#show"
+    resource :session, only: %i[new create destroy]
+    # The emailed link opens a page with a button; mail scanners that open links do not use up the sign-in
+    get "sign_in/:token" => "sessions#edit", as: :sign_in
+    patch "sign_in/:token" => "sessions#update"
+    resources :ideas, only: %i[new create]
+    resources :features, only: [] do
+      resource :vote, only: %i[create destroy]
+    end
+  end
+
   resources :conversations, only: %i[index show create] do
     resources :messages, only: :create
   end

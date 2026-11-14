@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -22,6 +22,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_140000) do
     t.text "custom_instructions"
     t.jsonb "ai_settings", default: {}, null: false
     t.string "time_zone", default: "UTC", null: false
+    t.string "portal_slug"
+    t.boolean "portal_enabled", default: false, null: false
+    t.index ["portal_slug"], name: "index_accounts_on_portal_slug", unique: true
   end
 
   create_table "chat_messages", force: :cascade do |t|
@@ -294,6 +297,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_140000) do
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
   end
 
+  create_table "portal_visitors", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "customer_id"
+    t.string "email", null: false
+    t.datetime "last_signed_in_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "email"], name: "index_portal_visitors_on_account_id_and_email", unique: true
+    t.index ["account_id"], name: "index_portal_visitors_on_account_id"
+    t.index ["customer_id"], name: "index_portal_visitors_on_customer_id"
+    t.check_constraint "email::text = lower(email::text)", name: "portal_visitors_email_lowercase"
+  end
+
+  create_table "portal_votes", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "portal_visitor_id", null: false
+    t.bigint "feature_id", null: false
+    t.bigint "feedback_note_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_portal_votes_on_account_id"
+    t.index ["feature_id"], name: "index_portal_votes_on_feature_id"
+    t.index ["feedback_note_id"], name: "index_portal_votes_on_feedback_note_id"
+    t.index ["portal_visitor_id", "feature_id"], name: "index_portal_votes_on_portal_visitor_id_and_feature_id", unique: true
+    t.index ["portal_visitor_id"], name: "index_portal_votes_on_portal_visitor_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "name", null: false
@@ -382,6 +412,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_140000) do
   add_foreign_key "invitations", "users", column: "invited_by_id"
   add_foreign_key "knowledge_documents", "accounts"
   add_foreign_key "messages", "conversations"
+  add_foreign_key "portal_visitors", "accounts"
+  add_foreign_key "portal_visitors", "customers"
+  add_foreign_key "portal_votes", "accounts"
+  add_foreign_key "portal_votes", "features"
+  add_foreign_key "portal_votes", "feedback_notes"
+  add_foreign_key "portal_votes", "portal_visitors"
   add_foreign_key "products", "accounts"
   add_foreign_key "sessions", "users"
   add_foreign_key "skills", "accounts"

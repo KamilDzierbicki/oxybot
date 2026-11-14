@@ -8,8 +8,8 @@ class WorkspacesController < ApplicationController
 
   def update
     @account = Current.account
-    if @account.update(time_zone: params.expect(account: [ :time_zone ])[:time_zone])
-      redirect_to workspace_path, notice: "Time zone saved."
+    if @account.update(params.expect(account: %i[time_zone portal_enabled portal_slug]))
+      redirect_to workspace_path, notice: "Saved."
     else
       render :show, status: :unprocessable_entity
     end

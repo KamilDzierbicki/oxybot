@@ -4,6 +4,7 @@ class Customer < ApplicationRecord
   has_many :contacts, dependent: :nullify
   has_many :feedback_notes, dependent: :nullify
   has_many :insights, dependent: :nullify
+  has_many :portal_visitors, dependent: :nullify
 
   normalizes :domain, with: ->(domain) { domain.strip.downcase.delete_prefix("www.").presence }
 

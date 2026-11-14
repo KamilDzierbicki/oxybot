@@ -2,6 +2,9 @@
 class Account < ApplicationRecord
   include AiSettings, AiBudget
 
+  # Portal votes point at features and feedback notes, so they go first when a workspace is deleted
+  has_many :portal_votes, dependent: :destroy
+  has_many :portal_visitors, dependent: :destroy
   has_many :users, dependent: :destroy
   has_many :products, dependent: :destroy
   has_many :features, dependent: :destroy
@@ -28,13 +31,15 @@ class Account < ApplicationRecord
 
   EXPORTED = {
     users: %i[id name email_address role slack_user_id mattermost_user_id created_at],
-    products: %i[id name slug description], features: %i[id product_id title description status released_at linear_identifier],
+    products: %i[id name slug description],
+    features: %i[id product_id title description status released_at linear_identifier impact confidence effort roadmap_lane on_portal],
     customers: %i[id name domain plan arr_cents], contacts: %i[id customer_id email name],
     feedback_notes: %i[id customer_id source author author_email body created_at],
     insights: %i[id feedback_note_id product_id customer_id feature_id quote summary urgency triage_state created_at],
     documents: %i[id feature_id kind title body status created_at updated_at],
     knowledge_documents: %i[id title body], skills: %i[id user_id name description instructions],
-    conversations: %i[id user_id channel title created_at]
+    conversations: %i[id user_id channel title created_at],
+    portal_visitors: %i[id customer_id email last_signed_in_at created_at], portal_votes: %i[id portal_visitor_id feature_id created_at]
   }.freeze
 
   def export
@@ -44,6 +49,17 @@ class Account < ApplicationRecord
   end
 
   # The weekly opportunity report (config/recurring.yml); it is posted to Slack when it is ready
+  normalizes :portal_slug, with: ->(slug) { slug.to_s.strip.downcase.parameterize.presence }
+  validates :portal_slug, uniqueness: true, length: { in: 3..40 }, allow_nil: true
+  validates :portal_slug, presence: true, if: :portal_enabled?
+
+  # The customer an email belongs to: a known contact first, otherwise the company with that email domain
+  def customer_for_email(email)
+    return if email.blank?
+
+    contacts.find_by(email: email.downcase)&.customer || customers.find_by(domain: email.downcase.split("@").last)
+  end
+
   def stale_embeddings?
     features.stale_embeddings.exists? || insights.stale_embeddings.exists?
   end

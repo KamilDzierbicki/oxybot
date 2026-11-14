@@ -46,6 +46,13 @@ model is the vendor's choice, and you cannot check how a number was made. OxyBot
 - Change requests ("shorten the requirements") come back as suggestions with a diff; every edit is a version.
 - Templates, team skills (`/churn-risk`) and team or personal instructions encode how your team works.
 
+**Plans and customers**
+- RICE prioritization: reach is counted from the customers asking, people set impact, confidence and effort.
+- A roadmap with Now, Next and Later lanes, ordered by priority and ARR.
+- A customer portal per workspace (`/p/<name>`): customers sign in with a link sent to their email, vote and
+  share ideas. Votes count as evidence with the voter's company and ARR; ideas go to triage. It shows only the
+  features you mark for it, never evidence or revenue.
+
 **Where you work**
 - An assistant in the web app, in Slack (DM or mention) and in Mattermost (`/oxybot` or `@oxybot`).
 - Features go to Linear as issues with their spec; status syncs both ways.

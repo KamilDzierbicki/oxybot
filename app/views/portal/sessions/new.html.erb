@@ -1,0 +1,9 @@
+<% content_for :title, "Sign in" %>
+<div class="card auth portal-auth">
+  <h1>Sign in to vote</h1>
+  <p class="muted">We email you a link. No password, and we use your email only to count your votes and reply to your ideas.</p>
+  <%= form_with url: portal_session_path(portal_slug: portal.portal_slug), class: "form" do |form| %>
+    <label>Work email<%= form.email_field :email, required: true, autofocus: true, autocomplete: "email", value: params[:email] %></label>
+    <div><%= form.submit "Email me a link", class: "button button--primary" %></div>
+  <% end %>
+</div>

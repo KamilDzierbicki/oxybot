@@ -1,0 +1,8 @@
+<% content_for :title, "Share an idea" %>
+<h1>Share an idea</h1>
+<p class="muted page-intro">What would make <%= portal.name %> more useful for you? Describe the problem in your own words.</p>
+<%= form_with model: @note, url: portal_ideas_path(portal_slug: portal.portal_slug), scope: :feedback_note, class: "form" do |form| %>
+  <%= render "shared/errors", record: @note %>
+  <label>Your idea<%= form.text_area :body, rows: 6, required: true, maxlength: 5000 %></label>
+  <div class="row"><%= form.submit "Send", class: "button button--primary" %> <%= link_to "Back to the roadmap", portal_root_path(portal_slug: portal.portal_slug) %></div>
+<% end %>

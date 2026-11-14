@@ -2,11 +2,12 @@
 class FeedbackNote < ApplicationRecord
   include Extractable
 
-  SOURCES = %w[manual slack mattermost hubspot email].freeze
+  SOURCES = %w[manual slack mattermost hubspot email portal].freeze
 
   belongs_to :account
   belongs_to :customer, optional: true
   has_many :insights, dependent: :destroy
+  has_one :portal_vote, dependent: :delete # deleting a vote's note takes the vote with it
 
   broadcasts_refreshes
 
@@ -28,7 +29,6 @@ class FeedbackNote < ApplicationRecord
   def resolve_customer
     return if customer || author_email.blank?
 
-    self.customer = account.contacts.find_by(email: author_email)&.customer ||
-                    account.customers.find_by(domain: author_email.split("@").last)
+    self.customer = account.customer_for_email(author_email)
   end
 end

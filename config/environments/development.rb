@@ -37,6 +37,11 @@ Rails.application.configure do
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
+  # Without SMTP settings, mail (invitations, portal sign-in links) is written to tmp/mails so it can be read locally
+  unless ENV["SMTP_ADDRESS"].present?
+    config.action_mailer.delivery_method = :file
+    config.action_mailer.file_settings = { location: Rails.root.join("tmp/mails") }
+  end
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
