@@ -16,7 +16,7 @@ class Document::Generation
     return document.update!(status: "failed", body: "AI drafting is paused on this server.") unless Rails.configuration.x.ai_enabled
 
     brief = Document::Brief.new(document, self).to_s
-    response = DocumentWriter.new(generation: self).ask(brief)
+    response = Prompt.linked("document-writer") { DocumentWriter.new(generation: self).ask(brief) }
     body, cited = checked_citations(response.content)
     document.transaction do
       document.update!(body: body, status: "ready", cited_insight_ids: cited)

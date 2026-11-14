@@ -30,6 +30,14 @@ class Prompt
     from_file(name)
   end
 
+  # Model calls in the block are linked to the Langfuse version of this prompt; a file prompt has no version to link
+  def self.linked(name, &block)
+    version = fetch(name).version
+    return block.call unless version
+
+    OpenTelemetry::Context.with_value(Otel::PROMPT, { name: name, version: version }, &block)
+  end
+
   def self.from_file(name)
     Template.new(name: name, text: FILES.join("#{name}.txt").read, source: "file", version: nil)
   end

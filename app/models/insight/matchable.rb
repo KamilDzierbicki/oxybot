@@ -30,7 +30,7 @@ module Insight::Matchable
   # The judge's verdict on these candidates: {"feature_id", "confidence", "reason"}. Also used by Evaluation.
   def judge(candidates)
     question = "<insight>\nInsight: #{summary.squish}\nQuote: #{quote.squish}\n</insight>\n\nWhich feature does this insight ask for?"
-    FeatureJudge.new(insight: self, candidates: candidates).ask(question).parsed || {}
+    Prompt.linked("feature-judge") { FeatureJudge.new(insight: self, candidates: candidates).ask(question) }.parsed || {}
   end
 
   private

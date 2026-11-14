@@ -22,10 +22,14 @@ class Conversation::Turn
     history.each { |message| agent.add_message(role: message.role.to_sym, content: message.content) }
     agent.before_tool_call { |call| @tool_calls << { name: call.name, arguments: call.arguments } }
 
-    response = Skill::Tracing.with(available: Skill.available_to(user), used: skill) { agent.ask(question_text) }
-    content, cited = checked_citations(response.content.to_s)
-    reply.update!(status: "done", content: content.presence || "(no answer)", tool_calls: @tool_calls,
-                  cited_insight_ids: cited, input_tokens: response.tokens&.input, output_tokens: response.tokens&.output)
+    Langfuse.traced("assistant-turn") do |_trace_id, span|
+      response = Skill::Tracing.with(available: Skill.available_to(user), used: skill) { Prompt.linked("product-agent") { agent.ask(question_text) } }
+      content, cited = checked_citations(response.content.to_s)
+      reply.update!(status: "done", content: content.presence || "(no answer)", tool_calls: @tool_calls,
+                    cited_insight_ids: cited, input_tokens: response.tokens&.input, output_tokens: response.tokens&.output)
+      # The evaluator checks the answer against what the tools returned for the cited insights: quote and customer record
+      Langfuse.record_content(span, input: question_text, output: reply.content, metadata: { evidence: evidence_for(cited) })
+    end
     deliver_to_chat
   rescue RubyLLM::Error, RubyLLM::ToolRoundLimitError, Faraday::Error => e
     Rails.error.report(e, context: { message_id: reply.id })
@@ -54,6 +58,14 @@ class Conversation::Turn
   end
 
   private
+
+  def evidence_for(insight_ids)
+    account.insights.includes(:customer).where(id: insight_ids).map do |insight|
+      customer = insight.customer
+      { id: insight.id, quote: insight.quote, urgency: insight.urgency,
+        customer: customer && { name: customer.name, plan: customer.plan, arr: customer.arr_cents / 100 } }
+    end
+  end
 
   def paused
     reply.update!(status: "failed", content: "AI answers are paused on this server. Try again later.")

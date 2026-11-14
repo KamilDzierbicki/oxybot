@@ -79,7 +79,8 @@ class Evaluation
   def experiment_item(item, dataset_id)
     tracer = OpenTelemetry.tracer_provider.tracer("oxybot")
     run = { "langfuse.experiment.id" => run_name, "langfuse.experiment.name" => run_name,
-            "langfuse.experiment.dataset.id" => dataset_id, "langfuse.experiment.metadata.model" => model }.compact
+            "langfuse.experiment.dataset.id" => dataset_id, "langfuse.experiment.metadata.model" => model,
+            "langfuse.environment" => Langfuse.environment }.compact
     context = OpenTelemetry::Baggage.build { |baggage| run.each { |key, value| baggage.set_value(key, value.to_s) } }
 
     root = tracer.start_span("experiment-item", with_parent: context, attributes: {
@@ -107,6 +108,7 @@ class Evaluation
 
   def score(root, result)
     Langfuse.post("/api/public/scores", { traceId: root.context.hex_trace_id, observationId: root.context.hex_span_id,
-                                          name: "correct", value: result.correct ? 1 : 0, dataType: "BOOLEAN" })
+                                          name: "correct", value: result.correct ? 1 : 0, dataType: "BOOLEAN",
+                                          environment: Langfuse.environment })
   end
 end

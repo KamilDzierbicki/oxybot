@@ -7,7 +7,8 @@ module Langfuse::Score
   def record(id, trace_id:, name:, value:)
     return if trace_id.blank? || !Langfuse.configured?
 
-    LangfuseScoreJob.perform_later(id, { "traceId" => trace_id, "name" => name, "value" => value ? 1 : 0, "dataType" => "BOOLEAN" })
+    LangfuseScoreJob.perform_later(id, { "traceId" => trace_id, "name" => name, "value" => value ? 1 : 0, "dataType" => "BOOLEAN",
+                                         "environment" => Langfuse.environment })
   end
 
   def remove(id)

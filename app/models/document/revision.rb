@@ -14,7 +14,9 @@ class Document::Revision
   def run
     Langfuse.traced("revise-document") do |trace_id|
       remember_insights(document.cited_insight_ids)
-      reply = DocumentReviser.new(revision: self).ask("<document>\n#{base_body}\n</document>\n\nRequest: #{suggestion.instruction}").parsed || {}
+      reply = Prompt.linked("document-reviser") do
+        DocumentReviser.new(revision: self).ask("<document>\n#{base_body}\n</document>\n\nRequest: #{suggestion.instruction}")
+      end.parsed || {}
       body, _cited = checked_citations(clean(reply["body"]))
       if body.blank? || body.squish == base_body.squish
         next suggestion.update!(status: "failed", rationale: "The agent returned the document unchanged. Try a more specific request.", trace_id: trace_id)

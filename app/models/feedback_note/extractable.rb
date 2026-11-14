@@ -29,8 +29,9 @@ module FeedbackNote::Extractable
     return if awaiting_product?
     return unless self.class.where(id: id, processed_at: nil).update_all(processed_at: Time.current) == 1
 
-    Langfuse.traced("extract-insights") do |trace_id|
+    Langfuse.traced("extract-insights") do |trace_id, span|
       extracted = ask_extractor
+      Langfuse.record_content(span, input: body, output: extracted)
       transaction do
         extracted.each { |attributes| build_insight(attributes)&.save! }
         update_columns(processed_at: Time.current, extraction_trace_id: trace_id)
@@ -45,7 +46,7 @@ module FeedbackNote::Extractable
 
   # The model's insights for this note, unchecked. Also used by Evaluation.
   def ask_extractor
-    Array(InsightExtractor.new(note: self).ask("Feedback:\n#{body}").parsed&.dig("insights"))
+    Array(Prompt.linked("insight-extractor") { InsightExtractor.new(note: self).ask("Feedback:\n#{body}") }.parsed&.dig("insights"))
   end
 
   private
