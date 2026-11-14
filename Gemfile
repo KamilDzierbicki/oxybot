@@ -30,7 +30,7 @@ gem "bootsnap", require: false
 # Every model call goes to LiteLLM through RubyLLM's OpenAI-compatible provider
 gem "ruby_llm", "~> 2.1"
 # pgvector columns and nearest-neighbor scopes for insights and features
-gem "neighbor", "~> 0.6"
+gem "neighbor", "~> 1.2"
 # MCP server that exposes specs to coding agents (official Model Context Protocol SDK)
 gem "mcp"
 # Error and job failure reports (Sentry or a self-hosted GlitchTip), only when SENTRY_DSN is set
