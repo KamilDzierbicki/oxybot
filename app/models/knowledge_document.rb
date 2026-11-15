@@ -18,6 +18,11 @@ class KnowledgeDocument < ApplicationRecord
 
   scope :alphabetically, -> { order(:title, :id) }
 
+  # Long documents saved before sections existed: the prompt names them as searchable, so they need their sections
+  def self.build_missing_chunks
+    where("length(knowledge_documents.body) > ?", IN_PROMPT_LIMIT).where.missing(:chunks).find_each(&:rebuild_chunks)
+  end
+
   def long? = body.to_s.length > IN_PROMPT_LIMIT
 
   # Embeds the sections in batches of one embedding call each (EmbedJob)
@@ -57,12 +62,12 @@ class KnowledgeDocument < ApplicationRecord
     end
   end
 
-  private
-
   def rebuild_chunks
     build_chunks
     EmbedJob.perform_later(self) if long?
   end
+
+  private
 
   def fit(paragraph)
     return [ paragraph ] if paragraph.length <= CHUNK_SIZE

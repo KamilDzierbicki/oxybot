@@ -44,6 +44,17 @@ class KnowledgeDocumentTest < ActiveSupport::TestCase
     assert_includes Prompt::Context.new(@account).to_h[:company_context], "Three plans"
   end
 
+  test "a long document saved before sections existed gets them once, and short ones stay whole" do
+    long = @account.knowledge_documents.create!(title: "Pricing handbook", body: long_body)
+    short = @account.knowledge_documents.create!(title: "Strategy", body: "Win mid-market logistics in 2027.")
+    long.chunks.delete_all
+
+    assert_enqueued_with(job: EmbedJob, args: [ long ]) { KnowledgeDocument.build_missing_chunks }
+    assert_not_empty long.chunks.reload, "without sections the prompt lists a document nobody can search"
+    assert_empty short.chunks
+    assert_no_enqueued_jobs(only: EmbedJob) { KnowledgeDocument.build_missing_chunks }
+  end
+
   test "the agent finds a section of a long document, and only in its own workspace" do
     @account.knowledge_documents.create!(title: "Pricing handbook", body: long_body).embed
     accounts(:globex).knowledge_documents.create!(title: "Globex pricing", body: long_body.gsub("Nonprofits", "Universities")).embed
