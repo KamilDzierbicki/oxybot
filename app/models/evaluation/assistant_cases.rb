@@ -7,6 +7,7 @@ module Evaluation::AssistantCases
   private
 
   def evaluate_tools(item)
+    knowledge_corpus if item["knowledge"] # the long document of config/evals/knowledge.yml, for search_knowledge
     reply = ask_assistant(item["question"])
     trajectory = Evaluation::Trajectory.new(reply.tool_calls, item["expected"])
     Evaluation::Result.new(id: item["id"], correct: trajectory.correct?, expected: item["expected"], actual: { "tool_calls" => reply.tool_calls },

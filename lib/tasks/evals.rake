@@ -11,7 +11,7 @@ namespace :evals do
       retrieval: ENV["RAG"].to_s.split(",").to_h { |pair| pair.split("=", 2).map(&:strip) } }
   end
 
-  desc "Measure AI steps: TASK=extraction|matching|retrieval|documents|tools|injection (default all, comma-separated) [MODEL=oxybot-haiku] " \
+  desc "Measure AI steps: TASK=extraction|matching|retrieval|knowledge|documents|tools|injection (default all, comma-separated) [MODEL=oxybot-haiku] " \
        "[LABEL=candidate or VERSION=4] [RAG=rrf_k=30,text_weight=0.5]"
   task run: :environment do
     model = ENV.fetch("MODEL", "oxybot-haiku")

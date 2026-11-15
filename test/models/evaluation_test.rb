@@ -101,6 +101,21 @@ class EvaluationTest < ActiveSupport::TestCase
     assert results.first.correct
   end
 
+  test "knowledge ranks the sections of the long handbook per search mode, counting a section once, and keeps nothing" do
+    evaluation = Evaluation.new(task: "knowledge", model: "oxybot-haiku", account: accounts(:acme))
+    evaluation.instance_variable_set(:@items, [ { "id" => "api", "query" => "API rate limit per minute", "relevant" => [ "Usage limits" ] } ])
+
+    results = assert_no_difference -> { [ KnowledgeDocument.count, KnowledgeChunk.count ].sum } do
+      evaluation.run
+    end
+
+    result = results.first
+    assert_equal %w[mrr_hybrid mrr_text mrr_vector recall_at_5_hybrid recall_at_5_text recall_at_5_vector], result.scores.keys.sort
+    assert_equal 1.0, result.scores["recall_at_5_text"], "the words of the query are in the Usage limits section"
+    assert_equal result.actual["hybrid_top_5"].uniq, result.actual["hybrid_top_5"], "a section split in two counts once"
+    assert_not evaluation.variant["retrieval"].key?("limit"), "search_feedback's config is not what search_knowledge uses"
+  end
+
   test "documents score a draft against the reference with BLEU and ROUGE, and keep nothing" do
     evaluation = Evaluation.new(task: "documents", model: "oxybot-haiku", account: accounts(:acme))
     evaluation.instance_variable_set(:@dataset, [ { "id" => "notes", "kind" => "release_notes", "feature" => "Shopify connector",

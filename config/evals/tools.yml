@@ -28,3 +28,8 @@
 - id: thanks
   question: Thanks, that is all for now.
   expected: { tools: [], max_steps: 0 }
+# knowledge: true plants the long document of config/evals/knowledge.yml first, so the assistant has search_knowledge
+- id: pricing-handbook
+  question: What does our pricing say about discounts for nonprofits?
+  knowledge: true
+  expected: { tools: [search_knowledge], arguments: { search_knowledge: { query: [nonprofit, charit, discount] } }, max_steps: 2 }

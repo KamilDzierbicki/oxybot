@@ -25,6 +25,19 @@ class KnowledgeDocument < ApplicationRecord
     chunks.includes(:knowledge_document).each_slice(ReembedJob::BATCH) { |batch| KnowledgeChunk.embed_all(batch) }
   end
 
+  # Replaces the sections with the current text's, or removes them when the document is short. Saving does this on
+  # its own; an evaluation calls it directly, because its transaction never commits.
+  def build_chunks
+    transaction do
+      chunks.delete_all
+      next unless long?
+
+      section_texts.each_with_index do |section, position|
+        chunks.create!(account: account, position: position, heading: section[:heading], body: section[:body])
+      end
+    end
+  end
+
   # Sections under the nearest markdown heading, packed paragraph by paragraph up to CHUNK_SIZE. A paragraph that is
   # too long alone is split at sentence ends, and a sentence that is too long alone at the size limit, so no text is
   # dropped.
@@ -47,14 +60,7 @@ class KnowledgeDocument < ApplicationRecord
   private
 
   def rebuild_chunks
-    transaction do
-      chunks.delete_all
-      next unless long?
-
-      section_texts.each_with_index do |section, position|
-        chunks.create!(account: account, position: position, heading: section[:heading], body: section[:body])
-      end
-    end
+    build_chunks
     EmbedJob.perform_later(self) if long?
   end
 

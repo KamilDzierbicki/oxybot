@@ -15,6 +15,7 @@ on:
       - app/models/evaluation.rb
       - app/models/evaluation/**
       - app/models/concerns/hybrid_searchable.rb
+      - app/models/knowledge_document.rb
       - app/models/conversation/turn.rb
       - app/models/insight/matchable.rb
       - app/models/feedback_note/extractable.rb

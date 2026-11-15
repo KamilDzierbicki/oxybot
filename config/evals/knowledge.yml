@@ -1,0 +1,99 @@
+# Knowledge search: does the search_knowledge tool find the right section of a long company document? The document
+# below is longer than KnowledgeDocument::IN_PROMPT_LIMIT, so it is split into sections like any long document.
+# Each query names the headings of the sections that answer it. Measured with MRR and recall@5 for vector search
+# alone, full-text search alone and the fused hybrid search the tool uses, counting each section once.
+# The tools task plants this document too, for its cases marked knowledge: true.
+document:
+  title: Pricing and packaging handbook
+  body: |
+    This handbook is the reference for sales, support and product when a question touches price, plans or contracts.
+    It is updated every quarter by the revenue team.
+
+    ## Plans
+    Starter costs 29 dollars per workspace per month and includes five dashboards, two editors and email support.
+    It is meant for small teams that try the product on one data source.
+
+    Growth costs 149 dollars per workspace per month. It adds unlimited dashboards, ten editors, scheduled email
+    reports and the Shopify, HubSpot and Google Sheets connectors.
+
+    Enterprise is priced per contract, starting at 25,000 dollars per year. It adds single sign-on, audit logs,
+    PDF export with the company logo, a dedicated success manager and a 99.9% uptime commitment.
+
+    ## Discounts
+    Annual prepayment lowers the monthly price by 15% on Starter and Growth. Two-year Enterprise contracts get 10%
+    off the second year.
+
+    Nonprofits and schools get 40% off any plan after we check their registration. Startups in a partner accelerator
+    get Growth free for the first six months.
+
+    Sales may give up to 20% off without approval. Anything deeper needs the head of revenue to sign off in writing.
+
+    ## Billing and invoices
+    Monthly plans are charged by card on the first day of each period. Enterprise customers can pay by bank transfer
+    against an invoice, with 30-day payment terms.
+
+    Invoices show the VAT number of the customer and are sent to the billing contact as PDF files. A customer can
+    change the billing contact under workspace settings. Failed card payments are retried three times over a week
+    before the workspace becomes read-only.
+
+    ## Trials and refunds
+    Every new workspace gets a 14-day trial of Growth with no card required. The trial can be extended once by
+    support, by another 14 days, when the customer is still connecting data.
+
+    Monthly plans are not refunded for a started month. Annual plans can be refunded pro rata within the first
+    30 days. Enterprise refunds follow the contract.
+
+    ## Security and compliance
+    Customer data is stored in the European Union, in Frankfurt, and backed up every night. We hold a SOC 2 Type II
+    report and sign a data processing agreement with every paying customer on request.
+
+    Single sign-on supports SAML and works with Okta, Azure AD and Google Workspace. Audit logs keep one year of
+    sign-ins, exports and permission changes.
+
+    ## Competitors
+    Competitors that charge per seat cost larger teams more, because every viewer needs a paid seat. Our price is
+    per workspace, so a team can add readers for free.
+
+    Against tools that bundle a data warehouse, we win on setup time: customers connect their first source in
+    minutes. We lose when a customer already runs a warehouse team and wants SQL modeling inside the product.
+
+    ## Contract changes
+    Upgrades take effect immediately and are charged pro rata for the rest of the period. Downgrades take effect
+    at the end of the current period.
+
+    Cancelling a monthly plan stops renewal; the workspace stays usable until the period ends and is deleted
+    90 days later, after an export is offered to the owner.
+    ## Support levels
+    Starter gets email support with an answer within two business days. Growth gets chat support during European
+    business hours and an answer within eight hours.
+
+    Enterprise gets a named success manager, a shared Slack channel and a one-hour response for outages that stop
+    the whole workspace. Onboarding sessions are included in the first three months.
+
+    ## Usage limits
+    Each workspace can refresh a dashboard at most every 15 minutes on Starter and every five minutes on Growth and
+    Enterprise. Imports above ten million rows per month need Enterprise.
+
+    API calls are limited to 600 per minute per workspace. Customers that hit the limit get an error that says when
+    to retry, and their account manager sees a warning, so the limit can be raised in the contract.
+    ## Partners and resellers
+    Certified agencies resell Growth and Enterprise with a 20% margin and handle the first line of support for their
+    clients. A reseller deal must be registered in the CRM before the first demo, or the margin does not apply.
+
+    Referral partners who only introduce a customer get 10% of the first year's contract value, paid after the
+    customer's first invoice is settled.
+queries:
+  - { id: nonprofit, query: "Do charities get a lower price?", relevant: [Discounts] }
+  - { id: approval, query: "How big a discount can a sales rep give alone?", relevant: [Discounts] }
+  - { id: sso, query: "Which plan has single sign-on with Okta?", relevant: [Security and compliance, Plans] }
+  - { id: data-location, query: "Where is customer data stored?", relevant: [Security and compliance] }
+  - { id: trial-extension, query: "Can the free trial be made longer?", relevant: [Trials and refunds] }
+  - { id: refund-annual, query: "refund of an annual subscription", relevant: [Trials and refunds] }
+  - { id: invoice-vat, query: "Does the invoice include our VAT number?", relevant: [Billing and invoices] }
+  - { id: failed-payment, query: "What happens when a card payment fails?", relevant: [Billing and invoices] }
+  - { id: per-seat, query: "Why are we cheaper than tools priced per seat?", relevant: [Competitors] }
+  - { id: downgrade, query: "When does a downgrade start?", relevant: [Contract changes] }
+  - { id: growth-price, query: "Growth plan price and connectors", relevant: [Plans] }
+  - { id: response-time, query: "How fast does support answer on Growth?", relevant: [Support levels] }
+  - { id: api-limit, query: "API rate limit per minute", relevant: [Usage limits] }
+  - { id: reseller, query: "What margin do resellers earn?", relevant: [Partners and resellers] }

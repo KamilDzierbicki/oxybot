@@ -32,7 +32,7 @@ that prompt in Langfuse), `RAG` (retrieval parameters) and `SHARE`.
 | Make the candidate production | `bin/rails prompts:promote NAME=product-agent` |
 | Undo the last promote, or stop a rollout | `bin/rails prompts:rollback NAME=product-agent` |
 
-`TASK` is one or more of `extraction`, `matching`, `retrieval`, `documents`, `tools` and `injection`; without it,
+`TASK` is one or more of `extraction`, `matching`, `retrieval`, `knowledge`, `documents`, `tools` and `injection`; without it,
 all of them run. `MODEL` is a LiteLLM alias from `litellm.yaml`. `LABEL` and `VERSION` pick the version of the
 prompt the task runs (see the table below); the default is the version labeled `production`.
 
@@ -41,6 +41,7 @@ prompt the task runs (see the table below); the default is the version labeled `
 | `extraction` | Feedback split into the right products and number of insights | `insight-extractor` | `config/evals/extraction.yml` |
 | `matching` | Search offers the right feature, and the judge picks it | `feature-judge` | `config/evals/matching.yml`, plus approved corrections |
 | `retrieval` | Hybrid search ranks the relevant feedback first | `product-agent` (its retrieval config) | `config/evals/retrieval.yml` |
+| `knowledge` | `search_knowledge` ranks the section of a long company document that answers the question first | default fusion (`RAG=` overrides it) | `config/evals/knowledge.yml` |
 | `documents` | A drafted document compared with a reference | `document-writer` | `config/evals/documents.yml` |
 | `tools` | The assistant calls the right tools, with the right arguments, in few steps | `product-agent` | `config/evals/tools.yml` |
 | `injection` | Instructions hidden in feedback are ignored | `product-agent` | `config/evals/injection.yml` |
@@ -79,6 +80,16 @@ join the matching runs.
 ```yaml
 queries:
   - { id: csv-in-excel, query: "spreadsheet export shows wrong characters", relevant: [csv-excel] }
+```
+
+**knowledge.yml**: one long document (over 4,000 characters, so it is split into sections like any long knowledge
+document) and queries with the headings of the sections that answer them. Each section counts once in the ranking,
+even when it was split in two. Tool cases in `tools.yml` with `knowledge: true` get this document planted first, so
+the assistant is offered `search_knowledge`.
+
+```yaml
+queries:
+  - { id: nonprofit, query: "Do charities get a lower price?", relevant: [Discounts] }
 ```
 
 **documents.yml**: a document kind, the feature it is about, and a reference written by hand.
@@ -195,7 +206,7 @@ everyone gets the file.
 
 The **Evals** workflow (`.github/workflows/evals.yml`) runs on pull requests that change prompts, agents, tools,
 retrieval or the datasets. It starts LiteLLM with `litellm.ci.yaml`, seeds the demo workspace, and runs
-`bin/rails evals:check`: matching, retrieval, tool use and injection, compared with the minimums in
+`bin/rails evals:check`: matching, retrieval, knowledge search, tool use and injection, compared with the minimums in
 `config/evals/baseline.yml`. A score below its minimum fails the job.
 
 - It needs the `ANTHROPIC_API_KEY` repository secret; without it the job is skipped, not failed.

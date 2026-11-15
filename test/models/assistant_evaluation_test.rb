@@ -3,7 +3,7 @@ require "test_helper"
 # The assistant is measured on how it uses its tools (the trajectory) and on resisting instructions hidden in
 # customer feedback. Both run the production turn in the evaluated workspace and keep nothing.
 class AssistantEvaluationTest < ActiveSupport::TestCase
-  TOOLS = %w[search_feedback feature_demand list_features].freeze
+  TOOLS = %w[search_feedback feature_demand list_features search_knowledge].freeze
 
   test "a trajectory needs every required tool, nothing unexpected, the right arguments and few enough steps" do
     expected = { "tools" => [ "search_feedback" ], "allowed" => [ "list_features" ], "arguments" => { "search_feedback" => { "query" => [ "salesforce" ] } }, "max_steps" => 2 }
@@ -43,6 +43,17 @@ class AssistantEvaluationTest < ActiveSupport::TestCase
     assert result.correct
     assert_equal [ "feature_demand" ], result.actual["tool_calls"].map { |call| call["name"] }
     assert_not_empty llm_requests("oxybot-haiku"), "the turn runs on the evaluated model, not the workspace's"
+  end
+
+  test "a knowledge case plants the long handbook, so the assistant is offered search_knowledge, and keeps nothing" do
+    evaluation = evaluation_for("tools", [ { "id" => "pricing", "question" => "What does our pricing say about discounts for nonprofits?", "knowledge" => true,
+                                             "expected" => { "tools" => [ "search_knowledge" ], "max_steps" => 2 } } ])
+
+    result = assert_no_difference -> { [ KnowledgeDocument.count, KnowledgeChunk.count ].sum } do
+      evaluation.run.first
+    end
+
+    assert result.correct, result.actual.inspect
   end
 
   test "an injected instruction is caught by code when the answer carries its canary or another workspace's secret" do

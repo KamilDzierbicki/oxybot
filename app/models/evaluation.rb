@@ -4,6 +4,7 @@
 # - matching: the production path, hybrid search for candidates then Insight#judge, picks the expected feature or
 #   none (correct); candidates_hit says whether search offered the expected feature at all
 # - retrieval: hybrid search on a fixed corpus, with MRR and recall@5 for vector, full-text and fused search
+# - knowledge: the same for the sections of a long knowledge document, as the search_knowledge tool searches them
 # - documents: a drafted document against a reference, with BLEU-4 and ROUGE-1/2/L
 # - tools and injection: assistant turns, scored on their tool calls and on resisting hidden instructions
 #   (Evaluation::AssistantCases)
@@ -18,10 +19,11 @@
 class Evaluation
   include AssistantCases
 
-  TASKS = %w[extraction matching retrieval documents tools injection].freeze
+  TASKS = %w[extraction matching retrieval knowledge documents tools injection].freeze
   BOOLEAN_SCORES = %w[correct candidates_hit tool_choice within_steps resisted].freeze
   # The prompt each task runs; its config holds the retrieval parameters the task uses
-  PROMPTS = { "extraction" => "insight-extractor", "matching" => "feature-judge", "retrieval" => "product-agent", "documents" => "document-writer",
+  PROMPTS = { "extraction" => "insight-extractor", "matching" => "feature-judge", "retrieval" => "product-agent", "knowledge" => "product-agent",
+              "documents" => "document-writer",
               "tools" => "product-agent", "injection" => "product-agent" }.freeze
   SEARCH_MODES = %i[vector text hybrid].freeze
 
@@ -46,7 +48,7 @@ class Evaluation
       copy.ai_settings = copy.ai_settings.merge("model_extract" => model, "model_judge" => model, "model_writer" => model, "model_assistant" => model)
     end
     @variant = within_variant do
-      { "model" => model, "prompt" => Prompt.version_tag(PROMPTS.fetch(task)), "retrieval" => Prompt.retrieval(PROMPTS.fetch(task)).presence }.compact
+      { "model" => model, "prompt" => Prompt.version_tag(PROMPTS.fetch(task)), "retrieval" => retrieval_tuning.presence }.compact
     end
     label = [ model, variant["prompt"], *@retrieval.map { |key, value| "#{key}=#{value}" } ].join(" ")
     @run_name = "#{task} #{label} #{Time.current.utc.strftime("%Y-%m-%d %H:%M:%S")}"
@@ -54,7 +56,7 @@ class Evaluation
 
   def items
     @items ||= case task
-    when "retrieval" then dataset.fetch("queries")
+    when "retrieval", "knowledge" then dataset.fetch("queries")
     when "matching" then dataset + @account.evaluation_cases.approved.where(task: "matching").order(:id).map(&:to_item)
     else dataset
     end
@@ -127,12 +129,48 @@ class Evaluation
       ranking = corpus[:account].insights.ranked(item["query"], mode: mode, vector: vector, space: space, tuning: Prompt.retrieval("product-agent"))
       [ mode, ranking.map { |insight| corpus[:keys][insight.id] }.first(10) ]
     end
-    scores = SEARCH_MODES.each_with_object({}) do |mode, all|
+    scores = search_scores(rankings, relevant)
+    Result.new(id: item["id"], correct: scores["recall_at_5_hybrid"] == 1.0, expected: { "relevant" => relevant },
+               actual: { "hybrid_top_5" => rankings[:hybrid].first(5) }, scores: scores)
+  end
+
+  # Ranks the sections of the long document for the query in each search mode, counting each section (heading) once
+  def evaluate_knowledge(item)
+    chunks = KnowledgeChunk.where(knowledge_document: knowledge_corpus)
+    space, vectors = EmbeddingSpace.embed([ item["query"] ], task: :query)
+    relevant = item["relevant"]
+    rankings = SEARCH_MODES.to_h do |mode|
+      ranking = chunks.ranked(item["query"], mode: mode, vector: vectors.first, space: space, tuning: retrieval_tuning)
+      [ mode, ranking.map { |chunk| chunk.heading || "Introduction" }.uniq.first(10) ]
+    end
+    scores = search_scores(rankings, relevant)
+    Result.new(id: item["id"], correct: scores["recall_at_5_hybrid"] == 1.0, expected: { "relevant" => relevant },
+               actual: { "hybrid_top_5" => rankings[:hybrid].first(5) }, scores: scores)
+  end
+
+  # The evaluation's long document in the evaluated workspace, split and embedded once per run (rolled back with it)
+  def knowledge_corpus
+    @knowledge_corpus ||= begin
+      source = YAML.load_file(Rails.root.join("config/evals/knowledge.yml")).fetch("document")
+      document = @account.knowledge_documents.create!(title: source.fetch("title"), body: source.fetch("body"))
+      raise ArgumentError, "config/evals/knowledge.yml must be longer than #{KnowledgeDocument::IN_PROMPT_LIMIT} characters" unless document.long?
+
+      document.tap { it.build_chunks }.tap(&:embed)
+    end
+  end
+
+  # search_knowledge uses the default fusion; product-agent's config tunes search_feedback, so it is not applied here
+  def retrieval_tuning
+    return Prompt.retrieval(PROMPTS.fetch(task)) unless task == "knowledge"
+
+    HybridSearchable::TUNING.merge(@retrieval.to_h { |key, value| [ key, Prompt.retrieval_value(key, value) ] }.compact.slice(*HybridSearchable::TUNING.keys))
+  end
+
+  def search_scores(rankings, relevant)
+    SEARCH_MODES.each_with_object({}) do |mode, all|
       all["mrr_#{mode}"] = RetrievalMetrics.reciprocal_rank(rankings[mode], relevant).round(4)
       all["recall_at_5_#{mode}"] = RetrievalMetrics.recall_at(5, rankings[mode], relevant).round(4)
     end
-    Result.new(id: item["id"], correct: scores["recall_at_5_hybrid"] == 1.0, expected: { "relevant" => relevant },
-               actual: { "hybrid_top_5" => rankings[:hybrid].first(5) }, scores: scores)
   end
 
   # Drafts the document with the production writer and compares it with the reference
