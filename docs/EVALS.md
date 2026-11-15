@@ -15,6 +15,8 @@ bin/rails evals:prepare                    # embeddings and extracted insights f
 
 Set `LANGFUSE_URL`, `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` (see `.env.example`) to see runs in Langfuse.
 Without them, evaluations still run and print their results.
+The `evals:`, `prompts:` and `langfuse:` tasks read `.env` the way `bin/dev` does (variables set in the shell win), so
+they reach LiteLLM and Langfuse from any terminal.
 
 ## The commands
 

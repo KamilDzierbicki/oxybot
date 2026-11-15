@@ -1,15 +1,8 @@
 #!/usr/bin/env ruby
 # Puma on port 3120 with the Solid Queue supervisor inside it, so one command runs the web app and the jobs.
 # Values from .env (if present) are loaded first; variables already set in the shell win.
-env_file = File.expand_path("../.env", __dir__)
-if File.exist?(env_file)
-  File.foreach(env_file) do |line|
-    key, value = line.strip.split("=", 2)
-    next if key.nil? || key.start_with?("#") || value.nil? || value.empty?
-
-    ENV[key] ||= value
-  end
-end
+require_relative "../lib/boot/env_file"
+EnvFile.load(File.expand_path("../.env", __dir__))
 
 ENV["PORT"] ||= "3120"
 ENV["SOLID_QUEUE_IN_PUMA"] ||= "1"
