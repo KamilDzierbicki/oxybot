@@ -1,12 +1,14 @@
 # OxyBot
 
-**An open-source product agent for product teams.** OxyBot collects customer feedback from Slack, Mattermost and
-forms, turns it into atomic insights, links them to your backlog, ranks features by how many customers ask and how
-much revenue they bring, and drafts specs, reports and release notes with a citation for every claim. You can ask it
-questions in the web app, in Slack or in Mattermost, and coding agents read its specs over MCP.
+**An open-source product agent for product teams.** OxyBot collects customer feedback from Slack, Mattermost, a web
+form, a customer portal and support tools (Intercom, Zendesk, Gong). It splits each message into single customer
+needs, called insights, and links them to your backlog. Then it counts how many customers ask for each feature and how
+much annual revenue (ARR) they bring. From that it drafts specs, reports and release notes in which every claim cites
+a customer quote. You can ask it questions in the web app, in Slack or in Mattermost, and coding agents read its specs
+over MCP.
 
 It is self-hosted and built with Ruby on Rails,
-Postgres with pgvector, LiteLLM and Langfuse. MIT licensed.
+Postgres with pgvector, RubyLLM, LiteLLM and Langfuse. MIT licensed.
 
 ![The assistant answers with cited customer evidence; a citation opens the quote, the customer and their ARR](docs/screenshots/assistant.jpg)
 
@@ -31,7 +33,8 @@ model is the vendor's choice, and you cannot check how a number was made. OxyBot
 ## Features
 
 **Feedback to evidence**
-- Feedback arrives from Slack and Mattermost feedback channels, a web form and (soon) email.
+- Feedback arrives from Slack and Mattermost feedback channels, a web form, the customer portal, and Intercom,
+  Zendesk and Gong (hourly sync); email is coming soon.
 - A model splits each note into atomic insights, one product each, with urgency and the customer behind it.
 - Customers and ARR sync from HubSpot; an insight's customer is found from the author's email or domain.
 - Hybrid search (vectors plus full text) and a judge model suggest the backlog feature each insight asks for.
@@ -393,8 +396,9 @@ in `app/tools`.
 ## Roadmap
 
 - Real-time co-editing of documents between people
-- Analytics connectors (Amplitude, Pendo) for launch reviews; today they read `config/mocks/usage.yml`
-- Email and support-tool sources (Intercom, Zendesk, Gong)
+- Running the Intercom, Zendesk, Gong, Salesforce, Amplitude, Pendo and Hex connectors against live accounts; until a
+  token is saved they run in test mode
+- Email as a feedback source
 - Competitive research from public sources
 
 ## Contributing
