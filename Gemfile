@@ -28,7 +28,7 @@ gem "solid_cable"
 gem "bootsnap", require: false
 
 # Every model call goes to LiteLLM through RubyLLM's OpenAI-compatible provider
-gem "ruby_llm", "~> 2.1"
+gem "ruby_llm", "~> 2.2"
 # pgvector columns and nearest-neighbor scopes for insights and features
 gem "neighbor", "~> 0.6"
 # MCP server that exposes specs to coding agents (official Model Context Protocol SDK)
